@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
+import { Geist } from "next/font/google";
+
+const geist = Geist({
+  variable: "--font-sans",
+  subsets: ["latin"],
+});
 import { LanguageProvider } from "@/lib/i18n/language-context";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
@@ -19,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable} h-full antialiased`}>
+    <html lang="en" className={`${geist.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <LanguageProvider>
           <AuthProvider>{children}</AuthProvider>
