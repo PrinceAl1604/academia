@@ -77,18 +77,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, loading, pathname, router]);
 
   const loadUserProfile = async (userId: string) => {
-    // Check role and plan from localStorage (will be replaced with Supabase later)
-    const storedRole = localStorage.getItem("academia-role");
-    const storedPlan = localStorage.getItem("academia-plan");
+    // Fetch role and plan from the users table in Supabase
+    const { data, error } = await supabase
+      .from("users")
+      .select("role, subscription_tier")
+      .eq("id", userId)
+      .single();
 
-    setRole((storedRole as Role) || "user");
-    setPlan((storedPlan as Plan) || "free");
+    if (data && !error) {
+      setRole((data.role as Role) || "user");
+      setPlan((data.subscription_tier as Plan) || "free");
+    } else {
+      // User not in users table yet — default to free student
+      setRole("user");
+      setPlan("free");
+    }
   };
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
-    localStorage.removeItem("academia-role");
-    localStorage.removeItem("academia-plan");
     setUser(null);
     setRole(null);
     setPlan("free");
