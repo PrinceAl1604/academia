@@ -138,7 +138,7 @@ export function DashboardSidebar() {
 
       {/* User section */}
       <div className="border-t p-4">
-        {isAuthenticated ? (
+        {isAuthenticated && (
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
               <AvatarFallback className="bg-neutral-200 text-sm font-medium">
@@ -170,21 +170,6 @@ export function DashboardSidebar() {
             >
               <LogOut className="h-4 w-4" />
             </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <Link
-              href="/sign-in"
-              className="flex h-9 w-full items-center justify-center rounded-lg border border-neutral-200 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="flex h-9 w-full items-center justify-center rounded-lg bg-neutral-900 text-sm font-medium text-white hover:bg-neutral-800"
-            >
-              Sign Up
-            </Link>
           </div>
         )}
       </div>
