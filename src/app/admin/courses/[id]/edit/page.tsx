@@ -146,6 +146,25 @@ export default function AdminCourseEditPage({ params }: PageProps) {
         <h1 className="text-2xl font-bold text-neutral-900">Edit Course</h1>
       </div>
 
+      {/* Curriculum Editor Link */}
+      <Card>
+        <CardContent className="flex items-center justify-between py-4">
+          <div>
+            <p className="font-medium text-neutral-900">Course Curriculum</p>
+            <p className="text-sm text-neutral-500">
+              Add modules and lessons with YouTube video URLs
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            render={<Link href={`/admin/courses/${id}/curriculum`} />}
+            className="gap-1.5"
+          >
+            Edit Curriculum →
+          </Button>
+        </CardContent>
+      </Card>
+
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="space-y-6 pt-6">

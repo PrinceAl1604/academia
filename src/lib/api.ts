@@ -272,6 +272,86 @@ export async function createLesson(lesson: {
 }
 
 /**
+ * Update a module.
+ */
+export async function updateModule(
+  id: string,
+  updates: Partial<{ title: string; sort_order: number }>
+) {
+  const { data, error } = await supabase
+    .from("modules")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Delete a module (and its lessons via cascade).
+ */
+export async function deleteModule(id: string) {
+  // Delete lessons first
+  await supabase.from("lessons").delete().eq("module_id", id);
+  const { error } = await supabase.from("modules").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/**
+ * Update a lesson.
+ */
+export async function updateLesson(
+  id: string,
+  updates: Partial<{
+    title: string;
+    type: string;
+    youtube_url: string;
+    duration_minutes: number;
+    content: string;
+    is_free: boolean;
+    sort_order: number;
+  }>
+) {
+  const { data, error } = await supabase
+    .from("lessons")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Delete a lesson.
+ */
+export async function deleteLesson(id: string) {
+  const { error } = await supabase.from("lessons").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/**
+ * Get modules with lessons for a course (admin).
+ */
+export async function getModulesForCourse(courseId: string): Promise<ModuleRow[]> {
+  const { data, error } = await supabase
+    .from("modules")
+    .select("*, lessons(*)")
+    .eq("course_id", courseId)
+    .order("sort_order", { ascending: true });
+
+  if (error) return [];
+
+  return (data ?? []).map((m: ModuleRow) => ({
+    ...m,
+    lessons: (m.lessons ?? []).sort(
+      (a: LessonRow, b: LessonRow) => a.sort_order - b.sort_order
+    ),
+  }));
+}
+
+/**
  * Get all instructors.
  */
 export async function getInstructors() {
