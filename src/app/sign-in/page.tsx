@@ -42,7 +42,7 @@ export default function SignInPage() {
       {/* Logo */}
       <div className="p-8">
         <Link href="/sign-in" className="inline-block">
-          <img src="/logo.svg" alt="Academia" className="h-6" />
+          <img src="/logo-wordmark.svg" alt="Educator" className="h-6" />
         </Link>
       </div>
 

@@ -59,7 +59,7 @@ export function DashboardTopbar() {
         </SheetTrigger>
         <SheetContent side="left" className="w-72">
           <div className="flex items-center pb-6 pt-4">
-            <img src="/logo.svg" alt="Academia" className="h-5" />
+            <img src="/logo-wordmark.svg" alt="Educator" className="h-5" />
           </div>
           <nav className="flex flex-col gap-1">
             {mobileNav.map((item) => {

@@ -53,7 +53,7 @@ export function DashboardSidebar() {
       {/* Logo - wordmark only */}
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/" className="flex items-center">
-          <img src="/logo.svg" alt="Academia" className="h-5" />
+          <img src="/logo-wordmark.svg" alt="Educator" className="h-5" />
         </Link>
       </div>
 
