@@ -5,7 +5,6 @@ import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { DashboardTopbar } from "@/components/layout/dashboard-topbar";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { LicenceModal } from "@/components/shared/licence-modal";
 import { CourseCarousel } from "@/components/shared/course-carousel";
 import { courses, categories } from "@/data/mock";
 
@@ -111,7 +110,6 @@ export default function HomePage() {
           )}
         </main>
       </div>
-      <LicenceModal />
     </div>
   );
 }

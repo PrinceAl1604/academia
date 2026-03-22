@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { courses } from "@/data/mock";
 import { useAuth } from "@/lib/auth-context";
-import { LicenceModal } from "@/components/shared/licence-modal";
+import { UpgradePopover } from "@/components/shared/upgrade-popover";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -38,7 +38,7 @@ interface PageProps {
 
 export default function CourseDetailPage({ params }: PageProps) {
   const { slug } = use(params);
-  const { isActivated, openLicenceModal } = useAuth();
+  const { isActivated } = useAuth();
   const course = courses.find((c) => c.slug === slug);
 
   if (!course) {
@@ -242,13 +242,12 @@ export default function CourseDetailPage({ params }: PageProps) {
                 </p>
 
                 {isLocked ? (
-                  <Button
-                    className="h-10 w-full gap-2 text-sm"
-                    onClick={openLicenceModal}
-                  >
-                    <Lock className="h-4 w-4" />
-                    Activate to Access
-                  </Button>
+                  <UpgradePopover locked>
+                    <Button className="h-10 w-full gap-2 text-sm">
+                      <Lock className="h-4 w-4" />
+                      Activate to Access
+                    </Button>
+                  </UpgradePopover>
                 ) : (
                   <Button
                     className="h-10 w-full text-sm"
@@ -291,7 +290,6 @@ export default function CourseDetailPage({ params }: PageProps) {
           </div>
         </div>
       </main>
-      <LicenceModal />
     </div>
   );
 }

@@ -39,7 +39,7 @@ const settingsNav = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { isAdmin, logout, userName } = useAuth();
+  const { isAdmin, isActivated, logout, userName } = useAuth();
   const { t } = useLanguage();
 
   const adminNav = [
@@ -153,7 +153,7 @@ export function DashboardSidebar() {
               {userName || currentUser.name}
             </p>
             <div className="flex items-center gap-1.5">
-              <p className="text-xs text-neutral-500">Pro Plan</p>
+              <p className="text-xs text-neutral-500">{isActivated ? "Pro Plan" : "Free Plan"}</p>
               {isAdmin && (
                 <Badge className="h-4 bg-red-100 px-1.5 text-[10px] text-red-700">
                   Admin
