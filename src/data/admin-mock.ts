@@ -25,13 +25,13 @@ export const licenceKeys: LicenceKey[] = [
   },
   {
     id: "lk2",
-    key: "ADMIN-7R2J-K5L8-W3Y6",
+    key: "ADMIN-ALEX-2026-MASTER",
     type: "admin",
     status: "active",
-    assignedTo: "Alex Landrin",
-    email: "alex@example.com",
+    assignedTo: "Alex Landrin (Owner)",
+    email: "alex@academia.com",
     createdAt: "2025-12-01",
-    expiresAt: "2027-12-01",
+    expiresAt: "2099-12-31",
   },
   {
     id: "lk3",
