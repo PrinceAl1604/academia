@@ -27,7 +27,6 @@ import {
   HelpCircle,
   GraduationCap,
 } from "lucide-react";
-import { currentUser } from "@/data/mock";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { LanguageToggle } from "@/components/shared/language-toggle";
@@ -47,7 +46,7 @@ const mobileNav = [
 export function DashboardTopbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
-  const { isAdmin } = useAuth();
+  const { isAdmin, userName, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/80 px-4 backdrop-blur-md lg:px-8">
@@ -123,14 +122,14 @@ export function DashboardTopbar() {
           >
             <Avatar className="h-7 w-7">
               <AvatarFallback className="bg-neutral-200 text-xs font-medium">
-                {currentUser.name
+                {(userName || "U")
                   .split(" ")
-                  .map((n) => n[0])
+                  .map((n: string) => n[0])
                   .join("")}
               </AvatarFallback>
             </Avatar>
             <span className="hidden text-sm font-medium sm:inline">
-              {currentUser.name.split(" ")[0]}
+              {(userName || "User").split(" ")[0]}
             </span>
             {isAdmin && (
               <Badge className="bg-red-100 text-red-700">Admin</Badge>
@@ -150,7 +149,7 @@ export function DashboardTopbar() {
               Subscription
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 text-red-600">
+            <DropdownMenuItem className="gap-2 text-red-600" onClick={logout}>
               <LogOut className="h-4 w-4" />
               Sign Out
             </DropdownMenuItem>

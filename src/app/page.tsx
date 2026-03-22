@@ -10,7 +10,7 @@ import { CourseCarousel } from "@/components/shared/course-carousel";
 import { courses, categories } from "@/data/mock";
 
 export default function HomePage() {
-  const { isActivated } = useAuth();
+  const { isActivated, isAuthenticated, loading } = useAuth();
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState("All");
 
@@ -38,6 +38,14 @@ export default function HomePage() {
     const levels = [...new Set(categoryCourses.map((c) => c.level))];
     return levels.length === 1 ? levels[0] : "Mixed";
   };
+
+  if (loading || !isAuthenticated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neutral-50/50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-neutral-200 border-t-neutral-800" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50/50">

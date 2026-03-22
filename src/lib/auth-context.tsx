@@ -8,17 +8,23 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "./supabase";
+import type { User } from "@supabase/supabase-js";
 
 type Role = "user" | "admin" | null;
 
 interface AuthContextType {
-  isActivated: boolean;
-  role: Role;
+  user: User | null;
+  isAuthenticated: boolean;
   isAdmin: boolean;
+  role: Role;
   userName: string | null;
-  activate: (key: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  isActivated: boolean;
+  loading: boolean;
+  logout: () => Promise<void>;
+  activateLicenceKey: (key: string) => Promise<{ success: boolean; error?: string }>;
+  // Legacy compat
   showLicenceModal: boolean;
   openLicenceModal: () => void;
   dismissModal: () => void;
@@ -26,46 +32,83 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const STORAGE_KEY = "academia-licence";
-const ROLE_KEY = "academia-role";
-const USER_KEY = "academia-user";
-const LICENCE_VAL_KEY = "academia-licence-value";
+const PUBLIC_ROUTES = ["/sign-in", "/sign-up", "/reset-password", "/auth/callback", "/privacy", "/terms"];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isActivated, setIsActivated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<Role>(null);
-  const [userName, setUserName] = useState<string | null>(null);
+  const [isActivated, setIsActivated] = useState(false);
   const [showLicenceModal, setShowLicenceModal] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
-  // Load activation state from localStorage
+  // Listen to auth state changes
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    const savedRole = localStorage.getItem(ROLE_KEY) as Role;
-    const savedUser = localStorage.getItem(USER_KEY);
-    if (saved === "activated") {
-      setIsActivated(true);
-      setRole(savedRole || "user");
-      setUserName(savedUser);
-    }
-    setMounted(true);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadUserRole(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          loadUserRole(session.user.id);
+        } else {
+          setRole(null);
+          setIsActivated(false);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Auto-show modal after 3 seconds if not activated
+  // Redirect logic
   useEffect(() => {
-    if (!mounted || isActivated) return;
+    if (loading) return;
 
-    const timer = setTimeout(() => {
-      setShowLicenceModal(true);
-    }, 3000);
+    const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
-    return () => clearTimeout(timer);
-  }, [mounted, isActivated]);
+    if (!user && !isPublicRoute) {
+      router.push("/sign-in");
+    } else if (user && (pathname === "/sign-in" || pathname === "/sign-up")) {
+      router.push("/");
+    }
+  }, [user, loading, pathname, router]);
 
-  const activate = useCallback(
-    async (
-      key: string
-    ): Promise<{ success: boolean; error?: string }> => {
+  const loadUserRole = async (userId: string) => {
+    // Check if user has an activated licence key
+    const storedRole = localStorage.getItem("academia-role");
+    const storedActivated = localStorage.getItem("academia-licence");
+
+    if (storedActivated === "activated") {
+      setIsActivated(true);
+      setRole((storedRole as Role) || "user");
+    }
+  };
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem("academia-licence");
+    localStorage.removeItem("academia-role");
+    localStorage.removeItem("academia-user");
+    localStorage.removeItem("academia-licence-value");
+    setUser(null);
+    setRole(null);
+    setIsActivated(false);
+    router.push("/sign-in");
+  }, [router]);
+
+  const activateLicenceKey = useCallback(
+    async (key: string): Promise<{ success: boolean; error?: string }> => {
       const trimmed = key.trim();
       if (trimmed.length < 4) {
         return { success: false, error: "Invalid licence key" };
@@ -92,51 +135,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const detectedRole = data.type === "admin" ? "admin" : "user";
-      const name = data.assigned_to || "Student";
 
       setIsActivated(true);
       setRole(detectedRole);
-      setUserName(name);
       setShowLicenceModal(false);
 
-      localStorage.setItem(STORAGE_KEY, "activated");
-      localStorage.setItem(ROLE_KEY, detectedRole);
-      localStorage.setItem(USER_KEY, name);
-      localStorage.setItem(LICENCE_VAL_KEY, trimmed);
+      localStorage.setItem("academia-licence", "activated");
+      localStorage.setItem("academia-role", detectedRole);
+      localStorage.setItem("academia-licence-value", trimmed);
 
       return { success: true };
     },
     []
   );
 
-  const logout = useCallback(() => {
-    setIsActivated(false);
-    setRole(null);
-    setUserName(null);
-    setShowLicenceModal(false);
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(ROLE_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(LICENCE_VAL_KEY);
-  }, []);
+  const userName =
+    user?.user_metadata?.full_name ||
+    user?.email?.split("@")[0] ||
+    null;
 
-  const openLicenceModal = useCallback(() => {
-    setShowLicenceModal(true);
-  }, []);
-
-  const dismissModal = useCallback(() => {
-    setShowLicenceModal(false);
-  }, []);
+  const openLicenceModal = useCallback(() => setShowLicenceModal(true), []);
+  const dismissModal = useCallback(() => setShowLicenceModal(false), []);
 
   return (
     <AuthContext.Provider
       value={{
-        isActivated,
-        role,
+        user,
+        isAuthenticated: !!user,
         isAdmin: role === "admin",
+        role,
         userName,
-        activate,
+        isActivated,
+        loading,
         logout,
+        activateLicenceKey,
         showLicenceModal,
         openLicenceModal,
         dismissModal,
