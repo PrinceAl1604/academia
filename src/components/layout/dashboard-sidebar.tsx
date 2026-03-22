@@ -39,7 +39,7 @@ const settingsNav = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { isAdmin } = useAuth();
+  const { isAdmin, logout, userName } = useAuth();
   const { t } = useLanguage();
 
   const adminNav = [
@@ -142,15 +142,15 @@ export function DashboardSidebar() {
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
             <AvatarFallback className="bg-neutral-200 text-sm font-medium">
-              {currentUser.name
+              {(userName || currentUser.name)
                 .split(" ")
-                .map((n) => n[0])
+                .map((n: string) => n[0])
                 .join("")}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 truncate">
             <p className="text-sm font-medium text-neutral-900">
-              {currentUser.name}
+              {userName || currentUser.name}
             </p>
             <div className="flex items-center gap-1.5">
               <p className="text-xs text-neutral-500">Pro Plan</p>
@@ -161,7 +161,11 @@ export function DashboardSidebar() {
               )}
             </div>
           </div>
-          <button className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600">
+          <button
+            onClick={logout}
+            className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+            title="Log out"
+          >
             <LogOut className="h-4 w-4" />
           </button>
         </div>

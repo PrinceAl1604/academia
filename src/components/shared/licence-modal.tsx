@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Key, ArrowRight, ShieldCheck, X } from "lucide-react";
+import { Key, ArrowRight, ShieldCheck, X, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 
@@ -19,13 +19,19 @@ export function LicenceModal() {
   const { showLicenceModal, activate, dismissModal } = useAuth();
   const { t } = useLanguage();
   const [licenceKey, setLicenceKey] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleActivate = () => {
-    const success = activate(licenceKey);
-    if (!success) {
-      setError(true);
-      setTimeout(() => setError(false), 2000);
+  const handleActivate = async () => {
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+
+    const result = await activate(licenceKey);
+
+    if (!result.success) {
+      setError(result.error || "Invalid licence key");
+      setLoading(false);
     }
   };
 
@@ -62,18 +68,16 @@ export function LicenceModal() {
               className={`h-12 text-center font-mono text-lg tracking-widest ${
                 error ? "border-red-500 ring-1 ring-red-500" : ""
               }`}
-              maxLength={19}
               value={licenceKey}
               onChange={(e) => {
                 setLicenceKey(e.target.value);
-                setError(false);
+                setError(null);
               }}
               onKeyDown={(e) => e.key === "Enter" && handleActivate()}
+              disabled={loading}
             />
             {error && (
-              <p className="text-xs text-red-500">
-                Please enter a valid licence key
-              </p>
+              <p className="text-xs text-red-500">{error}</p>
             )}
             <p className="text-xs text-neutral-400">
               {t.signInPage.format}
@@ -83,9 +87,19 @@ export function LicenceModal() {
           <Button
             className="h-12 w-full gap-2 text-base"
             onClick={handleActivate}
+            disabled={loading || !licenceKey.trim()}
           >
-            {t.signInPage.activate}
-            <ArrowRight className="h-4 w-4" />
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Validating...
+              </>
+            ) : (
+              <>
+                {t.signInPage.activate}
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </Button>
 
           <button
