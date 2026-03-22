@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: "Academia — Learn from the best",
   description:
     "Access premium courses taught by industry experts. One subscription, unlimited learning.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

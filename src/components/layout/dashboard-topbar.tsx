@@ -60,11 +60,9 @@ export function DashboardTopbar() {
           <Menu className="h-5 w-5" />
         </SheetTrigger>
         <SheetContent side="left" className="w-72">
-          <div className="flex items-center gap-2 pb-6 pt-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900">
-              <GraduationCap className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-lg font-bold">Academia</span>
+          <div className="flex items-center gap-2.5 pb-6 pt-4">
+            <img src="/favicon.svg" alt="" className="h-8 w-8" />
+            <img src="/logo.svg" alt="Academia" className="h-4" />
           </div>
           <nav className="flex flex-col gap-1">
             {mobileNav.map((item) => {
