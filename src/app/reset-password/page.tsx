@@ -37,9 +37,7 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-screen flex-col bg-[#faf9f7]">
       <div className="p-8">
         <Link href="/sign-in" className="inline-block">
-          <span className="text-xl font-bold tracking-tight text-neutral-900">
-            Academia
-          </span>
+          <img src="/logo.svg" alt="Academia" className="h-6" />
         </Link>
       </div>
 
