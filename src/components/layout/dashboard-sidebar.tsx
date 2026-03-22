@@ -51,11 +51,10 @@ export function DashboardSidebar() {
 
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 flex-col border-r bg-white lg:flex">
-      {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b px-6">
-        <Link href="/" className="flex items-center gap-2.5">
-          <img src="/favicon.svg" alt="" className="h-8 w-8" />
-          <img src="/logo.svg" alt="Academia" className="h-4" />
+      {/* Logo - wordmark only */}
+      <div className="flex h-16 items-center border-b px-6">
+        <Link href="/" className="flex items-center">
+          <img src="/logo.svg" alt="Academia" className="h-5" />
         </Link>
       </div>
 
