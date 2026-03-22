@@ -24,13 +24,12 @@ import {
 } from "lucide-react";
 import { courses, currentUser } from "@/data/mock";
 import { useAuth } from "@/lib/auth-context";
-import { LicenceModal } from "@/components/shared/licence-modal";
 
 export default function CoursePlayerPage() {
   const params = useParams();
   const slug = params.slug as string;
   const course = courses.find((c) => c.slug === slug);
-  const { isActivated, openLicenceModal } = useAuth();
+  const { isPro, isAuthenticated } = useAuth();
 
   const [activeLesson, setActiveLesson] = useState(
     course?.curriculum[0]?.lessons[0]?.id ?? ""
@@ -48,26 +47,39 @@ export default function CoursePlayerPage() {
     );
   }
 
-  const isLocked = !isActivated && !course.isFree;
+  const isLocked = !isPro && !course.isFree;
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-white p-8 text-center">
+        <Lock className="h-12 w-12 text-neutral-300" />
+        <h1 className="text-xl font-semibold text-neutral-900">
+          Sign in to watch this course
+        </h1>
+        <p className="max-w-md text-neutral-500">
+          Create a free account or sign in to start learning.
+        </p>
+        <Button className="mt-2 gap-2" render={<Link href="/sign-in" />}>
+          Sign In
+        </Button>
+      </div>
+    );
+  }
 
   if (isLocked) {
     return (
-      <>
-        <div className="flex h-screen flex-col items-center justify-center gap-4 bg-white p-8 text-center">
-          <Lock className="h-12 w-12 text-neutral-300" />
-          <h1 className="text-xl font-semibold text-neutral-900">
-            Activate your licence to access this course
-          </h1>
-          <p className="max-w-md text-neutral-500">
-            This course requires an active licence. Enter your licence key to unlock all premium courses.
-          </p>
-          <Button className="mt-2 gap-2" onClick={openLicenceModal}>
-            <Lock className="h-4 w-4" />
-            Activate Licence
-          </Button>
-        </div>
-        <LicenceModal />
-      </>
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-white p-8 text-center">
+        <Lock className="h-12 w-12 text-neutral-300" />
+        <h1 className="text-xl font-semibold text-neutral-900">
+          Pro membership required
+        </h1>
+        <p className="max-w-md text-neutral-500">
+          This course is part of the Pro plan. Upgrade your membership to unlock all courses.
+        </p>
+        <Button className="mt-2 gap-2" render={<Link href="/dashboard/subscription" />}>
+          Get Membership
+        </Button>
+      </div>
     );
   }
 
@@ -265,7 +277,6 @@ export default function CoursePlayerPage() {
           </aside>
         )}
       </div>
-      <LicenceModal />
     </div>
   );
 }

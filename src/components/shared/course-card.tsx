@@ -1,8 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Course } from "@/types";
-import { UpgradePopover } from "./upgrade-popover";
+import { MembershipPopover } from "./upgrade-popover";
+import { useAuth } from "@/lib/auth-context";
 
 interface CourseCardProps {
   course: Course;
@@ -27,14 +31,27 @@ export function CourseCard({
   locked = false,
   variant = "default",
 }: CourseCardProps) {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const gradient = gradients[parseInt(course.id) % gradients.length];
   const totalLessons = course.curriculum.reduce(
     (acc, mod) => acc + mod.lessons.length,
     0
   );
 
-  // Simple progress mock (0 for locked, random for unlocked based on id)
   const progressValue = locked ? 0 : (parseInt(course.id) * 17) % 100;
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      router.push("/sign-in");
+      return;
+    }
+    if (locked) {
+      e.preventDefault();
+      // Popover handles this
+    }
+  };
 
   if (variant === "compact") {
     const compactCard = (
@@ -66,11 +83,11 @@ export function CourseCard({
     );
 
     if (locked) {
-      return <UpgradePopover locked>{compactCard}</UpgradePopover>;
+      return <MembershipPopover>{compactCard}</MembershipPopover>;
     }
 
     return (
-      <Link href={`/courses/${course.slug}`} className="block">
+      <Link href={`/courses/${course.slug}`} className="block" onClick={handleClick}>
         {compactCard}
       </Link>
     );
@@ -98,7 +115,6 @@ export function CourseCard({
         <div
           className={`relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-gradient-to-br ${gradient}`}
         >
-          {/* Decorative elements to mimic course content preview */}
           <div className="absolute inset-0 flex items-center justify-center p-4">
             <div className="w-full space-y-2 rounded-lg bg-white/60 p-3 backdrop-blur-sm">
               <div className="h-2 w-3/4 rounded-full bg-neutral-300/50" />
@@ -128,21 +144,18 @@ export function CourseCard({
           <span className="text-[11px] font-medium text-neutral-400 tabular-nums">
             {course.duration}
           </span>
-          <Progress
-            value={progressValue}
-            className="h-1 flex-1"
-          />
+          <Progress value={progressValue} className="h-1 flex-1" />
         </div>
       </div>
     </div>
   );
 
   if (locked) {
-    return <UpgradePopover locked>{defaultCard}</UpgradePopover>;
+    return <MembershipPopover>{defaultCard}</MembershipPopover>;
   }
 
   return (
-    <Link href={`/courses/${course.slug}`} className="block">
+    <Link href={`/courses/${course.slug}`} className="block" onClick={handleClick}>
       {defaultCard}
     </Link>
   );

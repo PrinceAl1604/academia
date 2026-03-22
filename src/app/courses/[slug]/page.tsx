@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { courses } from "@/data/mock";
 import { useAuth } from "@/lib/auth-context";
-import { UpgradePopover } from "@/components/shared/upgrade-popover";
+import { MembershipPopover } from "@/components/shared/upgrade-popover";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -38,14 +38,14 @@ interface PageProps {
 
 export default function CourseDetailPage({ params }: PageProps) {
   const { slug } = use(params);
-  const { isActivated } = useAuth();
+  const { isPro, isAuthenticated } = useAuth();
   const course = courses.find((c) => c.slug === slug);
 
   if (!course) {
     notFound();
   }
 
-  const isLocked = !isActivated && !course.isFree;
+  const isLocked = !isPro && !course.isFree;
 
   const totalLessons = course.curriculum.reduce(
     (acc, mod) => acc + mod.lessons.length,
@@ -237,17 +237,24 @@ export default function CourseDetailPage({ params }: PageProps) {
 
                 <p className="text-xs text-neutral-500 mb-3">
                   {isLocked
-                    ? "Activate your licence to access"
-                    : "Included in your subscription"}
+                    ? "Pro membership required"
+                    : "Included in your plan"}
                 </p>
 
                 {isLocked ? (
-                  <UpgradePopover locked>
+                  <MembershipPopover>
                     <Button className="h-10 w-full gap-2 text-sm">
                       <Lock className="h-4 w-4" />
-                      Activate to Access
+                      Get Membership
                     </Button>
-                  </UpgradePopover>
+                  </MembershipPopover>
+                ) : !isAuthenticated ? (
+                  <Button
+                    className="h-10 w-full text-sm"
+                    render={<Link href="/sign-in" />}
+                  >
+                    Sign In to Start
+                  </Button>
                 ) : (
                   <Button
                     className="h-10 w-full text-sm"

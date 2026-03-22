@@ -20,7 +20,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { currentUser } from "@/data/mock";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 
@@ -39,7 +38,7 @@ const settingsNav = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { isAdmin, isActivated, logout, userName } = useAuth();
+  const { isAdmin, isAuthenticated, isPro, logout, userName } = useAuth();
   const { t } = useLanguage();
 
   const adminNav = [
@@ -139,36 +138,55 @@ export function DashboardSidebar() {
 
       {/* User section */}
       <div className="border-t p-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-neutral-200 text-sm font-medium">
-              {(userName || currentUser.name)
-                .split(" ")
-                .map((n: string) => n[0])
-                .join("")}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 truncate">
-            <p className="text-sm font-medium text-neutral-900">
-              {userName || currentUser.name}
-            </p>
-            <div className="flex items-center gap-1.5">
-              <p className="text-xs text-neutral-500">{isActivated ? "Pro Plan" : "Free Plan"}</p>
-              {isAdmin && (
-                <Badge className="h-4 bg-red-100 px-1.5 text-[10px] text-red-700">
-                  Admin
-                </Badge>
-              )}
+        {isAuthenticated ? (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9">
+              <AvatarFallback className="bg-neutral-200 text-sm font-medium">
+                {(userName || "U")
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .join("")}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 truncate">
+              <p className="text-sm font-medium text-neutral-900">
+                {userName || "User"}
+              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs text-neutral-500">
+                  {isPro ? "Pro Plan" : "Free Plan"}
+                </p>
+                {isAdmin && (
+                  <Badge className="h-4 bg-red-100 px-1.5 text-[10px] text-red-700">
+                    Admin
+                  </Badge>
+                )}
+              </div>
             </div>
+            <button
+              onClick={logout}
+              className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
+              title="Log out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            onClick={logout}
-            className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-            title="Log out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
+        ) : (
+          <div className="space-y-2">
+            <Link
+              href="/sign-in"
+              className="flex h-9 w-full items-center justify-center rounded-lg border border-neutral-200 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/sign-up"
+              className="flex h-9 w-full items-center justify-center rounded-lg bg-neutral-900 text-sm font-medium text-white hover:bg-neutral-800"
+            >
+              Sign Up
+            </Link>
+          </div>
+        )}
       </div>
     </aside>
   );

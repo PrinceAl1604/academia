@@ -25,7 +25,6 @@ import {
   LayoutDashboard,
   Trophy,
   HelpCircle,
-  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -46,7 +45,7 @@ const mobileNav = [
 export function DashboardTopbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
-  const { isAdmin, userName, logout } = useAuth();
+  const { isAdmin, isAuthenticated, userName, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/80 px-4 backdrop-blur-md lg:px-8">
@@ -90,7 +89,7 @@ export function DashboardTopbar() {
         {isSearchOpen ? (
           <div className="max-w-md">
             <Input
-              placeholder="Search your courses..."
+              placeholder="Search courses..."
               className="h-9"
               autoFocus
               onBlur={() => setIsSearchOpen(false)}
@@ -111,50 +110,71 @@ export function DashboardTopbar() {
       {/* Actions */}
       <div className="flex items-center gap-2">
         <LanguageToggle />
-        <Button variant="ghost" size="icon" className="relative h-9 w-9">
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-        </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={<Button variant="ghost" className="h-9 gap-2 pl-2 pr-3" />}
-          >
-            <Avatar className="h-7 w-7">
-              <AvatarFallback className="bg-neutral-200 text-xs font-medium">
-                {(userName || "U")
-                  .split(" ")
-                  .map((n: string) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
-            <span className="hidden text-sm font-medium sm:inline">
-              {(userName || "User").split(" ")[0]}
-            </span>
-            {isAdmin && (
-              <Badge className="bg-red-100 text-red-700">Admin</Badge>
-            )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem render={<Link href="/dashboard/profile" />} className="gap-2">
-              <User className="h-4 w-4" />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/dashboard/settings" />} className="gap-2">
-              <Settings className="h-4 w-4" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/dashboard/subscription" />} className="gap-2">
-              <CreditCard className="h-4 w-4" />
-              Subscription
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 text-red-600" onClick={logout}>
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {isAuthenticated ? (
+          <>
+            <Button variant="ghost" size="icon" className="relative h-9 w-9">
+              <Bell className="h-4 w-4" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={<Button variant="ghost" className="h-9 gap-2 pl-2 pr-3" />}
+              >
+                <Avatar className="h-7 w-7">
+                  <AvatarFallback className="bg-neutral-200 text-xs font-medium">
+                    {(userName || "U")
+                      .split(" ")
+                      .map((n: string) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden text-sm font-medium sm:inline">
+                  {(userName || "User").split(" ")[0]}
+                </span>
+                {isAdmin && (
+                  <Badge className="bg-red-100 text-red-700">Admin</Badge>
+                )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem render={<Link href="/dashboard/profile" />} className="gap-2">
+                  <User className="h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem render={<Link href="/dashboard/settings" />} className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem render={<Link href="/dashboard/subscription" />} className="gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Subscription
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2 text-red-600" onClick={logout}>
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              className="h-9 text-sm"
+              render={<Link href="/sign-in" />}
+            >
+              Sign In
+            </Button>
+            <Button
+              className="h-9 text-sm"
+              render={<Link href="/sign-up" />}
+            >
+              Sign Up
+            </Button>
+          </div>
+        )}
       </div>
     </header>
   );
