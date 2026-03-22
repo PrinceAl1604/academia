@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
 import { LanguageProvider } from "@/lib/i18n/language-context";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
-
-const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Educator — Learn from the best",
@@ -24,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html lang="en" className={`${GeistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <LanguageProvider>
           <AuthProvider>{children}</AuthProvider>
