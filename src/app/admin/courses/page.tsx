@@ -1,24 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { courses } from "@/data/mock";
+import { getAllCourses, deleteCourse, type CourseRow } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Pencil, Trash2, Star, Users } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  Star,
+  Users,
+  Loader2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 
 export default function AdminCoursesPage() {
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const loadCourses = useCallback(async () => {
+    const data = await getAllCourses();
+    setCourses(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadCourses();
+  }, [loadCourses]);
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
+      return;
+    }
+    setDeleting(id);
+    try {
+      await deleteCourse(id);
+      setCourses((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      alert("Failed to delete course. It may have modules or enrollments linked to it.");
+    }
+    setDeleting(null);
+  };
 
   const filteredCourses = courses.filter(
     (course) =>
       course.title.toLowerCase().includes(search.toLowerCase()) ||
-      course.category.toLowerCase().includes(search.toLowerCase())
+      (course.category?.name ?? "").toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -32,7 +77,10 @@ export default function AdminCoursesPage() {
             {courses.length} {t.admin.courses}
           </p>
         </div>
-        <Button render={<Link href="/admin/courses/new" />} className="gap-1.5">
+        <Button
+          render={<Link href="/admin/courses/new" />}
+          className="gap-1.5"
+        >
           <Plus className="h-4 w-4" />
           {t.admin.addCourse}
         </Button>
@@ -66,34 +114,70 @@ export default function AdminCoursesPage() {
                     <h3 className="font-medium text-neutral-900 truncate">
                       {course.title}
                     </h3>
-                    <Badge variant="secondary" className="shrink-0 bg-green-100 text-green-700">
-                      {t.admin.published}
-                    </Badge>
+                    {course.is_published ? (
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 bg-green-100 text-green-700"
+                      >
+                        <Eye className="mr-1 h-3 w-3" />
+                        {t.admin.published}
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 bg-neutral-100 text-neutral-500"
+                      >
+                        <EyeOff className="mr-1 h-3 w-3" />
+                        Draft
+                      </Badge>
+                    )}
+                    {course.is_free && (
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 bg-blue-100 text-blue-700"
+                      >
+                        Free
+                      </Badge>
+                    )}
                   </div>
                   <div className="mt-1.5 flex items-center gap-4 text-sm text-neutral-500">
-                    <span>{course.category}</span>
+                    <span>{course.category?.name ?? "No category"}</span>
+                    <span>{course.level}</span>
                     <span className="flex items-center gap-1">
                       <Users className="h-3.5 w-3.5" />
-                      {course.studentsCount.toLocaleString()} {t.admin.students}
+                      {course.students_count.toLocaleString()}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                      {course.rating}
-                    </span>
+                    {course.rating > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        {course.rating}
+                      </span>
+                    )}
+                    <span>{course.duration_hours}h · {course.total_lessons} lessons</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
-                    render={<Link href={`/admin/courses/new?edit=${course.id}`} />}
+                    render={<Link href={`/admin/courses/${course.id}/edit`} />}
                     className="gap-1.5"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                     {t.admin.edit}
                   </Button>
-                  <Button variant="destructive" size="sm" className="gap-1.5">
-                    <Trash2 className="h-3.5 w-3.5" />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={deleting === course.id}
+                    onClick={() => handleDelete(course.id, course.title)}
+                  >
+                    {deleting === course.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
                     {t.admin.delete}
                   </Button>
                 </div>

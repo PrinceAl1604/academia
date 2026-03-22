@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useLanguage } from "@/lib/i18n/language-context";
 import {
   getCategories,
   getInstructors,
-  createCourse,
+  updateCourse,
   type CategoryRow,
 } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,19 +25,17 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+interface PageProps {
+  params: Promise<{ id: string }>;
 }
 
-export default function AdminCourseNewPage() {
-  const { t } = useLanguage();
+export default function AdminCourseEditPage({ params }: PageProps) {
+  const { id } = use(params);
   const router = useRouter();
 
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [instructors, setInstructors] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,18 +54,39 @@ export default function AdminCourseNewPage() {
   const [isPublished, setIsPublished] = useState(false);
 
   useEffect(() => {
-    Promise.all([getCategories(), getInstructors()]).then(
-      ([cats, insts]) => {
-        setCategories(cats);
-        setInstructors(insts);
-      }
-    );
-  }, []);
+    async function load() {
+      const [cats, insts] = await Promise.all([
+        getCategories(),
+        getInstructors(),
+      ]);
+      setCategories(cats);
+      setInstructors(insts);
 
-  // Auto-generate slug from title
-  useEffect(() => {
-    setSlug(slugify(title));
-  }, [title]);
+      // Load existing course
+      const { data: course } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (course) {
+        setTitle(course.title || "");
+        setSlug(course.slug || "");
+        setDescription(course.description || "");
+        setCategoryId(course.category_id || "");
+        setInstructorId(course.instructor_id || "");
+        setLevel(course.level || "Beginner");
+        setDurationHours(String(course.duration_hours || ""));
+        setTotalLessons(String(course.total_lessons || ""));
+        setYoutubePreviewUrl(course.youtube_preview_url || "");
+        setTags((course.tags || []).join(", "));
+        setIsFree(course.is_free || false);
+        setIsPublished(course.is_published || false);
+      }
+      setLoading(false);
+    }
+    load();
+  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,10 +99,10 @@ export default function AdminCourseNewPage() {
     setError(null);
 
     try {
-      await createCourse({
+      await updateCourse(id, {
         title: title.trim(),
-        slug: slug || slugify(title),
-        description: description.trim() || undefined,
+        slug,
+        description: description.trim(),
         category_id: categoryId || undefined,
         instructor_id: instructorId || undefined,
         level,
@@ -100,11 +119,19 @@ export default function AdminCourseNewPage() {
 
       router.push("/admin/courses");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to create course";
+      const message = err instanceof Error ? err.message : "Failed to update course";
       setError(message);
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -116,9 +143,7 @@ export default function AdminCourseNewPage() {
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="text-2xl font-bold text-neutral-900">
-          {t.admin.createCourse}
-        </h1>
+        <h1 className="text-2xl font-bold text-neutral-900">Edit Course</h1>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -126,10 +151,9 @@ export default function AdminCourseNewPage() {
           <CardContent className="space-y-6 pt-6">
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">{t.admin.courseTitle} *</Label>
+              <Label htmlFor="title">Course Title *</Label>
               <Input
                 id="title"
-                placeholder="e.g. Complete UI/UX Design Masterclass"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
@@ -141,38 +165,33 @@ export default function AdminCourseNewPage() {
               <Label htmlFor="slug">URL Slug</Label>
               <Input
                 id="slug"
-                placeholder="auto-generated-from-title"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-neutral-400">
-                /courses/{slug || "..."}
-              </p>
             </div>
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">{t.admin.courseDescription}</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                placeholder="Describe what students will learn..."
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
 
-            {/* Category + Level row */}
+            {/* Category + Level */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>{t.admin.category}</Label>
+                <Label>Category</Label>
                 <Select
                   value={categoryId}
                   onValueChange={(v) => setCategoryId(v ?? "")}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t.admin.selectCategory} />
+                    <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
@@ -185,7 +204,7 @@ export default function AdminCourseNewPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>{t.admin.selectLevel}</Label>
+                <Label>Level</Label>
                 <Select value={level} onValueChange={(v) => setLevel(v ?? "Beginner")}>
                   <SelectTrigger>
                     <SelectValue />
@@ -207,7 +226,7 @@ export default function AdminCourseNewPage() {
                 onValueChange={(v) => setInstructorId(v ?? "")}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select an instructor" />
+                  <SelectValue placeholder="Select instructor" />
                 </SelectTrigger>
                 <SelectContent>
                   {instructors.map((inst) => (
@@ -219,7 +238,7 @@ export default function AdminCourseNewPage() {
               </Select>
             </div>
 
-            {/* Duration + Lessons row */}
+            {/* Duration + Lessons */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="duration">Duration (hours)</Label>
@@ -227,7 +246,6 @@ export default function AdminCourseNewPage() {
                   id="duration"
                   type="number"
                   min="0"
-                  placeholder="42"
                   value={durationHours}
                   onChange={(e) => setDurationHours(e.target.value)}
                 />
@@ -238,19 +256,17 @@ export default function AdminCourseNewPage() {
                   id="lessons"
                   type="number"
                   min="0"
-                  placeholder="12"
                   value={totalLessons}
                   onChange={(e) => setTotalLessons(e.target.value)}
                 />
               </div>
             </div>
 
-            {/* YouTube Preview URL */}
+            {/* YouTube URL */}
             <div className="space-y-2">
               <Label htmlFor="youtube">YouTube Preview URL</Label>
               <Input
                 id="youtube"
-                placeholder="https://www.youtube.com/watch?v=..."
                 value={youtubePreviewUrl}
                 onChange={(e) => setYoutubePreviewUrl(e.target.value)}
               />
@@ -258,16 +274,14 @@ export default function AdminCourseNewPage() {
 
             {/* Tags */}
             <div className="space-y-2">
-              <Label htmlFor="tags">{t.admin.tags}</Label>
+              <Label htmlFor="tags">Tags</Label>
               <Input
                 id="tags"
-                placeholder={t.admin.tagsPlaceholder}
+                placeholder="design, figma, prototyping"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
               />
-              <p className="text-xs text-neutral-400">
-                Separate with commas: design, figma, prototyping
-              </p>
+              <p className="text-xs text-neutral-400">Separate with commas</p>
             </div>
 
             {/* Toggles */}
@@ -276,7 +290,7 @@ export default function AdminCourseNewPage() {
                 <div>
                   <Label>Free Course</Label>
                   <p className="text-xs text-neutral-500">
-                    Available to all users without membership
+                    Available without membership
                   </p>
                 </div>
                 <Switch checked={isFree} onCheckedChange={setIsFree} />
@@ -285,7 +299,7 @@ export default function AdminCourseNewPage() {
                 <div>
                   <Label>Published</Label>
                   <p className="text-xs text-neutral-500">
-                    Visible to students on the browse page
+                    Visible to students
                   </p>
                 </div>
                 <Switch
@@ -295,10 +309,7 @@ export default function AdminCourseNewPage() {
               </div>
             </div>
 
-            {/* Error */}
-            {error && (
-              <p className="text-sm text-red-500">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-500">{error}</p>}
 
             {/* Actions */}
             <div className="flex items-center gap-3 pt-2">
@@ -308,7 +319,7 @@ export default function AdminCourseNewPage() {
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
-                {t.admin.saveCourse}
+                Save Changes
               </Button>
               <Button
                 type="button"
