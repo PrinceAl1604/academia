@@ -3,13 +3,13 @@
 import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CourseCard } from "./course-card";
-import { Course } from "@/types";
+import { CourseRow } from "@/lib/api";
 
 interface CourseCarouselProps {
   title: string;
   subtitle: string;
-  courses: Course[];
-  locked?: (course: Course) => boolean;
+  courses: CourseRow[];
+  locked?: (course: CourseRow) => boolean;
 }
 
 export function CourseCarousel({

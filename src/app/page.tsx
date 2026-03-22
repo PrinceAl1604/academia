@@ -1,39 +1,62 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { DashboardTopbar } from "@/components/layout/dashboard-topbar";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { CourseCarousel } from "@/components/shared/course-carousel";
-import { courses, categories } from "@/data/mock";
+import { getCourses, getCategories, type CourseRow, type CategoryRow } from "@/lib/api";
+import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
   const { isPro } = useAuth();
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch courses and categories from Supabase
+  useEffect(() => {
+    async function load() {
+      const [coursesData, categoriesData] = await Promise.all([
+        getCourses(),
+        getCategories(),
+      ]);
+      setCourses(coursesData);
+      setCategories(categoriesData);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const categoryNames = useMemo(
+    () => categories.map((c) => c.name),
+    [categories]
+  );
 
   const filteredCourses = useMemo(() => {
     if (selectedCategory === "All") return courses;
-    return courses.filter((c) => c.category === selectedCategory);
-  }, [selectedCategory]);
+    return courses.filter((c) => c.category?.name === selectedCategory);
+  }, [selectedCategory, courses]);
 
   const coursesByCategory = useMemo(() => {
-    const grouped: Record<string, typeof courses> = {};
-    for (const cat of categories) {
-      const catCourses = filteredCourses.filter((c) => c.category === cat);
+    const grouped: Record<string, CourseRow[]> = {};
+    for (const cat of categoryNames) {
+      const catCourses = filteredCourses.filter(
+        (c) => c.category?.name === cat
+      );
       if (catCourses.length > 0) {
         grouped[cat] = catCourses;
       }
     }
     return grouped;
-  }, [filteredCourses]);
+  }, [filteredCourses, categoryNames]);
 
-  const isLocked = (course: (typeof courses)[0]) =>
-    !isPro && !course.isFree;
+  const isLocked = (course: CourseRow) => !isPro && !course.is_free;
 
-  // Determine level label for a category group
-  const getCategoryLevel = (categoryCourses: typeof courses) => {
+  const getCategoryLevel = (categoryCourses: CourseRow[]) => {
     const levels = [...new Set(categoryCourses.map((c) => c.level))];
     return levels.length === 1 ? levels[0] : "Mixed";
   };
@@ -63,7 +86,7 @@ export default function HomePage() {
             >
               {t.catalog.all}
             </button>
-            {categories.map((cat) => (
+            {categoryNames.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
@@ -78,24 +101,32 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Course carousels by category */}
-          {Object.entries(coursesByCategory).map(
-            ([category, categoryCourses]) => (
-              <CourseCarousel
-                key={category}
-                title={category}
-                subtitle={`${categoryCourses.length} ${
-                  categoryCourses.length === 1
-                    ? t.catalog.course
-                    : t.catalog.courses
-                } · ${getCategoryLevel(categoryCourses)}`}
-                courses={categoryCourses}
-                locked={isLocked}
-              />
-            )
+          {/* Loading state */}
+          {loading && (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+            </div>
           )}
 
-          {filteredCourses.length === 0 && (
+          {/* Course carousels by category */}
+          {!loading &&
+            Object.entries(coursesByCategory).map(
+              ([category, categoryCourses]) => (
+                <CourseCarousel
+                  key={category}
+                  title={category}
+                  subtitle={`${categoryCourses.length} ${
+                    categoryCourses.length === 1
+                      ? t.catalog.course
+                      : t.catalog.courses
+                  } · ${getCategoryLevel(categoryCourses)}`}
+                  courses={categoryCourses}
+                  locked={isLocked}
+                />
+              )
+            )}
+
+          {!loading && filteredCourses.length === 0 && (
             <div className="py-20 text-center">
               <p className="text-neutral-500">{t.catalog.noCourses}</p>
             </div>

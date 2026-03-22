@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
@@ -27,8 +27,9 @@ import {
   CheckCircle,
   Lock,
   Video,
+  Loader2,
 } from "lucide-react";
-import { courses } from "@/data/mock";
+import { getCourseBySlug, type CourseRow, type ModuleRow } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { MembershipPopover } from "@/components/shared/upgrade-popover";
 
@@ -39,18 +40,37 @@ interface PageProps {
 export default function CourseDetailPage({ params }: PageProps) {
   const { slug } = use(params);
   const { isPro, isAuthenticated } = useAuth();
-  const course = courses.find((c) => c.slug === slug);
+  const [course, setCourse] = useState<(CourseRow & { modules: ModuleRow[] }) | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getCourseBySlug(slug).then((data) => {
+      setCourse(data);
+      setLoading(false);
+    });
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-neutral-50/50">
+        <DashboardSidebar />
+        <div className="lg:pl-64">
+          <DashboardTopbar />
+          <div className="flex items-center justify-center py-32">
+            <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!course) {
     notFound();
   }
 
-  const isLocked = !isPro && !course.isFree;
-
-  const totalLessons = course.curriculum.reduce(
-    (acc, mod) => acc + mod.lessons.length,
-    0
-  );
+  const isLocked = !isPro && !course.is_free;
+  const totalLessons = course.total_lessons ?? 0;
+  const durationLabel = `${course.duration_hours ?? 0} hours`;
 
   const lessonIcon = (type: string) => {
     switch (type) {
@@ -68,10 +88,10 @@ export default function CourseDetailPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-neutral-50/50">
       <DashboardSidebar />
-      <DashboardTopbar />
+      <div className="lg:pl-64">
+        <DashboardTopbar />
 
-      <main className="lg:pl-64 pt-16 lg:pt-0">
-        <div className="mx-auto max-w-4xl px-6 py-8">
+        <main className="mx-auto max-w-4xl px-6 py-8">
           {/* Back button */}
           <Link
             href="/"
@@ -84,31 +104,34 @@ export default function CourseDetailPage({ params }: PageProps) {
           {/* Course Header */}
           <div className="mb-8">
             <Badge variant="secondary" className="mb-3">
-              {course.category}
+              {course.category?.name ?? "General"}
             </Badge>
             <h1 className="text-2xl font-bold text-neutral-900 sm:text-3xl">
               {course.title}
             </h1>
-            <p className="mt-3 text-neutral-500 leading-relaxed max-w-2xl">
-              {course.description}
-            </p>
+            {course.description && (
+              <p className="mt-3 text-neutral-500 leading-relaxed max-w-2xl">
+                {course.description}
+              </p>
+            )}
 
             {/* Stats row */}
             <div className="mt-5 flex flex-wrap items-center gap-5 text-sm text-neutral-500">
-              <span className="flex items-center gap-1.5">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                <span className="font-semibold text-neutral-900">
-                  {course.rating}
+              {course.rating > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  <span className="font-semibold text-neutral-900">
+                    {course.rating}
+                  </span>
                 </span>
-                ({course.reviewsCount} reviews)
-              </span>
+              )}
               <span className="flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
-                {course.studentsCount.toLocaleString()} students
+                {course.students_count.toLocaleString()} students
               </span>
               <span className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
-                {course.duration}
+                {durationLabel}
               </span>
               <span className="flex items-center gap-1.5">
                 <BookOpen className="h-4 w-4" />
@@ -117,24 +140,28 @@ export default function CourseDetailPage({ params }: PageProps) {
             </div>
 
             {/* Instructor */}
-            <div className="mt-6 flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-neutral-200 text-xs font-medium text-neutral-700">
-                  {course.instructor.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm font-semibold text-neutral-900">
-                  {course.instructor.name}
-                </p>
-                <p className="text-xs text-neutral-500">
-                  {course.instructor.title}
-                </p>
+            {course.instructor && (
+              <div className="mt-6 flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback className="bg-neutral-200 text-xs font-medium text-neutral-700">
+                    {course.instructor.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-semibold text-neutral-900">
+                    {course.instructor.name}
+                  </p>
+                  {course.instructor.title && (
+                    <p className="text-xs text-neutral-500">
+                      {course.instructor.title}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <Separator className="mb-8" />
@@ -146,84 +173,91 @@ export default function CourseDetailPage({ params }: PageProps) {
                 Course Curriculum
               </h2>
               <p className="mt-1 text-sm text-neutral-500">
-                {course.curriculum.length} modules · {totalLessons} lessons ·{" "}
-                {course.duration}
+                {course.modules.length} modules · {totalLessons} lessons ·{" "}
+                {durationLabel}
               </p>
 
-              <Accordion
-                className="mt-5"
-                defaultValue={[course.curriculum[0]?.id]}
-              >
-                {course.curriculum.map((module, idx) => (
-                  <AccordionItem key={module.id} value={module.id}>
-                    <AccordionTrigger className="text-left hover:no-underline">
-                      <div className="flex-1">
-                        <span className="text-sm font-semibold">
-                          Module {idx + 1}: {module.title}
-                        </span>
-                        <p className="mt-0.5 text-xs text-neutral-500">
-                          {module.lessons.length} lessons
-                        </p>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="space-y-0.5">
-                        {module.lessons.map((lesson) => (
-                          <li
-                            key={lesson.id}
-                            className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-neutral-100/80"
-                          >
-                            <div className="flex items-center gap-3">
-                              {lessonIcon(lesson.type)}
-                              <span className="text-sm text-neutral-700">
-                                {lesson.title}
-                              </span>
-                              {lesson.isFree && (
-                                <Badge
-                                  variant="secondary"
-                                  className="text-[10px] px-1.5 py-0"
-                                >
-                                  Free
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-neutral-400">
-                              <span>{lesson.duration}</span>
-                              {!lesson.isFree && isLocked && (
-                                <Lock className="h-3 w-3" />
-                              )}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+              {course.modules.length > 0 ? (
+                <Accordion
+                  className="mt-5"
+                  defaultValue={[course.modules[0]?.id]}
+                >
+                  {course.modules.map((module, idx) => (
+                    <AccordionItem key={module.id} value={module.id}>
+                      <AccordionTrigger className="text-left hover:no-underline">
+                        <div className="flex-1">
+                          <span className="text-sm font-semibold">
+                            Module {idx + 1}: {module.title}
+                          </span>
+                          <p className="mt-0.5 text-xs text-neutral-500">
+                            {module.lessons.length} lessons
+                          </p>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <ul className="space-y-0.5">
+                          {module.lessons.map((lesson) => (
+                            <li
+                              key={lesson.id}
+                              className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-neutral-100/80"
+                            >
+                              <div className="flex items-center gap-3">
+                                {lessonIcon(lesson.type)}
+                                <span className="text-sm text-neutral-700">
+                                  {lesson.title}
+                                </span>
+                                {lesson.is_free && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-[10px] px-1.5 py-0"
+                                  >
+                                    Free
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-neutral-400">
+                                <span>{lesson.duration_minutes}min</span>
+                                {!lesson.is_free && isLocked && (
+                                  <Lock className="h-3 w-3" />
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              ) : (
+                <p className="mt-5 text-sm text-neutral-400">
+                  Curriculum coming soon.
+                </p>
+              )}
 
               {/* Tags */}
-              <div className="mt-10">
-                <h3 className="text-sm font-semibold text-neutral-900">
-                  Skills you&apos;ll learn
-                </h3>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {course.tags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="px-2.5 py-0.5 text-xs"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+              {course.tags && course.tags.length > 0 && (
+                <div className="mt-10">
+                  <h3 className="text-sm font-semibold text-neutral-900">
+                    Skills you&apos;ll learn
+                  </h3>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {course.tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="px-2.5 py-0.5 text-xs"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* Sidebar card - right side */}
+            {/* Sidebar card */}
             <div>
               <div className="sticky top-24 rounded-xl border border-neutral-200 bg-white p-5">
-                {/* Thumbnail */}
                 <div className="aspect-video rounded-lg bg-gradient-to-br from-neutral-100 to-neutral-200 mb-4">
                   <div className="flex h-full items-center justify-center">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md">
@@ -277,7 +311,7 @@ export default function CourseDetailPage({ params }: PageProps) {
                 <ul className="space-y-2.5 text-xs">
                   <li className="flex items-center gap-2 text-neutral-600">
                     <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                    {course.duration} of content
+                    {durationLabel} of content
                   </li>
                   <li className="flex items-center gap-2 text-neutral-600">
                     <CheckCircle className="h-3.5 w-3.5 text-green-600" />
@@ -295,8 +329,8 @@ export default function CourseDetailPage({ params }: PageProps) {
               </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

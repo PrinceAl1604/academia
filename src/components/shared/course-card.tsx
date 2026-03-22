@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Course } from "@/types";
+import { CourseRow } from "@/lib/api";
 import { MembershipPopover } from "./upgrade-popover";
 import { useAuth } from "@/lib/auth-context";
 
 interface CourseCardProps {
-  course: Course;
+  course: CourseRow;
   index?: number;
   locked?: boolean;
   variant?: "default" | "compact";
@@ -25,6 +25,15 @@ const gradients = [
   "from-sky-100 via-blue-100 to-indigo-100",
 ];
 
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
 export function CourseCard({
   course,
   index = 0,
@@ -33,13 +42,12 @@ export function CourseCard({
 }: CourseCardProps) {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const gradient = gradients[parseInt(course.id) % gradients.length];
-  const totalLessons = course.curriculum.reduce(
-    (acc, mod) => acc + mod.lessons.length,
-    0
-  );
+  const gradient = gradients[hashCode(course.id) % gradients.length];
+  const categoryName = course.category?.name ?? "General";
+  const totalLessons = course.total_lessons ?? 0;
+  const durationLabel = `${course.duration_hours ?? 0} hours`;
 
-  const progressValue = locked ? 0 : (parseInt(course.id) * 17) % 100;
+  const progressValue = locked ? 0 : hashCode(course.id) % 100;
 
   const handleClick = (e: React.MouseEvent) => {
     if (!isAuthenticated) {
@@ -49,7 +57,6 @@ export function CourseCard({
     }
     if (locked) {
       e.preventDefault();
-      // Popover handles this
     }
   };
 
@@ -105,7 +112,7 @@ export function CourseCard({
           {index + 1}
         </span>
         <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600">
-          {course.category}
+          {categoryName}
         </span>
         {locked && <Lock className="ml-auto h-3.5 w-3.5 text-neutral-400" />}
       </div>
@@ -115,13 +122,21 @@ export function CourseCard({
         <div
           className={`relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-gradient-to-br ${gradient}`}
         >
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <div className="w-full space-y-2 rounded-lg bg-white/60 p-3 backdrop-blur-sm">
-              <div className="h-2 w-3/4 rounded-full bg-neutral-300/50" />
-              <div className="h-2 w-1/2 rounded-full bg-neutral-300/50" />
-              <div className="h-2 w-2/3 rounded-full bg-neutral-300/50" />
+          {course.thumbnail_url ? (
+            <img
+              src={course.thumbnail_url}
+              alt={course.title}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center p-4">
+              <div className="w-full space-y-2 rounded-lg bg-white/60 p-3 backdrop-blur-sm">
+                <div className="h-2 w-3/4 rounded-full bg-neutral-300/50" />
+                <div className="h-2 w-1/2 rounded-full bg-neutral-300/50" />
+                <div className="h-2 w-2/3 rounded-full bg-neutral-300/50" />
+              </div>
             </div>
-          </div>
+          )}
           {locked && (
             <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/30 rounded-lg">
               <Lock className="h-6 w-6 text-white" />
@@ -142,7 +157,7 @@ export function CourseCard({
         {/* Progress bar */}
         <div className="mt-3 flex items-center gap-2">
           <span className="text-[11px] font-medium text-neutral-400 tabular-nums">
-            {course.duration}
+            {durationLabel}
           </span>
           <Progress value={progressValue} className="h-1 flex-1" />
         </div>
