@@ -57,12 +57,14 @@ function SubscriptionContent() {
     }
   }, [searchParams, user, isPro]);
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (provider: "monetbil" | "magma") => {
     if (!user) return;
     setPaying(true);
 
+    const endpoint = provider === "magma" ? "/api/payment/magma" : "/api/payment/initialize";
+
     try {
-      const res = await fetch("/api/payment/initialize", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -75,11 +77,9 @@ function SubscriptionContent() {
       const data = await res.json();
 
       if (data.checkout_url) {
-        // Save payment ref for verification on return
         if (data.payment_ref) {
           localStorage.setItem("pending_payment_ref", data.payment_ref);
         }
-        // Redirect to Monetbil checkout
         window.location.href = data.checkout_url;
       } else {
         alert(data.error || "Failed to start payment. Please try again.");
@@ -177,22 +177,38 @@ function SubscriptionContent() {
               <span className="text-sm text-neutral-400">/ month</span>
             </div>
 
-            <Button
-              className="h-12 w-full gap-2 text-base"
-              onClick={handleSubscribe}
-              disabled={paying}
-            >
-              {paying ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Crown className="h-5 w-5" />
-              )}
-              {paying ? "Redirecting..." : "Subscribe Now"}
-            </Button>
+            <div className="space-y-3">
+              <Button
+                className="h-12 w-full gap-2 text-base"
+                onClick={() => handleSubscribe("monetbil")}
+                disabled={paying}
+              >
+                {paying ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Crown className="h-5 w-5" />
+                )}
+                {paying ? "Redirecting..." : "Pay with Monetbil"}
+              </Button>
+
+              <Button
+                variant="outline"
+                className="h-12 w-full gap-2 text-base"
+                onClick={() => handleSubscribe("magma")}
+                disabled={paying}
+              >
+                {paying ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Crown className="h-5 w-5" />
+                )}
+                {paying ? "Redirecting..." : "Pay with Magma OnePay"}
+              </Button>
+            </div>
 
             <div className="mt-3 flex items-center justify-center gap-2 text-xs text-neutral-400">
               <Shield className="h-3.5 w-3.5" />
-              Secure payment via Monetbil · Mobile Money & Cards accepted
+              Secure payment · Mobile Money & Cards accepted
             </div>
           </div>
         </Card>
