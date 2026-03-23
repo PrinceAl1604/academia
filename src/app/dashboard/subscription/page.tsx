@@ -165,7 +165,7 @@ function SubscriptionContent() {
                     data-background-color="#FFFFFF"
                     data-cta-animation="shine"
                     data-locale="en"
-                    data-primary-color="#000000"
+                    data-primary-color="#ffcc00"
                   />
                   <Script
                     src="https://js.chariow.com/v1/widget.min.js"
