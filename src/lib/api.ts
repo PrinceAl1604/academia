@@ -41,6 +41,7 @@ export interface ModuleRow {
   id: string;
   course_id: string;
   title: string;
+  description: string | null;
   sort_order: number;
   lessons: LessonRow[];
 }

@@ -34,6 +34,13 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { MembershipPopover } from "@/components/shared/upgrade-popover";
 
+function extractYouTubeId(url: string): string | null {
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  return match?.[1] ?? null;
+}
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -70,6 +77,7 @@ export default function CourseDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const isEn = t.nav.signIn === "Sign In";
   const isLocked = !isPro && !course.is_free;
   const totalLessons = course.total_lessons ?? 0;
   const durationLabel = `${course.duration_hours ?? 0} hours`;
@@ -175,7 +183,7 @@ export default function CourseDetailPage({ params }: PageProps) {
                 {t.courseDetail.curriculum}
               </h2>
               <p className="mt-1 text-sm text-neutral-500">
-                {course.modules.length} {t.courseDetail.modules} · {totalLessons} {t.courseDetail.lessons} ·{" "}
+                {course.modules.length} {isEn ? "chapters" : "chapitres"} · {totalLessons} {t.courseDetail.lessons} ·{" "}
                 {durationLabel}
               </p>
 
@@ -189,42 +197,61 @@ export default function CourseDetailPage({ params }: PageProps) {
                       <AccordionTrigger className="text-left hover:no-underline">
                         <div className="flex-1">
                           <span className="text-sm font-semibold">
-                            {t.courseDetail.module} {idx + 1}: {module.title}
+                            {isEn ? "Chapter" : "Chapitre"} {idx + 1}: {module.title}
                           </span>
                           <p className="mt-0.5 text-xs text-neutral-500">
                             {module.lessons.length} {t.courseDetail.lessons}
+                            {module.description && ` · ${module.description}`}
                           </p>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
                         <ul className="space-y-0.5">
-                          {module.lessons.map((lesson) => (
-                            <li
-                              key={lesson.id}
-                              className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-neutral-100/80"
-                            >
-                              <div className="flex items-center gap-3">
-                                {lessonIcon(lesson.type)}
-                                <span className="text-sm text-neutral-700">
-                                  {lesson.title}
-                                </span>
-                                {lesson.is_free && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-[10px] px-1.5 py-0"
+                          {module.lessons.map((lesson) => {
+                            const canPlay = !isLocked || lesson.is_free;
+                            const lessonLink = canPlay && isAuthenticated
+                              ? `/courses/${course.slug}/learn?lesson=${lesson.id}`
+                              : undefined;
+
+                            return (
+                              <li key={lesson.id}>
+                                {lessonLink ? (
+                                  <Link
+                                    href={lessonLink}
+                                    className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-neutral-100/80 transition-colors"
                                   >
-                                    {t.courseDetail.free}
-                                  </Badge>
+                                    <div className="flex items-center gap-3">
+                                      <Play className="h-4 w-4 text-neutral-400" />
+                                      <span className="text-sm text-neutral-700">
+                                        {lesson.title}
+                                      </span>
+                                      {lesson.is_free && (
+                                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                          {t.courseDetail.free}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-neutral-400">
+                                      {lesson.duration_minutes > 0 && <span>{lesson.duration_minutes}min</span>}
+                                    </div>
+                                  </Link>
+                                ) : (
+                                  <div className="flex items-center justify-between rounded-lg px-3 py-2.5 opacity-60">
+                                    <div className="flex items-center gap-3">
+                                      <Lock className="h-4 w-4 text-neutral-300" />
+                                      <span className="text-sm text-neutral-500">
+                                        {lesson.title}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-neutral-400">
+                                      {lesson.duration_minutes > 0 && <span>{lesson.duration_minutes}min</span>}
+                                      <Lock className="h-3 w-3" />
+                                    </div>
+                                  </div>
                                 )}
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-neutral-400">
-                                <span>{lesson.duration_minutes}min</span>
-                                {!lesson.is_free && isLocked && (
-                                  <Lock className="h-3 w-3" />
-                                )}
-                              </div>
-                            </li>
-                          ))}
+                              </li>
+                            );
+                          })}
                         </ul>
                       </AccordionContent>
                     </AccordionItem>
@@ -260,16 +287,38 @@ export default function CourseDetailPage({ params }: PageProps) {
             {/* Sidebar card */}
             <div>
               <div className="sticky top-24 rounded-xl border border-neutral-200 bg-white p-5">
-                <div className="aspect-video rounded-lg bg-gradient-to-br from-neutral-100 to-neutral-200 mb-4">
-                  <div className="flex h-full items-center justify-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md">
-                      <Play
-                        className="h-5 w-5 text-neutral-900"
-                        fill="currentColor"
+                {(() => {
+                  // Find first lesson with a YouTube URL for the preview
+                  const firstVideo = course.modules
+                    .flatMap((m) => m.lessons)
+                    .find((l) => l.youtube_url);
+                  const videoId = firstVideo?.youtube_url
+                    ? extractYouTubeId(firstVideo.youtube_url)
+                    : null;
+
+                  return videoId ? (
+                    <div className="aspect-video rounded-lg overflow-hidden mb-4 relative group cursor-pointer">
+                      <img
+                        src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+                        alt={course.title}
+                        className="h-full w-full object-cover"
                       />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md">
+                          <Play className="h-5 w-5 text-neutral-900" fill="currentColor" />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  ) : (
+                    <div className="aspect-video rounded-lg bg-gradient-to-br from-neutral-100 to-neutral-200 mb-4">
+                      <div className="flex h-full items-center justify-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md">
+                          <Play className="h-5 w-5 text-neutral-900" fill="currentColor" />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <p className="text-xs text-neutral-500 mb-3">
                   {isLocked
