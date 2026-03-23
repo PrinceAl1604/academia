@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -38,7 +38,9 @@ function getYouTubeId(url: string): string | null {
 
 export default function CoursePlayerPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const slug = params.slug as string;
+  const lessonParam = searchParams.get("lesson");
   const { user, isPro, isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
@@ -53,9 +55,23 @@ export default function CoursePlayerPage() {
     async function load() {
       const data = await getCourseBySlug(slug);
       setCourse(data);
-      if (data?.modules?.[0]?.lessons?.[0]) {
-        setActiveLesson(data.modules[0].lessons[0]);
-        setExpandedModules([data.modules[0].id]);
+      if (data) {
+        // If ?lesson=id is in URL, open that lesson
+        const allLessons = data.modules.flatMap((m) => m.lessons);
+        const targetLesson = lessonParam
+          ? allLessons.find((l) => l.id === lessonParam)
+          : allLessons[0];
+
+        if (targetLesson) {
+          setActiveLesson(targetLesson);
+          // Expand the chapter containing this lesson
+          const parentModule = data.modules.find((m) =>
+            m.lessons.some((l) => l.id === targetLesson.id)
+          );
+          if (parentModule) {
+            setExpandedModules([parentModule.id]);
+          }
+        }
       }
 
       // Load saved progress from Supabase
@@ -282,7 +298,7 @@ export default function CoursePlayerPage() {
                   >
                     <div>
                       <p className="text-xs font-medium uppercase text-neutral-400">
-                        Module {idx + 1}
+                        {t.nav.signIn === "Sign In" ? "Chapter" : "Chapitre"} {idx + 1}
                       </p>
                       <p className="text-sm font-medium text-neutral-900">
                         {module.title}
