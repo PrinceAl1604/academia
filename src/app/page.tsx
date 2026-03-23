@@ -51,8 +51,14 @@ export default function HomePage() {
         grouped[cat] = catCourses;
       }
     }
+    // Include uncategorized courses
+    const uncategorized = filteredCourses.filter((c) => !c.category?.name);
+    if (uncategorized.length > 0) {
+      const label = t.nav.signIn === "Sign In" ? "Other" : "Autres";
+      grouped[label] = uncategorized;
+    }
     return grouped;
-  }, [filteredCourses, categoryNames]);
+  }, [filteredCourses, categoryNames, t]);
 
   const isLocked = (course: CourseRow) => !isPro && !course.is_free;
 
