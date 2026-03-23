@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -18,26 +18,53 @@ import {
   GraduationCap,
   HelpCircle,
   Lock,
-  MessageSquare,
+  Loader2,
   Play,
   Video,
 } from "lucide-react";
-import { courses, currentUser } from "@/data/mock";
+import { getCourseBySlug, type CourseRow, type ModuleRow, type LessonRow } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+
+/**
+ * Extract YouTube video ID from various URL formats
+ */
+function getYouTubeId(url: string): string | null {
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  return match?.[1] ?? null;
+}
 
 export default function CoursePlayerPage() {
   const params = useParams();
   const slug = params.slug as string;
-  const course = courses.find((c) => c.slug === slug);
   const { isPro, isAuthenticated } = useAuth();
 
-  const [activeLesson, setActiveLesson] = useState(
-    course?.curriculum[0]?.lessons[0]?.id ?? ""
-  );
-  const [expandedModules, setExpandedModules] = useState<string[]>(
-    course?.curriculum[0] ? [course.curriculum[0].id] : []
-  );
+  const [course, setCourse] = useState<(CourseRow & { modules: ModuleRow[] }) | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeLesson, setActiveLesson] = useState<LessonRow | null>(null);
+  const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    getCourseBySlug(slug).then((data) => {
+      setCourse(data);
+      if (data?.modules?.[0]?.lessons?.[0]) {
+        setActiveLesson(data.modules[0].lessons[0]);
+        setExpandedModules([data.modules[0].id]);
+      }
+      setLoading(false);
+    });
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
 
   if (!course) {
     return (
@@ -47,7 +74,7 @@ export default function CoursePlayerPage() {
     );
   }
 
-  const isLocked = !isPro && !course.isFree;
+  const isLocked = !isPro && !course.is_free;
 
   if (!isAuthenticated) {
     return (
@@ -74,27 +101,23 @@ export default function CoursePlayerPage() {
           Pro membership required
         </h1>
         <p className="max-w-md text-neutral-500">
-          This course is part of the Pro plan. Upgrade your membership to unlock all courses.
+          Subscribe to unlock all courses — 15,000 FCFA/month.
         </p>
         <Button className="mt-2 gap-2" render={<Link href="/dashboard/subscription" />}>
-          Get Membership
+          Subscribe Now
         </Button>
       </div>
     );
   }
 
-  const totalLessons = course.curriculum.reduce(
-    (acc, mod) => acc + mod.lessons.length,
-    0
-  );
-  const completedCount = currentUser.completedLessons.filter((id) =>
-    course.curriculum.some((m) => m.lessons.some((l) => l.id === id))
-  ).length;
-  const progress = Math.round((completedCount / totalLessons) * 100);
+  const allLessons = course.modules.flatMap((m) => m.lessons);
+  const totalLessons = allLessons.length;
+  const completedCount = completedLessons.size;
+  const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
-  const currentLessonData = course.curriculum
-    .flatMap((m) => m.lessons)
-    .find((l) => l.id === activeLesson);
+  const youtubeId = activeLesson?.youtube_url
+    ? getYouTubeId(activeLesson.youtube_url)
+    : null;
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) =>
@@ -104,17 +127,32 @@ export default function CoursePlayerPage() {
     );
   };
 
+  const markComplete = () => {
+    if (!activeLesson) return;
+    setCompletedLessons((prev) => new Set([...prev, activeLesson.id]));
+
+    // Auto-advance to next lesson
+    const currentIdx = allLessons.findIndex((l) => l.id === activeLesson.id);
+    if (currentIdx < allLessons.length - 1) {
+      const next = allLessons[currentIdx + 1];
+      setActiveLesson(next);
+      // Expand the module containing the next lesson
+      const parentModule = course.modules.find((m) =>
+        m.lessons.some((l) => l.id === next.id)
+      );
+      if (parentModule && !expandedModules.includes(parentModule.id)) {
+        setExpandedModules((prev) => [...prev, parentModule.id]);
+      }
+    }
+  };
+
   const lessonIcon = (type: string, isCompleted: boolean) => {
     if (isCompleted) return <Check className="h-4 w-4 text-green-600" />;
     switch (type) {
-      case "video":
-        return <Video className="h-4 w-4" />;
-      case "article":
-        return <FileText className="h-4 w-4" />;
-      case "quiz":
-        return <HelpCircle className="h-4 w-4" />;
-      default:
-        return <Play className="h-4 w-4" />;
+      case "video": return <Video className="h-4 w-4" />;
+      case "article": return <FileText className="h-4 w-4" />;
+      case "quiz": return <HelpCircle className="h-4 w-4" />;
+      default: return <Play className="h-4 w-4" />;
     }
   };
 
@@ -153,43 +191,58 @@ export default function CoursePlayerPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Video area */}
         <div className="flex flex-1 flex-col">
-          {/* Video player placeholder */}
+          {/* YouTube embed or placeholder */}
           <div className="aspect-video w-full bg-neutral-900">
-            <div className="flex h-full flex-col items-center justify-center gap-3 text-white">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur">
-                <Play className="h-7 w-7" fill="currentColor" />
+            {youtubeId ? (
+              <iframe
+                src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
+                className="h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title={activeLesson?.title}
+              />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-white">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur">
+                  <Play className="h-7 w-7" fill="currentColor" />
+                </div>
+                <p className="text-sm text-neutral-400">
+                  {activeLesson?.title ?? "Select a lesson"}
+                </p>
+                <p className="text-xs text-neutral-500">
+                  No video URL set for this lesson
+                </p>
               </div>
-              <p className="text-sm text-neutral-400">
-                {currentLessonData?.title}
-              </p>
-            </div>
+            )}
           </div>
 
           {/* Lesson info */}
           <div className="flex-1 overflow-y-auto p-6">
             <div className="mx-auto max-w-3xl">
               <Badge variant="secondary" className="mb-3">
-                {currentLessonData?.type}
+                {activeLesson?.type}
               </Badge>
               <h1 className="text-2xl font-bold text-neutral-900">
-                {currentLessonData?.title}
+                {activeLesson?.title}
               </h1>
-              <p className="mt-2 text-neutral-500">
-                Duration: {currentLessonData?.duration}
-              </p>
+              {activeLesson?.duration_minutes && activeLesson.duration_minutes > 0 && (
+                <p className="mt-2 text-neutral-500">
+                  Duration: {activeLesson.duration_minutes} min
+                </p>
+              )}
 
               <Separator className="my-6" />
 
-              <div className="flex gap-3">
-                <Button className="gap-2">
-                  <Check className="h-4 w-4" />
-                  Mark as Complete
-                </Button>
-                <Button variant="outline" className="gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Discussion
-                </Button>
-              </div>
+              <Button
+                className="gap-2"
+                onClick={markComplete}
+                disabled={activeLesson ? completedLessons.has(activeLesson.id) : true}
+              >
+                <Check className="h-4 w-4" />
+                {activeLesson && completedLessons.has(activeLesson.id)
+                  ? "Completed"
+                  : "Mark as Complete"}
+              </Button>
             </div>
           </div>
         </div>
@@ -198,16 +251,14 @@ export default function CoursePlayerPage() {
         {sidebarOpen && (
           <aside className="hidden w-80 flex-shrink-0 border-l bg-neutral-50 md:block">
             <div className="border-b p-4">
-              <h3 className="font-semibold text-neutral-900">
-                Course Content
-              </h3>
+              <h3 className="font-semibold text-neutral-900">Course Content</h3>
               <p className="mt-0.5 text-xs text-neutral-500">
                 {completedCount}/{totalLessons} lessons completed
               </p>
               <Progress value={progress} className="mt-2 h-1.5" />
             </div>
             <ScrollArea className="h-[calc(100vh-14rem)]">
-              {course.curriculum.map((module, idx) => (
+              {course.modules.map((module, idx) => (
                 <div key={module.id}>
                   <button
                     className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-neutral-100"
@@ -230,9 +281,8 @@ export default function CoursePlayerPage() {
                   {expandedModules.includes(module.id) && (
                     <div className="pb-2">
                       {module.lessons.map((lesson) => {
-                        const isCompleted =
-                          currentUser.completedLessons.includes(lesson.id);
-                        const isActive = lesson.id === activeLesson;
+                        const isCompleted = completedLessons.has(lesson.id);
+                        const isActive = lesson.id === activeLesson?.id;
                         return (
                           <button
                             key={lesson.id}
@@ -241,7 +291,7 @@ export default function CoursePlayerPage() {
                                 ? "bg-neutral-200/70"
                                 : "hover:bg-neutral-100"
                             }`}
-                            onClick={() => setActiveLesson(lesson.id)}
+                            onClick={() => setActiveLesson(lesson)}
                           >
                             <span
                               className={`flex-shrink-0 ${
@@ -263,9 +313,11 @@ export default function CoursePlayerPage() {
                             >
                               {lesson.title}
                             </span>
-                            <span className="flex-shrink-0 text-xs text-neutral-400">
-                              {lesson.duration}
-                            </span>
+                            {lesson.duration_minutes > 0 && (
+                              <span className="flex-shrink-0 text-xs text-neutral-400">
+                                {lesson.duration_minutes}m
+                              </span>
+                            )}
                           </button>
                         );
                       })}
