@@ -65,16 +65,16 @@ export default function ProfilePage() {
         <form className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">{t.signUpPage.firstName}</Label>
+              <Label htmlFor="firstName">{t.auth.fullName}</Label>
               <Input id="firstName" defaultValue="Alex" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">{t.signUpPage.lastName}</Label>
+              <Label htmlFor="lastName">{t.profile.title}</Label>
               <Input id="lastName" defaultValue="Landrin" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">{t.signUpPage.email}</Label>
+            <Label htmlFor="email">{t.auth.email}</Label>
             <Input
               id="email"
               type="email"

@@ -103,43 +103,35 @@ export const translations = {
       rights: "All rights reserved.",
     },
 
-    // Sign In
-    signInPage: {
-      title: "Enter Your Licence Key",
-      subtitle:
-        "Use the licence key provided to you to access all courses on Academia.",
-      placeholder: "ACAD-XXXX-XXXX-XXXX",
-      format: "Your licence key is in the format ACAD-XXXX-XXXX-XXXX",
-      activate: "Activate & Access Courses",
-      secureAccess: "Secure Access",
-      secureDesc:
-        "Your licence key provides full access to all courses. Keep it safe and don't share it with others.",
-      noKey: "Don't have a licence key?",
-      getOne: "Get one here",
-      trouble: "Having trouble?",
-      contactSupport: "Contact support",
-    },
-
-    // Sign Up
-    signUpPage: {
-      title: "Get your licence key",
-      subtitle: "One key unlocks everything. No username or password needed.",
-      choosePlan: "Choose your plan",
-      choosePlanSubtitle: "Select a plan and receive your licence key via email.",
-      whereToSend: "Where should we send your licence key?",
-      firstName: "First name",
-      lastName: "Last name",
-      email: "Email address",
-      emailHint: "Your licence key will be sent to this email address.",
-      getLicence: "Get Your Licence Key",
-      alreadyHaveKey: "Already have a licence key?",
-      activateHere: "Activate it here",
-      monthly: "Monthly",
-      annual: "Annual",
-      lifetime: "Lifetime",
-      mostPopular: "Most Popular",
-      afterPurchase:
-        "After purchase, your licence key will be sent to your email instantly.",
+    // Auth - Sign In
+    auth: {
+      signIn: "Sign in",
+      signUp: "Create account",
+      email: "Email",
+      emailPlaceholder: "Enter your email address...",
+      password: "Password",
+      passwordPlaceholder: "Enter password...",
+      continueEmail: "Continue with email",
+      resetPassword: "Reset password",
+      noAccount: "No account?",
+      signUpButton: "Sign up",
+      alreadyAccount: "Already have an account?",
+      signInButton: "Sign in",
+      privacy: "Privacy",
+      terms: "Terms",
+      fullName: "Full name",
+      fullNamePlaceholder: "Enter your full name...",
+      createPassword: "Create a password...",
+      minChars: "Minimum 6 characters",
+      createAccount: "Create account",
+      checkEmail: "Check your email",
+      confirmationSent: "We sent a confirmation link to",
+      backToSignIn: "Back to sign in",
+      resetTitle: "Reset password",
+      resetDesc: "Enter your email and we'll send you a link to reset your password.",
+      sendResetLink: "Send reset link",
+      checkEmailReset: "Check your email for a password reset link.",
+      passwordMinError: "Password must be at least 6 characters",
     },
 
     // Pricing
@@ -492,45 +484,35 @@ export const translations = {
       rights: "Tous droits réservés.",
     },
 
-    // Sign In
-    signInPage: {
-      title: "Entrez votre clé de licence",
-      subtitle:
-        "Utilisez la clé de licence qui vous a été fournie pour accéder à tous les cours sur Academia.",
-      placeholder: "ACAD-XXXX-XXXX-XXXX",
-      format: "Votre clé de licence est au format ACAD-XXXX-XXXX-XXXX",
-      activate: "Activer et accéder aux cours",
-      secureAccess: "Accès sécurisé",
-      secureDesc:
-        "Votre clé de licence donne un accès complet à tous les cours. Gardez-la en sécurité et ne la partagez pas.",
-      noKey: "Vous n'avez pas de clé de licence ?",
-      getOne: "Obtenez-en une ici",
-      trouble: "Des problèmes ?",
-      contactSupport: "Contacter le support",
-    },
-
-    // Sign Up
-    signUpPage: {
-      title: "Obtenez votre clé de licence",
-      subtitle:
-        "Une seule clé déverrouille tout. Pas besoin de nom d'utilisateur ni de mot de passe.",
-      choosePlan: "Choisissez votre plan",
-      choosePlanSubtitle:
-        "Sélectionnez un plan et recevez votre clé de licence par e-mail.",
-      whereToSend: "Où devons-nous envoyer votre clé de licence ?",
-      firstName: "Prénom",
-      lastName: "Nom",
-      email: "Adresse e-mail",
-      emailHint: "Votre clé de licence sera envoyée à cette adresse e-mail.",
-      getLicence: "Obtenir votre clé de licence",
-      alreadyHaveKey: "Vous avez déjà une clé de licence ?",
-      activateHere: "Activez-la ici",
-      monthly: "Mensuel",
-      annual: "Annuel",
-      lifetime: "À vie",
-      mostPopular: "Le plus populaire",
-      afterPurchase:
-        "Après l'achat, votre clé de licence sera envoyée à votre e-mail instantanément.",
+    // Auth
+    auth: {
+      signIn: "Se connecter",
+      signUp: "Créer un compte",
+      email: "E-mail",
+      emailPlaceholder: "Entrez votre adresse e-mail...",
+      password: "Mot de passe",
+      passwordPlaceholder: "Entrez le mot de passe...",
+      continueEmail: "Continuer avec l'e-mail",
+      resetPassword: "Réinitialiser le mot de passe",
+      noAccount: "Pas de compte ?",
+      signUpButton: "S'inscrire",
+      alreadyAccount: "Vous avez déjà un compte ?",
+      signInButton: "Se connecter",
+      privacy: "Confidentialité",
+      terms: "Conditions",
+      fullName: "Nom complet",
+      fullNamePlaceholder: "Entrez votre nom complet...",
+      createPassword: "Créer un mot de passe...",
+      minChars: "Minimum 6 caractères",
+      createAccount: "Créer un compte",
+      checkEmail: "Vérifiez votre e-mail",
+      confirmationSent: "Nous avons envoyé un lien de confirmation à",
+      backToSignIn: "Retour à la connexion",
+      resetTitle: "Réinitialiser le mot de passe",
+      resetDesc: "Entrez votre e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+      sendResetLink: "Envoyer le lien",
+      checkEmailReset: "Vérifiez votre e-mail pour un lien de réinitialisation.",
+      passwordMinError: "Le mot de passe doit contenir au moins 6 caractères",
     },
 
     // Pricing
