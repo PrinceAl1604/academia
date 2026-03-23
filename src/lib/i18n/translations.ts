@@ -207,6 +207,7 @@ export const translations = {
 
     // Dashboard
     dashboard: {
+      browse: "Browse",
       welcomeBack: "Welcome back",
       continueSubtitle: "Continue where you left off, or explore new courses.",
       enrolledCourses: "Enrolled Courses",
@@ -217,6 +218,8 @@ export const translations = {
       viewAll: "View all",
       complete: "complete",
       continue: "Continue",
+      signOut: "Sign Out",
+      signUp: "Sign Up",
     },
 
     // My Courses
@@ -595,6 +598,7 @@ export const translations = {
 
     // Dashboard
     dashboard: {
+      browse: "Explorer",
       welcomeBack: "Bon retour",
       continueSubtitle:
         "Continuez là où vous vous êtes arrêté, ou explorez de nouveaux cours.",
@@ -606,6 +610,8 @@ export const translations = {
       viewAll: "Voir tout",
       complete: "terminé",
       continue: "Continuer",
+      signOut: "Déconnexion",
+      signUp: "S'inscrire",
     },
 
     // My Courses

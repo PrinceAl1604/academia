@@ -23,23 +23,23 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 
-const mainNav = [
-  { label: "Browse", href: "/", icon: LayoutDashboard },
-  { label: "My Courses", href: "/dashboard/courses", icon: BookOpen },
-  { label: "Certificates", href: "/dashboard/certificates", icon: Trophy },
-];
-
-const settingsNav = [
-  { label: "Profile", href: "/dashboard/profile", icon: User },
-  { label: "Subscription", href: "/dashboard/subscription", icon: CreditCard },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
-  { label: "Help", href: "/dashboard/help", icon: HelpCircle },
-];
-
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { isAdmin, isAuthenticated, isPro, logout, userName } = useAuth();
   const { t } = useLanguage();
+
+  const mainNav = [
+    { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
+    { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
+    { label: t.certificatesPage.title || "Certificates", href: "/dashboard/certificates", icon: Trophy },
+  ];
+
+  const settingsNav = [
+    { label: t.profile.title || "Profile", href: "/dashboard/profile", icon: User },
+    { label: t.subscription.title || "Subscription", href: "/dashboard/subscription", icon: CreditCard },
+    { label: t.settings.title || "Settings", href: "/dashboard/settings", icon: Settings },
+    { label: t.help.title || "Help", href: "/dashboard/help", icon: HelpCircle },
+  ];
 
   const adminNav = [
     { label: t.admin.dashboard, href: "/admin", icon: Shield },
@@ -84,7 +84,7 @@ export function DashboardSidebar() {
           <>
             <Separator className="my-4" />
             <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-neutral-400">
-              Admin
+              {t.admin.dashboard ? "Admin" : "Admin"}
             </p>
             <div className="space-y-1">
               {adminNav.map((item) => {

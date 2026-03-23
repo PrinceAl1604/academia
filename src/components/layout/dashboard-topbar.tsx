@@ -30,22 +30,24 @@ import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { Badge } from "@/components/ui/badge";
-
-const mobileNav = [
-  { label: "Browse", href: "/", icon: LayoutDashboard },
-  { label: "My Courses", href: "/dashboard/courses", icon: BookOpen },
-  { label: "Certificates", href: "/dashboard/certificates", icon: Trophy },
-  { label: "Profile", href: "/dashboard/profile", icon: User },
-  { label: "Subscription", href: "/dashboard/subscription", icon: CreditCard },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
-  { label: "Help", href: "/dashboard/help", icon: HelpCircle },
-];
 
 export function DashboardTopbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
   const { isAdmin, isAuthenticated, userName, logout } = useAuth();
+  const { t } = useLanguage();
+
+  const mobileNav = [
+    { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
+    { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
+    { label: t.certificatesPage.title || "Certificates", href: "/dashboard/certificates", icon: Trophy },
+    { label: t.profile.title || "Profile", href: "/dashboard/profile", icon: User },
+    { label: t.subscription.title || "Subscription", href: "/dashboard/subscription", icon: CreditCard },
+    { label: t.settings.title || "Settings", href: "/dashboard/settings", icon: Settings },
+    { label: t.help.title || "Help", href: "/dashboard/help", icon: HelpCircle },
+  ];
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/80 px-4 backdrop-blur-md lg:px-8">
@@ -140,20 +142,20 @@ export function DashboardTopbar() {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem render={<Link href="/dashboard/profile" />} className="gap-2">
                   <User className="h-4 w-4" />
-                  Profile
+                  {t.profile.title}
                 </DropdownMenuItem>
                 <DropdownMenuItem render={<Link href="/dashboard/settings" />} className="gap-2">
                   <Settings className="h-4 w-4" />
-                  Settings
+                  {t.settings.title}
                 </DropdownMenuItem>
                 <DropdownMenuItem render={<Link href="/dashboard/subscription" />} className="gap-2">
                   <CreditCard className="h-4 w-4" />
-                  Subscription
+                  {t.subscription.title}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2 text-red-600" onClick={logout}>
                   <LogOut className="h-4 w-4" />
-                  Sign Out
+                  {t.dashboard.signOut}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -165,13 +167,13 @@ export function DashboardTopbar() {
               className="h-9 text-sm"
               render={<Link href="/sign-in" />}
             >
-              Sign In
+              {t.nav.signIn}
             </Button>
             <Button
               className="h-9 text-sm"
               render={<Link href="/sign-up" />}
             >
-              Sign Up
+              {t.dashboard.signUp}
             </Button>
           </div>
         )}
