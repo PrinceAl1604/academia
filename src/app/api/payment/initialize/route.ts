@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       userId: user_id,
       email,
       notifyUrl: `${appUrl}/api/payment/notify`,
-      returnUrl: `${appUrl}/dashboard/subscription?payment=callback&ref=${paymentRef}`,
+      returnUrl: `${appUrl}/payment/success?ref=${paymentRef}`,
     });
 
     return NextResponse.json({
