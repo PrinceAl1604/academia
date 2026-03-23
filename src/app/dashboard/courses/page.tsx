@@ -1,142 +1,119 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Clock, Play } from "lucide-react";
-import { courses, currentUser } from "@/data/mock";
+import { BookOpen, Play, Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { supabase } from "@/lib/supabase";
+
+interface EnrolledCourse {
+  id: string;
+  title: string;
+  slug: string;
+  total_lessons: number;
+  duration_hours: number;
+  category_name: string;
+  level: string;
+}
 
 export default function MyCoursesPage() {
+  const { user } = useAuth();
   const { t } = useLanguage();
-  const enrolledCourses = courses.filter((c) =>
-    currentUser.enrolledCourses.includes(c.id)
-  );
+  const [courses, setCourses] = useState<EnrolledCourse[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const getProgress = (courseId: string) => {
-    const course = courses.find((c) => c.id === courseId);
-    if (!course) return 0;
-    const totalLessons = course.curriculum.reduce(
-      (acc, mod) => acc + mod.lessons.length,
-      0
-    );
-    const completedInCourse = course.curriculum.reduce(
-      (acc, mod) =>
-        acc +
-        mod.lessons.filter((l) => currentUser.completedLessons.includes(l.id))
-          .length,
-      0
-    );
-    return Math.round((completedInCourse / totalLessons) * 100);
-  };
+  useEffect(() => {
+    async function load() {
+      if (!user) { setLoading(false); return; }
 
-  const inProgressCourses = enrolledCourses.filter(
-    (c) => getProgress(c.id) > 0 && getProgress(c.id) < 100
-  );
-  const completedCourses = enrolledCourses.filter(
-    (c) => getProgress(c.id) === 100
-  );
-  const notStartedCourses = enrolledCourses.filter(
-    (c) => getProgress(c.id) === 0
-  );
+      const { data: enrollments } = await supabase
+        .from("enrollments")
+        .select("course_id")
+        .eq("user_id", user.id);
 
-  const CourseRow = ({ course }: { course: (typeof courses)[0] }) => {
-    const progress = getProgress(course.id);
+      if (enrollments && enrollments.length > 0) {
+        const courseIds = enrollments.map((e) => e.course_id);
+        const { data } = await supabase
+          .from("courses")
+          .select("id, title, slug, total_lessons, duration_hours, level, category:categories(name)")
+          .in("id", courseIds);
+
+        setCourses(
+          (data ?? []).map((c: Record<string, unknown>) => ({
+            ...c,
+            category_name: (c.category as Record<string, string>)?.name ?? "",
+          })) as EnrolledCourse[]
+        );
+      }
+      setLoading(false);
+    }
+    load();
+  }, [user]);
+
+  if (loading) {
     return (
-      <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
-        <div className="flex h-16 w-24 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-neutral-100 to-neutral-200">
-          <BookOpen className="h-6 w-6 text-neutral-300" />
-        </div>
-        <div className="flex-1">
-          <Badge variant="secondary" className="mb-1 text-xs">
-            {course.category}
-          </Badge>
-          <h3 className="font-semibold text-neutral-900">{course.title}</h3>
-          <p className="mt-0.5 text-sm text-neutral-500">
-            {course.instructor.name}
-          </p>
-          <div className="mt-2 flex items-center gap-4 text-xs text-neutral-400">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" /> {course.duration}
-            </span>
-            <span>{course.lessonsCount} lessons</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 sm:flex-col sm:items-end">
-          <div className="text-right">
-            <span className="text-sm font-medium text-neutral-700">
-              {progress}%
-            </span>
-            <Progress value={progress} className="mt-1 h-1.5 w-24" />
-          </div>
-          <Button size="sm" variant="outline" className="gap-1.5" render={<Link href={`/courses/${course.slug}/learn`} />}>
-            <Play className="h-3 w-3" />
-            {progress > 0 ? t.dashboard.continue : t.myCourses.start}
-          </Button>
-        </div>
-      </Card>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-neutral-900">{t.myCourses.title}</h1>
         <p className="mt-1 text-neutral-500">
-          {t.myCourses.enrolledIn} {enrolledCourses.length} {t.myCourses.coursesLabel}
+          {t.myCourses.enrolledIn} {courses.length} {t.myCourses.coursesLabel}
         </p>
       </div>
 
-      <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">{t.myCourses.all} ({enrolledCourses.length})</TabsTrigger>
-          <TabsTrigger value="in-progress">
-            {t.myCourses.inProgress} ({inProgressCourses.length})
-          </TabsTrigger>
-          <TabsTrigger value="completed">
-            {t.myCourses.completed} ({completedCourses.length})
-          </TabsTrigger>
-          <TabsTrigger value="not-started">
-            {t.myCourses.notStarted} ({notStartedCourses.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all" className="mt-6 space-y-3">
-          {enrolledCourses.map((c) => (
-            <CourseRow key={c.id} course={c} />
+      {courses.length === 0 ? (
+        <Card className="p-8 text-center">
+          <BookOpen className="mx-auto h-10 w-10 text-neutral-300" />
+          <p className="mt-3 text-neutral-500">
+            {t.nav.signIn === "Sign In"
+              ? "You haven't started any courses yet."
+              : "Vous n'avez pas encore commencé de cours."}
+          </p>
+          <Button variant="outline" className="mt-4 gap-2" render={<Link href="/" />}>
+            {t.dashboard.browse}
+          </Button>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {courses.map((course) => (
+            <Card key={course.id} className="overflow-hidden">
+              <div className="aspect-video bg-gradient-to-br from-neutral-100 to-neutral-200">
+                <div className="flex h-full items-center justify-center">
+                  <BookOpen className="h-8 w-8 text-neutral-300" />
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs">{course.category_name}</Badge>
+                  <Badge variant="secondary" className="text-xs">{course.level}</Badge>
+                </div>
+                <h3 className="font-semibold text-neutral-900 line-clamp-1">{course.title}</h3>
+                <p className="mt-1 text-xs text-neutral-500">
+                  {course.total_lessons} {t.courseDetail.lessons} · {course.duration_hours}h
+                </p>
+                <Button
+                  className="mt-4 h-9 w-full gap-2"
+                  variant="outline"
+                  render={<Link href={`/courses/${course.slug}/learn`} />}
+                >
+                  <Play className="h-3.5 w-3.5" />
+                  {t.dashboard.continue}
+                </Button>
+              </div>
+            </Card>
           ))}
-        </TabsContent>
-        <TabsContent value="in-progress" className="mt-6 space-y-3">
-          {inProgressCourses.length > 0 ? (
-            inProgressCourses.map((c) => <CourseRow key={c.id} course={c} />)
-          ) : (
-            <p className="py-10 text-center text-neutral-500">
-              {t.myCourses.noInProgress}
-            </p>
-          )}
-        </TabsContent>
-        <TabsContent value="completed" className="mt-6 space-y-3">
-          {completedCourses.length > 0 ? (
-            completedCourses.map((c) => <CourseRow key={c.id} course={c} />)
-          ) : (
-            <p className="py-10 text-center text-neutral-500">
-              {t.myCourses.noCompleted}
-            </p>
-          )}
-        </TabsContent>
-        <TabsContent value="not-started" className="mt-6 space-y-3">
-          {notStartedCourses.length > 0 ? (
-            notStartedCourses.map((c) => <CourseRow key={c.id} course={c} />)
-          ) : (
-            <p className="py-10 text-center text-neutral-500">
-              {t.myCourses.allStarted}
-            </p>
-          )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
     </div>
   );
 }
