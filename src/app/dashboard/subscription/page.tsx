@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import Script from "next/script";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -292,29 +291,13 @@ function SubscriptionContent() {
                   )}
                 </div>
 
-                {/* Chariow Widget */}
-                <div className="mt-4">
-                  <div
-                    id="chariow-widget"
-                    data-product-id="prd_o6clpf"
-                    data-store-domain="jwxfcqrf.mychariow.shop"
-                    data-style="tap"
-                    data-border-style="rounded"
-                    data-cta-width="xs"
-                    data-background-color="#FFFFFF"
-                    data-cta-animation="shine"
-                    data-locale="en"
-                    data-primary-color="#7DFF95"
-                  />
-                  <Script
-                    src="https://js.chariow.com/v1/widget.min.js"
-                    strategy="afterInteractive"
-                  />
-                  <link
-                    rel="stylesheet"
-                    href="https://js.chariow.com/v1/widget.min.css"
-                  />
-                </div>
+                <Button
+                  className="mt-4 h-12 w-full gap-2 text-base"
+                  onClick={() => window.location.href = "https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout"}
+                >
+                  <Crown className="h-5 w-5" />
+                  {t.nav.signIn === "Sign In" ? "Pay Now" : "Payer maintenant"}
+                </Button>
 
                 <p className="mt-3 text-xs text-neutral-400">
                   Mobile Money · Wave · Orange Money · Visa/Mastercard
