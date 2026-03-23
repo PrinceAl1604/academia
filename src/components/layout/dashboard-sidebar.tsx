@@ -116,43 +116,6 @@ export function DashboardSidebar() {
         </div>
       </nav>
 
-      {/* User section */}
-      <div className="border-t p-4">
-        {isAuthenticated && (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-neutral-200 text-sm font-medium">
-                {(userName || "U")
-                  .split(" ")
-                  .map((n: string) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 truncate">
-              <p className="text-sm font-medium text-neutral-900">
-                {userName || "User"}
-              </p>
-              <div className="flex items-center gap-1.5">
-                <p className="text-xs text-neutral-500">
-                  {isAdmin ? "Admin" : isPro ? "Pro Plan" : "Free Plan"}
-                </p>
-                {isAdmin && (
-                  <Badge className="h-4 bg-red-100 px-1.5 text-[10px] text-red-700">
-                    Admin
-                  </Badge>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={logout}
-              className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600"
-              title={t.dashboard.signOut}
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-      </div>
     </aside>
   );
 }
