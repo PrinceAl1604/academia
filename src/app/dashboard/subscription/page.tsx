@@ -45,6 +45,19 @@ export default function SubscriptionPage() {
   );
 }
 
+const CURRENCIES = [
+  { code: "USD", symbol: "$", amount: 27, label: "US Dollar" },
+  { code: "EUR", symbol: "€", amount: 24, label: "Euro" },
+  { code: "XOF", symbol: "", amount: 15000, label: "FCFA (XOF)" },
+  { code: "XAF", symbol: "", amount: 15000, label: "FCFA (XAF)" },
+  { code: "GBP", symbol: "£", amount: 21, label: "British Pound" },
+  { code: "CAD", symbol: "CA$", amount: 37, label: "Canadian Dollar" },
+  { code: "NGN", symbol: "₦", amount: 42000, label: "Nigerian Naira" },
+  { code: "GHS", symbol: "GH₵", amount: 320, label: "Ghanaian Cedi" },
+  { code: "KES", symbol: "KSh", amount: 3500, label: "Kenyan Shilling" },
+  { code: "MAD", symbol: "", amount: 260, label: "Moroccan Dirham" },
+];
+
 function SubscriptionContent() {
   const { user, isPro } = useAuth();
   const { t } = useLanguage();
@@ -52,6 +65,7 @@ function SubscriptionContent() {
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState(CURRENCIES[0]);
 
   const handleActivate = async () => {
     if (!licenceKey.trim() || !user) return;
@@ -145,14 +159,36 @@ function SubscriptionContent() {
                   licence key instantly via email.
                 </p>
 
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-neutral-900">
-                    {SUBSCRIPTION_PRICE.toLocaleString()}
-                  </span>
-                  <span className="text-lg text-neutral-500">
-                    {SUBSCRIPTION_CURRENCY}
-                  </span>
-                  <span className="text-sm text-neutral-400">/ month</span>
+                {/* Price with currency selector */}
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-neutral-900">
+                      {selectedCurrency.symbol}{selectedCurrency.amount.toLocaleString()}
+                    </span>
+                    <span className="text-lg text-neutral-500">
+                      {selectedCurrency.code}
+                    </span>
+                    <span className="text-sm text-neutral-400">/ month</span>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <select
+                    value={selectedCurrency.code}
+                    onChange={(e) => {
+                      const found = CURRENCIES.find((c) => c.code === e.target.value);
+                      if (found) setSelectedCurrency(found);
+                    }}
+                    className="h-8 rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-600 focus:outline-none focus:ring-1 focus:ring-neutral-300"
+                  >
+                    {CURRENCIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.label} — {c.symbol}{c.amount.toLocaleString()} {c.code}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-[10px] text-neutral-400">
+                    {t.nav.signIn === "Sign In" ? "Approximate conversion · Final amount at checkout" : "Conversion approximative · Montant final au paiement"}
+                  </p>
                 </div>
 
                 {/* Chariow Widget */}
