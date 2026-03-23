@@ -104,7 +104,31 @@ function SubscriptionContent() {
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState(CURRENCIES[0]);
+  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
+  const [currencySearch, setCurrencySearch] = useState("");
+  const [selectedCurrency, setSelectedCurrency] = useState(() => {
+    // Auto-detect currency from browser locale
+    try {
+      const locale = navigator.language || "en-US";
+      const regionMap: Record<string, string> = {
+        "fr-CI": "XOF", "fr-SN": "XOF", "fr-ML": "XOF", "fr-BF": "XOF", "fr-BJ": "XOF", "fr-TG": "XOF", "fr-NE": "XOF",
+        "fr-CM": "XAF", "fr-GA": "XAF", "fr-CG": "XAF", "fr-TD": "XAF", "fr-CF": "XAF",
+        "en-NG": "NGN", "en-GH": "GHS", "en-KE": "KES", "en-TZ": "TZS", "en-UG": "UGX",
+        "en-ZA": "ZAR", "en-GB": "GBP", "en-CA": "CAD",
+        "fr-FR": "EUR", "fr-MA": "MAD", "fr-TN": "TND", "fr-DZ": "DZD",
+        "fr-CD": "CDF", "fr-RW": "RWF", "fr-BI": "BIF",
+        "ar-EG": "EGP", "ar-MA": "MAD", "ar-TN": "TND", "ar-DZ": "DZD",
+        "pt-MZ": "MZN", "pt-AO": "AOA",
+        "sw-KE": "KES", "sw-TZ": "TZS",
+      };
+      const detected = regionMap[locale];
+      if (detected) {
+        const found = CURRENCIES.find((c) => c.code === detected);
+        if (found) return found;
+      }
+    } catch {}
+    return CURRENCIES[0]; // Default USD
+  });
 
   const handleActivate = async () => {
     if (!licenceKey.trim() || !user) return;
@@ -198,36 +222,74 @@ function SubscriptionContent() {
                   licence key instantly via email.
                 </p>
 
-                {/* Price with currency selector */}
-                <div className="mt-4 flex items-center gap-3">
+                {/* Price display */}
+                <div className="mt-4">
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-bold text-neutral-900">
                       {selectedCurrency.symbol}{selectedCurrency.amount.toLocaleString()}
                     </span>
-                    <span className="text-lg text-neutral-500">
-                      {selectedCurrency.code}
-                    </span>
+                    <span className="text-lg text-neutral-500">{selectedCurrency.code}</span>
                     <span className="text-sm text-neutral-400">/ month</span>
                   </div>
-                </div>
-                <div className="mt-2">
-                  <select
-                    value={selectedCurrency.code}
-                    onChange={(e) => {
-                      const found = CURRENCIES.find((c) => c.code === e.target.value);
-                      if (found) setSelectedCurrency(found);
-                    }}
-                    className="h-8 rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-600 focus:outline-none focus:ring-1 focus:ring-neutral-300"
+
+                  {/* Show USD equivalent if not USD */}
+                  {selectedCurrency.code !== "USD" && (
+                    <p className="mt-1 text-sm text-neutral-400">
+                      ≈ $27 USD
+                    </p>
+                  )}
+
+                  {/* Toggle currency picker */}
+                  <button
+                    onClick={() => setShowCurrencyPicker(!showCurrencyPicker)}
+                    className="mt-2 text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-700 transition-colors"
                   >
-                    {CURRENCIES.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.label} — {c.symbol}{c.amount.toLocaleString()} {c.code}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-[10px] text-neutral-400">
-                    {t.nav.signIn === "Sign In" ? "Approximate conversion · Final amount at checkout" : "Conversion approximative · Montant final au paiement"}
-                  </p>
+                    {showCurrencyPicker
+                      ? (t.nav.signIn === "Sign In" ? "Hide currencies" : "Masquer")
+                      : (t.nav.signIn === "Sign In" ? "See in other currency ▾" : "Voir dans une autre devise ▾")}
+                  </button>
+
+                  {/* Expandable currency picker */}
+                  {showCurrencyPicker && (
+                    <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                      {/* Search */}
+                      <input
+                        type="text"
+                        placeholder={t.nav.signIn === "Sign In" ? "Search country or currency..." : "Rechercher un pays ou une devise..."}
+                        value={currencySearch}
+                        onChange={(e) => setCurrencySearch(e.target.value)}
+                        className="mb-2 h-8 w-full rounded-md border border-neutral-200 bg-white px-3 text-xs placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-300"
+                      />
+                      <div className="max-h-40 overflow-y-auto space-y-0.5">
+                        {CURRENCIES.filter((c) =>
+                          c.label.toLowerCase().includes(currencySearch.toLowerCase()) ||
+                          c.code.toLowerCase().includes(currencySearch.toLowerCase())
+                        ).map((c) => (
+                          <button
+                            key={c.code}
+                            onClick={() => {
+                              setSelectedCurrency(c);
+                              setShowCurrencyPicker(false);
+                              setCurrencySearch("");
+                            }}
+                            className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs transition-colors ${
+                              selectedCurrency.code === c.code
+                                ? "bg-neutral-900 text-white"
+                                : "hover:bg-neutral-200 text-neutral-700"
+                            }`}
+                          >
+                            <span className="truncate">{c.label}</span>
+                            <span className="font-mono shrink-0 ml-2">
+                              {c.symbol}{c.amount.toLocaleString()}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-[10px] text-neutral-400">
+                        {t.nav.signIn === "Sign In" ? "Approximate conversion · Final amount at checkout" : "Conversion approximative · Montant final au paiement"}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Chariow Widget */}
