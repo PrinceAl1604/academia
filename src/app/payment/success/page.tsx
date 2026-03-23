@@ -1,10 +1,30 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, BookOpen, Key } from "lucide-react";
+import { CheckCircle, BookOpen, Loader2, Crown } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export default function PaymentSuccessPage() {
+  const { isPro } = useAuth();
+  const [checking, setChecking] = useState(true);
+
+  // Give the webhook a few seconds to process
+  useEffect(() => {
+    const timer = setTimeout(() => setChecking(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (checking) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#faf9f7] px-4">
+        <Loader2 className="h-10 w-10 animate-spin text-neutral-400" />
+        <p className="mt-4 text-neutral-500">Activating your account...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#faf9f7] px-4">
       <div className="w-full max-w-md text-center space-y-6">
@@ -14,42 +34,46 @@ export default function PaymentSuccessPage() {
 
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-neutral-900">
-            Purchase Successful!
+            {isPro ? "You're Pro!" : "Payment Successful!"}
           </h1>
           <p className="text-lg text-neutral-500">
-            Your licence key has been sent to your email.
+            {isPro
+              ? "Your account has been upgraded. All courses are now unlocked."
+              : "Your payment is being processed. Your account will be upgraded shortly."}
           </p>
         </div>
 
-        <div className="rounded-xl border border-neutral-200 bg-white p-6 text-left space-y-3">
-          <p className="text-sm font-semibold text-neutral-900">
-            Next step:
-          </p>
-          <div className="flex items-start gap-3">
-            <Key className="h-5 w-5 text-neutral-400 mt-0.5 shrink-0" />
-            <p className="text-sm text-neutral-600">
-              Check your email for the licence key, then go to
-              <strong> Subscription </strong> in the app and enter it to activate Pro.
-            </p>
+        {isPro && (
+          <div className="rounded-xl border border-neutral-200 bg-white p-6 text-left space-y-3">
+            <div className="flex items-center gap-3">
+              <Crown className="h-5 w-5 text-amber-500" />
+              <p className="text-sm font-semibold text-neutral-900">Pro Plan Active</p>
+            </div>
+            <ul className="space-y-2 text-sm text-neutral-600">
+              {["Access to all courses", "Certificate of completion", "Downloadable resources", "Priority support"].map((item) => (
+                <li key={item} className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-col gap-3">
           <Button
             className="h-12 w-full gap-2 text-base"
-            render={<Link href="/dashboard/subscription" />}
-          >
-            <Key className="h-5 w-5" />
-            Activate My Key
-          </Button>
-          <Button
-            variant="outline"
-            className="h-10 w-full gap-2"
             render={<Link href="/" />}
           >
-            <BookOpen className="h-4 w-4" />
-            Browse Courses
+            <BookOpen className="h-5 w-5" />
+            {isPro ? "Start Learning" : "Browse Courses"}
           </Button>
+
+          {!isPro && (
+            <p className="text-xs text-neutral-400">
+              If your account isn't upgraded in a few minutes, check your email for a licence key and activate it manually on the Subscription page.
+            </p>
+          )}
         </div>
       </div>
     </div>

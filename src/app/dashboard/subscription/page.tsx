@@ -293,7 +293,7 @@ function SubscriptionContent() {
 
                 <Button
                   className="mt-4 h-12 w-full gap-2 text-base"
-                  onClick={() => window.location.href = "https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout"}
+                  onClick={() => window.location.href = "https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout?success_url=" + encodeURIComponent(window.location.origin + "/payment/success")}
                 >
                   <Crown className="h-5 w-5" />
                   {t.nav.signIn === "Sign In" ? "Pay Now" : "Payer maintenant"}
