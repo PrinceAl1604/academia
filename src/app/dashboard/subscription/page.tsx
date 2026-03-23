@@ -46,16 +46,55 @@ export default function SubscriptionPage() {
 }
 
 const CURRENCIES = [
-  { code: "USD", symbol: "$", amount: 27, label: "US Dollar" },
-  { code: "EUR", symbol: "€", amount: 24, label: "Euro" },
-  { code: "XOF", symbol: "", amount: 15000, label: "FCFA (XOF)" },
-  { code: "XAF", symbol: "", amount: 15000, label: "FCFA (XAF)" },
-  { code: "GBP", symbol: "£", amount: 21, label: "British Pound" },
-  { code: "CAD", symbol: "CA$", amount: 37, label: "Canadian Dollar" },
-  { code: "NGN", symbol: "₦", amount: 42000, label: "Nigerian Naira" },
-  { code: "GHS", symbol: "GH₵", amount: 320, label: "Ghanaian Cedi" },
-  { code: "KES", symbol: "KSh", amount: 3500, label: "Kenyan Shilling" },
-  { code: "MAD", symbol: "", amount: 260, label: "Moroccan Dirham" },
+  // International
+  { code: "USD", symbol: "$", amount: 27, label: "🇺🇸 US Dollar" },
+  { code: "EUR", symbol: "€", amount: 24, label: "🇪🇺 Euro" },
+  { code: "GBP", symbol: "£", amount: 21, label: "🇬🇧 British Pound" },
+  { code: "CAD", symbol: "CA$", amount: 37, label: "🇨🇦 Canadian Dollar" },
+  // West Africa - FCFA Zone
+  { code: "XOF", symbol: "", amount: 15000, label: "🇨🇮 FCFA (XOF) — Côte d'Ivoire, Sénégal, Mali, Burkina..." },
+  { code: "XAF", symbol: "", amount: 15000, label: "🇨🇲 FCFA (XAF) — Cameroun, Gabon, Congo, Tchad..." },
+  // West Africa
+  { code: "NGN", symbol: "₦", amount: 42000, label: "🇳🇬 Nigerian Naira" },
+  { code: "GHS", symbol: "GH₵", amount: 320, label: "🇬🇭 Ghanaian Cedi" },
+  { code: "SLL", symbol: "Le", amount: 600000, label: "🇸🇱 Sierra Leonean Leone" },
+  { code: "GMD", symbol: "D", amount: 1900, label: "🇬🇲 Gambian Dalasi" },
+  { code: "GNF", symbol: "FG", amount: 230000, label: "🇬🇳 Guinean Franc" },
+  { code: "LRD", symbol: "L$", amount: 5400, label: "🇱🇷 Liberian Dollar" },
+  { code: "CVE", symbol: "", amount: 2700, label: "🇨🇻 Cape Verdean Escudo" },
+  // East Africa
+  { code: "KES", symbol: "KSh", amount: 3500, label: "🇰🇪 Kenyan Shilling" },
+  { code: "TZS", symbol: "TSh", amount: 70000, label: "🇹🇿 Tanzanian Shilling" },
+  { code: "UGX", symbol: "USh", amount: 100000, label: "🇺🇬 Ugandan Shilling" },
+  { code: "RWF", symbol: "FRw", amount: 37000, label: "🇷🇼 Rwandan Franc" },
+  { code: "BIF", symbol: "FBu", amount: 78000, label: "🇧🇮 Burundian Franc" },
+  { code: "ETB", symbol: "Br", amount: 3200, label: "🇪🇹 Ethiopian Birr" },
+  { code: "SOS", symbol: "Sh", amount: 15400, label: "🇸🇴 Somali Shilling" },
+  { code: "DJF", symbol: "Fdj", amount: 4800, label: "🇩🇯 Djiboutian Franc" },
+  { code: "ERN", symbol: "Nfk", amount: 405, label: "🇪🇷 Eritrean Nakfa" },
+  // Southern Africa
+  { code: "ZAR", symbol: "R", amount: 490, label: "🇿🇦 South African Rand" },
+  { code: "BWP", symbol: "P", amount: 360, label: "🇧🇼 Botswana Pula" },
+  { code: "MZN", symbol: "MT", amount: 1700, label: "🇲🇿 Mozambican Metical" },
+  { code: "ZMW", symbol: "ZK", amount: 740, label: "🇿🇲 Zambian Kwacha" },
+  { code: "MWK", symbol: "MK", amount: 47000, label: "🇲🇼 Malawian Kwacha" },
+  { code: "AOA", symbol: "Kz", amount: 24600, label: "🇦🇴 Angolan Kwanza" },
+  { code: "NAD", symbol: "N$", amount: 490, label: "🇳🇦 Namibian Dollar" },
+  { code: "SZL", symbol: "E", amount: 490, label: "🇸🇿 Eswatini Lilangeni" },
+  { code: "LSL", symbol: "L", amount: 490, label: "🇱🇸 Lesotho Loti" },
+  { code: "MGA", symbol: "Ar", amount: 123000, label: "🇲🇬 Malagasy Ariary" },
+  { code: "MUR", symbol: "₨", amount: 1230, label: "🇲🇺 Mauritian Rupee" },
+  { code: "SCR", symbol: "₨", amount: 370, label: "🇸🇨 Seychellois Rupee" },
+  // North Africa
+  { code: "MAD", symbol: "", amount: 260, label: "🇲🇦 Moroccan Dirham" },
+  { code: "TND", symbol: "", amount: 84, label: "🇹🇳 Tunisian Dinar" },
+  { code: "DZD", symbol: "", amount: 3600, label: "🇩🇿 Algerian Dinar" },
+  { code: "EGP", symbol: "E£", amount: 1350, label: "🇪🇬 Egyptian Pound" },
+  { code: "LYD", symbol: "", amount: 130, label: "🇱🇾 Libyan Dinar" },
+  { code: "SDG", symbol: "", amount: 16200, label: "🇸🇩 Sudanese Pound" },
+  // Central Africa
+  { code: "CDF", symbol: "FC", amount: 76000, label: "🇨🇩 Congolese Franc" },
+  { code: "STN", symbol: "Db", amount: 600, label: "🇸🇹 São Tomé Dobra" },
 ];
 
 function SubscriptionContent() {
