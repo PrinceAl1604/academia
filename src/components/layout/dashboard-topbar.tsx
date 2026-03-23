@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Bell,
   Menu,
   Search,
@@ -21,10 +26,14 @@ import {
   Settings,
   LogOut,
   CreditCard,
-  BookOpen,
   LayoutDashboard,
+  BookOpen,
   Trophy,
   HelpCircle,
+  Moon,
+  Sun,
+  UserPlus,
+  BookPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -32,9 +41,19 @@ import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/lib/supabase";
+
+interface Notification {
+  id: string;
+  type: "new_student" | "new_course";
+  message: string;
+  time: string;
+}
 
 export function DashboardTopbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const pathname = usePathname();
   const { isAdmin, isAuthenticated, userName, logout } = useAuth();
   const { t } = useLanguage();
@@ -43,11 +62,65 @@ export function DashboardTopbar() {
     { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
     { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
     { label: t.certificatesPage.title || "Certificates", href: "/dashboard/certificates", icon: Trophy },
-    { label: t.profile.title || "Profile", href: "/dashboard/profile", icon: User },
     { label: t.subscription.title || "Subscription", href: "/dashboard/subscription", icon: CreditCard },
     { label: t.settings.title || "Settings", href: "/dashboard/settings", icon: Settings },
-    { label: t.help.title || "Help", href: "/dashboard/help", icon: HelpCircle },
   ];
+
+  // Load notifications
+  useEffect(() => {
+    async function loadNotifications() {
+      if (isAdmin) {
+        // Admin: show recent signups
+        const { data } = await supabase
+          .from("users")
+          .select("id, name, email, created_at")
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        setNotifications(
+          (data ?? []).map((u) => ({
+            id: u.id,
+            type: "new_student" as const,
+            message: `${u.name || u.email} joined`,
+            time: new Date(u.created_at).toLocaleDateString(),
+          }))
+        );
+      } else {
+        // Student: show recent courses
+        const { data } = await supabase
+          .from("courses")
+          .select("id, title, created_at")
+          .eq("is_published", true)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        setNotifications(
+          (data ?? []).map((c) => ({
+            id: c.id,
+            type: "new_course" as const,
+            message: `New course: ${c.title}`,
+            time: new Date(c.created_at).toLocaleDateString(),
+          }))
+        );
+      }
+    }
+    if (isAuthenticated) loadNotifications();
+  }, [isAdmin, isAuthenticated]);
+
+  // Dark mode toggle
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    document.documentElement.classList.toggle("dark");
+    localStorage.setItem("theme", !darkMode ? "dark" : "light");
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") {
+      setDarkMode(true);
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/80 px-4 backdrop-blur-md lg:px-8">
@@ -91,7 +164,7 @@ export function DashboardTopbar() {
         {isSearchOpen ? (
           <div className="max-w-md">
             <Input
-              placeholder="Search courses..."
+              placeholder={t.nav.searchCourses}
               className="h-9"
               autoFocus
               onBlur={() => setIsSearchOpen(false)}
@@ -104,7 +177,7 @@ export function DashboardTopbar() {
             onClick={() => setIsSearchOpen(true)}
           >
             <Search className="h-4 w-4" />
-            <span className="hidden sm:inline">Search courses...</span>
+            <span className="hidden sm:inline">{t.nav.searchCourses}</span>
           </Button>
         )}
       </div>
@@ -115,11 +188,47 @@ export function DashboardTopbar() {
 
         {isAuthenticated ? (
           <>
-            <Button variant="ghost" size="icon" className="relative h-9 w-9">
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-            </Button>
+            {/* Notification Popover */}
+            <Popover>
+              <PopoverTrigger render={<Button variant="ghost" size="icon" className="relative h-9 w-9" />}>
+                <Bell className="h-4 w-4" />
+                {notifications.length > 0 && (
+                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
+                )}
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+                <div className="border-b px-4 py-3">
+                  <p className="text-sm font-semibold text-neutral-900">
+                    {t.nav.signIn === "Sign In" ? "Notifications" : "Notifications"}
+                  </p>
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y">
+                  {notifications.length === 0 ? (
+                    <p className="p-4 text-sm text-neutral-500 text-center">
+                      {t.nav.signIn === "Sign In" ? "No notifications" : "Aucune notification"}
+                    </p>
+                  ) : (
+                    notifications.map((n) => (
+                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-neutral-50">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 shrink-0 mt-0.5">
+                          {n.type === "new_student" ? (
+                            <UserPlus className="h-4 w-4 text-blue-500" />
+                          ) : (
+                            <BookPlus className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-neutral-700">{n.message}</p>
+                          <p className="text-xs text-neutral-400 mt-0.5">{n.time}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
 
+            {/* Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={<Button variant="ghost" className="h-9 gap-2 pl-2 pr-3" />}
@@ -148,9 +257,19 @@ export function DashboardTopbar() {
                   <Settings className="h-4 w-4" />
                   {t.settings.title}
                 </DropdownMenuItem>
-                <DropdownMenuItem render={<Link href="/dashboard/subscription" />} className="gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  {t.subscription.title}
+                {!isAdmin && (
+                  <DropdownMenuItem render={<Link href="/dashboard/subscription" />} className="gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    {t.subscription.title}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                {/* Dark Mode Toggle */}
+                <DropdownMenuItem className="gap-2" onClick={toggleDarkMode}>
+                  {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  {darkMode
+                    ? (t.nav.signIn === "Sign In" ? "Light Mode" : "Mode clair")
+                    : (t.nav.signIn === "Sign In" ? "Dark Mode" : "Mode sombre")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2 text-red-600" onClick={logout}>
@@ -162,17 +281,10 @@ export function DashboardTopbar() {
           </>
         ) : (
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              className="h-9 text-sm"
-              render={<Link href="/sign-in" />}
-            >
+            <Button variant="ghost" className="h-9 text-sm" render={<Link href="/sign-in" />}>
               {t.nav.signIn}
             </Button>
-            <Button
-              className="h-9 text-sm"
-              render={<Link href="/sign-up" />}
-            >
+            <Button className="h-9 text-sm" render={<Link href="/sign-up" />}>
               {t.dashboard.signUp}
             </Button>
           </div>
