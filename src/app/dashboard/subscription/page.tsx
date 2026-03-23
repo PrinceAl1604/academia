@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import Script from "next/script";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -153,21 +152,13 @@ function SubscriptionContent() {
                   <span className="text-sm text-neutral-400">/ month</span>
                 </div>
 
-                {/* Chariow Snap Widget */}
-                <div className="mt-4">
-                  <div
-                    id="chariow-widget"
-                    data-product-id="prd_o6clpf"
-                    data-store-domain="jwxfcqrf.mychariow.shop"
-                    data-style="tap"
-                    data-border-style="rounded"
-                    data-cta-width="xs"
-                  />
-                  <Script
-                    src="https://cdn.chariow.com/snap.js"
-                    strategy="lazyOnload"
-                  />
-                </div>
+                <Button
+                  className="mt-4 h-11 gap-2"
+                  onClick={() => window.open("https://jwxfcqrf.mychariow.shop/prd_o6clpf", "_blank")}
+                >
+                  <Crown className="h-4 w-4" />
+                  Buy Now
+                </Button>
 
                 <p className="mt-3 text-xs text-neutral-400">
                   Mobile Money · Wave · Orange Money · Visa/Mastercard
