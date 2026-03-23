@@ -258,7 +258,7 @@ export default function AdminCourseNewPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
@@ -273,7 +273,9 @@ export default function AdminCourseNewPage() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* ─── Course Details ─────────────────────────────────── */}
+        <div className="grid gap-6 lg:grid-cols-2">
+        {/* ─── LEFT: Course Details ───────────────────────────── */}
+        <div className="space-y-6">
         <Card>
           <CardContent className="space-y-6 pt-6">
             <div className="space-y-2">
@@ -415,8 +417,23 @@ export default function AdminCourseNewPage() {
           </CardContent>
         </Card>
 
-        {/* ─── Chapters & Lessons ─────────────────────────────── */}
-        <div className="mt-6">
+        {/* Error + Actions under course details */}
+        <div>
+          {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
+          <div className="flex items-center gap-3">
+            <Button type="submit" className="gap-2" disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {t.admin.saveCourse}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => router.push("/admin/courses")}>
+              {isEn ? "Cancel" : "Annuler"}
+            </Button>
+          </div>
+        </div>
+        </div>{/* end left column */}
+
+        {/* ─── RIGHT: Chapters & Lessons ──────────────────────── */}
+        <div className="lg:sticky lg:top-20 lg:self-start space-y-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-neutral-900">
@@ -583,22 +600,8 @@ export default function AdminCourseNewPage() {
               {isEn ? "Add Chapter" : "Ajouter un chapitre"}
             </Button>
           </div>
-        </div>
-
-        {/* ─── Error + Actions ────────────────────────────────── */}
-        <div className="mt-6">
-          {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
-
-          <div className="flex items-center gap-3">
-            <Button type="submit" className="gap-2" disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {t.admin.saveCourse}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => router.push("/admin/courses")}>
-              {isEn ? "Cancel" : "Annuler"}
-            </Button>
-          </div>
-        </div>
+        </div>{/* end right column */}
+        </div>{/* end grid */}
       </form>
     </div>
   );
