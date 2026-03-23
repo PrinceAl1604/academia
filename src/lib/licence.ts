@@ -22,4 +22,4 @@ export function generateLicenceKey(): string {
 // Subscription pricing (for display only — payment handled by Chariow)
 export const SUBSCRIPTION_PRICE = 15000;
 export const SUBSCRIPTION_CURRENCY = "FCFA";
-export const CHARIOW_PRODUCT_URL = process.env.NEXT_PUBLIC_CHARIOW_PRODUCT_URL || "";
+export const CHARIOW_PRODUCT_URL = process.env.NEXT_PUBLIC_CHARIOW_PRODUCT_URL || "https://jwxfcqrf.mychariow.shop/prd_o6clpf";
