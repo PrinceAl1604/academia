@@ -41,6 +41,7 @@ import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/shared/logo";
 import { supabase } from "@/lib/supabase";
 
 interface Notification {
@@ -134,7 +135,7 @@ export function DashboardTopbar() {
         </SheetTrigger>
         <SheetContent side="left" className="w-72">
           <div className="flex items-center pb-6 pt-4">
-            <img src="/logo-wordmark.svg" alt="Educator" className="h-5" />
+            <Logo className="h-5" />
           </div>
           <nav className="flex flex-col gap-1">
             {mobileNav.map((item) => {

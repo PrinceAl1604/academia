@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { Logo } from "@/components/shared/logo";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 
 export default function SignInPage() {
@@ -45,7 +46,7 @@ export default function SignInPage() {
       {/* Logo + Language Toggle */}
       <div className="flex items-center justify-between p-8">
         <Link href="/sign-in" className="inline-block">
-          <img src="/logo-wordmark.svg" alt="Educator" className="h-6" />
+          <Logo className="h-6" />
         </Link>
         <LanguageToggle />
       </div>

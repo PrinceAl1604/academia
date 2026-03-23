@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { Logo } from "@/components/shared/logo";
 
 export function DashboardSidebar() {
   const pathname = usePathname();
@@ -59,7 +60,7 @@ export function DashboardSidebar() {
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
         <Link href={isAdmin ? "/admin" : "/"} className="flex items-center">
-          <img src="/logo-wordmark.svg" alt="Educator" className="h-5" />
+          <Logo className="h-5" />
         </Link>
       </div>
 

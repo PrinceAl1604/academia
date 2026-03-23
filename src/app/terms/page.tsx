@@ -1,3 +1,4 @@
+import { Logo } from "@/components/shared/logo";
 import Link from "next/link";
 
 export default function TermsPage() {
@@ -5,7 +6,7 @@ export default function TermsPage() {
     <div className="min-h-screen bg-[#faf9f7]">
       <div className="p-8">
         <Link href="/" className="inline-block">
-          <img src="/logo-wordmark.svg" alt="Educator" className="h-6" />
+          <Logo className="h-6" />
         </Link>
       </div>
       <div className="mx-auto max-w-2xl px-4 pb-20">
