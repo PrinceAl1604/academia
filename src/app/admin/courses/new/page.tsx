@@ -22,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Plus, FolderOpen } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 function slugify(text: string): string {
   return text
@@ -37,6 +38,8 @@ export default function AdminCourseNewPage() {
 
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [saving, setSaving] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [creatingCat, setCreatingCat] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form state
@@ -159,21 +162,135 @@ export default function AdminCourseNewPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>{t.admin.category}</Label>
-                <Select
-                  value={categoryId}
-                  onValueChange={(v) => setCategoryId(v ?? "")}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t.admin.selectCategory} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {categories.length > 0 ? (
+                  <div className="space-y-2">
+                    <Select
+                      value={categoryId}
+                      onValueChange={(v) => setCategoryId(v ?? "")}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t.admin.selectCategory} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {/* Quick add */}
+                    {!creatingCat ? (
+                      <button
+                        type="button"
+                        onClick={() => setCreatingCat(true)}
+                        className="flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-700"
+                      >
+                        <Plus className="h-3 w-3" /> Add new category
+                      </button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Category name"
+                          value={newCatName}
+                          onChange={(e) => setNewCatName(e.target.value)}
+                          className="h-8 text-xs"
+                          autoFocus
+                          onKeyDown={async (e) => {
+                            if (e.key === "Enter" && newCatName.trim()) {
+                              e.preventDefault();
+                              const { data } = await supabase
+                                .from("categories")
+                                .insert({ name: newCatName.trim(), slug: newCatName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") })
+                                .select()
+                                .single();
+                              if (data) {
+                                setCategories((prev) => [...prev, data]);
+                                setCategoryId(data.id);
+                                setNewCatName("");
+                                setCreatingCat(false);
+                              }
+                            }
+                            if (e.key === "Escape") { setCreatingCat(false); setNewCatName(""); }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="h-8 text-xs"
+                          onClick={async () => {
+                            if (!newCatName.trim()) return;
+                            const { data } = await supabase
+                              .from("categories")
+                              .insert({ name: newCatName.trim(), slug: newCatName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") })
+                              .select()
+                              .single();
+                            if (data) {
+                              setCategories((prev) => [...prev, data]);
+                              setCategoryId(data.id);
+                              setNewCatName("");
+                              setCreatingCat(false);
+                            }
+                          }}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Empty state — no categories exist */
+                  <div className="rounded-lg border border-dashed border-neutral-300 p-4 text-center">
+                    <FolderOpen className="mx-auto h-6 w-6 text-neutral-300" />
+                    <p className="mt-2 text-sm text-neutral-500">
+                      {t.nav.signIn === "Sign In" ? "No categories yet" : "Aucune catégorie"}
+                    </p>
+                    <div className="mt-3 flex gap-2 justify-center">
+                      <Input
+                        placeholder={t.nav.signIn === "Sign In" ? "e.g. UI/UX Design" : "ex. UI/UX Design"}
+                        value={newCatName}
+                        onChange={(e) => setNewCatName(e.target.value)}
+                        className="h-9 max-w-[200px] text-sm"
+                        onKeyDown={async (e) => {
+                          if (e.key === "Enter" && newCatName.trim()) {
+                            e.preventDefault();
+                            const { data } = await supabase
+                              .from("categories")
+                              .insert({ name: newCatName.trim(), slug: newCatName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") })
+                              .select()
+                              .single();
+                            if (data) {
+                              setCategories((prev) => [...prev, data]);
+                              setCategoryId(data.id);
+                              setNewCatName("");
+                            }
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-9 gap-1"
+                        onClick={async () => {
+                          if (!newCatName.trim()) return;
+                          const { data } = await supabase
+                            .from("categories")
+                            .insert({ name: newCatName.trim(), slug: newCatName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") })
+                            .select()
+                            .single();
+                          if (data) {
+                            setCategories((prev) => [...prev, data]);
+                            setCategoryId(data.id);
+                            setNewCatName("");
+                          }
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        {t.nav.signIn === "Sign In" ? "Create" : "Créer"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
