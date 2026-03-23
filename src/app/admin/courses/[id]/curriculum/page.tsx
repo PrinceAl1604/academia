@@ -97,7 +97,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
       setExpandedModules((prev) => new Set([...prev, mod.id]));
       setNewModuleTitle("");
     } catch (err) {
-      alert("Failed to create module");
+      alert("Failed to create chapter");
     }
     setAddingModule(false);
   };
@@ -109,17 +109,17 @@ export default function CurriculumEditorPage({ params }: PageProps) {
         prev.map((m) => (m.id === moduleId ? { ...m, title } : m))
       );
     } catch (err) {
-      alert("Failed to update module");
+      alert("Failed to update chapter");
     }
   };
 
   const handleDeleteModule = async (moduleId: string, title: string) => {
-    if (!confirm(`Delete module "${title}" and all its lessons?`)) return;
+    if (!confirm(`Delete chapter "${title}" and all its lessons?`)) return;
     try {
       await deleteModule(moduleId);
       setModules((prev) => prev.filter((m) => m.id !== moduleId));
     } catch (err) {
-      alert("Failed to delete module");
+      alert("Failed to delete chapter");
     }
   };
 
@@ -211,7 +211,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
             Curriculum Editor
           </h1>
           <p className="text-sm text-neutral-500">
-            {courseTitle} · {modules.length} modules · {totalLessons} lessons
+            {courseTitle} · {modules.length} chapters · {totalLessons} lessons
           </p>
         </div>
       </div>
@@ -256,6 +256,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
                 <Badge variant="secondary" className="text-xs">
                   {module.lessons.length} lessons
                 </Badge>
+                {/* Chapter label shown below number */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -306,7 +307,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
       <Card>
         <CardContent className="flex items-center gap-3 py-3">
           <Input
-            placeholder="New module title..."
+            placeholder="New chapter title..."
             value={newModuleTitle}
             onChange={(e) => setNewModuleTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAddModule()}
@@ -322,7 +323,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
             ) : (
               <Plus className="h-4 w-4" />
             )}
-            Add Module
+            Add Chapter
           </Button>
         </CardContent>
       </Card>

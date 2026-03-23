@@ -125,7 +125,7 @@ export default function AdminCourseEditPage({ params }: PageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
@@ -137,26 +137,10 @@ export default function AdminCourseEditPage({ params }: PageProps) {
         <h1 className="text-2xl font-bold text-neutral-900">Edit Course</h1>
       </div>
 
-      {/* Curriculum Editor Link */}
-      <Card>
-        <CardContent className="flex items-center justify-between py-4">
-          <div>
-            <p className="font-medium text-neutral-900">Course Curriculum</p>
-            <p className="text-sm text-neutral-500">
-              Add modules and lessons with YouTube video URLs
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            render={<Link href={`/admin/courses/${id}/curriculum`} />}
-            className="gap-1.5"
-          >
-            Edit Curriculum →
-          </Button>
-        </CardContent>
-      </Card>
-
       <form onSubmit={handleSubmit}>
+        <div className="grid gap-6 lg:grid-cols-2">
+        {/* ─── LEFT: Course Details ───────────────────────────── */}
+        <div className="space-y-6">
         <Card>
           <CardContent className="space-y-6 pt-6">
             {/* Title */}
@@ -299,28 +283,77 @@ export default function AdminCourseEditPage({ params }: PageProps) {
               </div>
             </div>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
-
-            {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
-              <Button type="submit" className="gap-2" disabled={saving}>
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                Save Changes
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/admin/courses")}
-              >
-                Cancel
-              </Button>
-            </div>
           </CardContent>
         </Card>
+
+        {/* Error + Actions under course details */}
+        <div>
+          {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
+          <div className="flex items-center gap-3">
+            <Button type="submit" className="gap-2" disabled={saving}>
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              Save Changes
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/admin/courses")}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+        </div>{/* end left column */}
+
+        {/* ─── RIGHT: Curriculum & Actions ────────────────────── */}
+        <div className="lg:sticky lg:top-20 lg:self-start space-y-4">
+          {/* Curriculum Editor Link */}
+          <Card>
+            <CardContent className="space-y-4 pt-6">
+              <div>
+                <p className="font-semibold text-neutral-900">Course Curriculum</p>
+                <p className="text-sm text-neutral-500">
+                  Add chapters and lessons with YouTube video URLs
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                render={<Link href={`/admin/courses/${id}/curriculum`} />}
+                className="w-full gap-1.5"
+              >
+                Edit Curriculum →
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Quick Info */}
+          <Card>
+            <CardContent className="space-y-3 pt-6">
+              <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">Quick Info</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Status</span>
+                  <span className={isPublished ? "text-green-600 font-medium" : "text-neutral-400"}>
+                    {isPublished ? "Published" : "Draft"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Access</span>
+                  <span className="text-neutral-700">{isFree ? "Free" : "Pro"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Level</span>
+                  <span className="text-neutral-700">{level}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>{/* end right column */}
+        </div>{/* end grid */}
       </form>
     </div>
   );

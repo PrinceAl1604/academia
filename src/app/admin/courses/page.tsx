@@ -46,7 +46,7 @@ export default function AdminCoursesPage() {
       await deleteCourse(id);
       setCourses((prev) => prev.filter((c) => c.id !== id));
     } catch (err) {
-      alert("Failed to delete course. It may have modules or enrollments linked to it.");
+      alert("Failed to delete course. It may have chapters or enrollments linked to it.");
     }
     setDeleting(null);
   };
