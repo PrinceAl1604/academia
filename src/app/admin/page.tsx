@@ -1,96 +1,125 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { useAuth } from "@/lib/auth-context";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/lib/supabase";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { adminStats, activityFeed } from "@/data/admin-mock";
 import {
   Users,
   BookOpen,
-  KeyRound,
-  DollarSign,
+  Crown,
   ArrowRight,
   Plus,
   BarChart3,
-  GraduationCap,
-  CheckCircle,
-  Key,
+  Loader2,
+  TrendingUp,
 } from "lucide-react";
 
-function formatTimestamp(timestamp: string) {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-  if (diffHours < 1) return "Just now";
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return "Yesterday";
-  return `${diffDays}d ago`;
+interface Stats {
+  totalStudents: number;
+  proStudents: number;
+  totalCourses: number;
+  publishedCourses: number;
+  totalEnrollments: number;
+  recentSignups: number;
 }
-
-const activityIcons = {
-  enrollment: GraduationCap,
-  completion: CheckCircle,
-  licence_activated: Key,
-  new_course: BookOpen,
-};
 
 export default function AdminDashboardPage() {
   const { t } = useLanguage();
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const stats = [
+  useEffect(() => {
+    async function loadStats() {
+      const [
+        { count: totalStudents },
+        { count: proStudents },
+        { count: totalCourses },
+        { count: publishedCourses },
+        { count: totalEnrollments },
+        { count: recentSignups },
+      ] = await Promise.all([
+        supabase.from("users").select("*", { count: "exact", head: true }).eq("role", "student"),
+        supabase.from("users").select("*", { count: "exact", head: true }).eq("subscription_tier", "pro"),
+        supabase.from("courses").select("*", { count: "exact", head: true }),
+        supabase.from("courses").select("*", { count: "exact", head: true }).eq("is_published", true),
+        supabase.from("enrollments").select("*", { count: "exact", head: true }),
+        supabase.from("users").select("*", { count: "exact", head: true })
+          .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+      ]);
+
+      setStats({
+        totalStudents: totalStudents ?? 0,
+        proStudents: proStudents ?? 0,
+        totalCourses: totalCourses ?? 0,
+        publishedCourses: publishedCourses ?? 0,
+        totalEnrollments: totalEnrollments ?? 0,
+        recentSignups: recentSignups ?? 0,
+      });
+      setLoading(false);
+    }
+    loadStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  const statCards = [
     {
       label: t.admin.totalStudents,
-      value: adminStats.totalStudents.toLocaleString(),
+      value: stats?.totalStudents ?? 0,
       icon: Users,
       color: "bg-blue-50 text-blue-600",
     },
     {
+      label: "Pro Subscribers",
+      value: stats?.proStudents ?? 0,
+      icon: Crown,
+      color: "bg-amber-50 text-amber-600",
+    },
+    {
       label: t.admin.totalCourses,
-      value: adminStats.totalCourses,
+      value: `${stats?.publishedCourses ?? 0} / ${stats?.totalCourses ?? 0}`,
       icon: BookOpen,
       color: "bg-purple-50 text-purple-600",
+      subtitle: "published / total",
     },
     {
-      label: t.admin.activeLicences,
-      value: adminStats.activeLicences.toLocaleString(),
-      icon: KeyRound,
+      label: "New Signups (30d)",
+      value: stats?.recentSignups ?? 0,
+      icon: TrendingUp,
       color: "bg-green-50 text-green-600",
-    },
-    {
-      label: t.admin.revenue,
-      value: `$${adminStats.revenue.toLocaleString()}`,
-      icon: DollarSign,
-      color: "bg-amber-50 text-amber-600",
     },
   ];
 
   const quickActions = [
     {
       label: t.admin.addCourse,
-      description: "Create a new course for your students",
+      description: "Create a new course",
       href: "/admin/courses/new",
       icon: Plus,
       color: "bg-blue-50 text-blue-600",
     },
     {
-      label: t.admin.generateKey,
-      description: "Generate a new licence key",
-      href: "/admin/licences",
-      icon: KeyRound,
-      color: "bg-green-50 text-green-600",
+      label: t.admin.manageCourses,
+      description: "Edit or delete courses",
+      href: "/admin/courses",
+      icon: BookOpen,
+      color: "bg-purple-50 text-purple-600",
     },
     {
       label: t.admin.viewAnalytics,
-      description: "View detailed platform analytics",
+      description: "Detailed analytics",
       href: "/admin/analytics",
       icon: BarChart3,
-      color: "bg-purple-50 text-purple-600",
+      color: "bg-green-50 text-green-600",
     },
   ];
 
@@ -106,7 +135,7 @@ export default function AdminDashboardPage() {
 
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statCards.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="flex items-center gap-4">
               <div
@@ -117,7 +146,9 @@ export default function AdminDashboardPage() {
               <div>
                 <p className="text-sm text-neutral-500">{stat.label}</p>
                 <p className="text-2xl font-bold text-neutral-900">
-                  {stat.value}
+                  {typeof stat.value === "number"
+                    ? stat.value.toLocaleString()
+                    : stat.value}
                 </p>
               </div>
             </CardContent>
@@ -132,7 +163,10 @@ export default function AdminDashboardPage() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-3">
           {quickActions.map((action) => (
-            <Card key={action.href} className="transition-shadow hover:shadow-md">
+            <Card
+              key={action.href}
+              className="transition-shadow hover:shadow-md"
+            >
               <CardContent className="flex flex-col gap-3">
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-lg ${action.color}`}
@@ -158,36 +192,6 @@ export default function AdminDashboardPage() {
             </Card>
           ))}
         </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div>
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900">
-          {t.admin.recentActivity}
-        </h2>
-        <Card>
-          <CardContent className="divide-y">
-            {activityFeed.map((entry) => {
-              const Icon = activityIcons[entry.type];
-              return (
-                <div
-                  key={entry.id}
-                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100">
-                    <Icon className="h-4 w-4 text-neutral-600" />
-                  </div>
-                  <p className="flex-1 text-sm text-neutral-700">
-                    {entry.message}
-                  </p>
-                  <span className="shrink-0 text-xs text-neutral-400">
-                    {formatTimestamp(entry.timestamp)}
-                  </span>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

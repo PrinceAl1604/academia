@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { verifyPayment } from "@/lib/cinetpay";
+import { sendSubscriptionEmail } from "@/lib/email";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -45,6 +46,20 @@ export async function POST(request: Request) {
         { error: "Failed to upgrade user" },
         { status: 500 }
       );
+    }
+
+    // Send subscription confirmation email
+    const { data: userData } = await supabaseAdmin
+      .from("users")
+      .select("email, name")
+      .eq("id", user_id)
+      .single();
+
+    if (userData?.email) {
+      sendSubscriptionEmail({
+        to: userData.email,
+        name: userData.name || userData.email.split("@")[0],
+      }).catch(() => {});
     }
 
     return NextResponse.json({ success: true, plan: "pro" });

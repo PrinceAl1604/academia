@@ -45,6 +45,13 @@ export default function SignUpPage() {
       setError(error.message);
       setLoading(false);
     } else {
+      // Send welcome email (fire-and-forget)
+      fetch("/api/email/welcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name }),
+      }).catch(() => {});
+
       setSuccess(true);
       setLoading(false);
     }
