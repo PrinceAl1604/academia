@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { verifyPayment } from "@/lib/cinetpay";
+import { verifyPayment } from "@/lib/payment";
 import { sendSubscriptionEmail } from "@/lib/email";
 
 function getSupabaseAdmin() {
@@ -12,21 +12,21 @@ function getSupabaseAdmin() {
 
 export async function POST(request: Request) {
   try {
-    const { payment_id, user_id } = await request.json();
+    const { payment_ref, user_id } = await request.json();
 
-    if (!payment_id || !user_id) {
+    if (!payment_ref || !user_id) {
       return NextResponse.json(
-        { error: "Missing payment_id or user_id" },
+        { error: "Missing payment_ref or user_id" },
         { status: 400 }
       );
     }
 
-    // Verify payment with Moneroo
-    const result = await verifyPayment(payment_id);
+    // Verify payment with Monetbil
+    const result = await verifyPayment(payment_ref);
 
     if (!result.success) {
       return NextResponse.json(
-        { error: "Payment not verified", details: result.status },
+        { error: "Payment not verified", details: result.message },
         { status: 400 }
       );
     }

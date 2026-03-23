@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Check, Crown, Loader2, Shield } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { SUBSCRIPTION_PRICE } from "@/lib/cinetpay";
+import { SUBSCRIPTION_PRICE } from "@/lib/payment";
 
 const FEATURES = [
   "Access to all courses",
@@ -33,21 +33,21 @@ function SubscriptionContent() {
   const [paying, setPaying] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
-  // Handle payment callback from Moneroo
+  // Handle payment callback from Monetbil
   useEffect(() => {
     const isCallback = searchParams.get("payment") === "callback";
-    const paymentId = searchParams.get("paymentId") || localStorage.getItem("pending_payment_id");
+    const paymentRef = searchParams.get("ref") || localStorage.getItem("pending_payment_ref");
 
-    if (isCallback && paymentId && user && !isPro) {
+    if (isCallback && paymentRef && user && !isPro) {
       setVerifying(true);
       fetch("/api/payment/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payment_id: paymentId, user_id: user.id }),
+        body: JSON.stringify({ payment_ref: paymentRef, user_id: user.id }),
       })
         .then((res) => res.json())
         .then((data) => {
-          localStorage.removeItem("pending_payment_id");
+          localStorage.removeItem("pending_payment_ref");
           if (data.success) {
             window.location.href = "/dashboard/subscription";
           }
@@ -75,11 +75,11 @@ function SubscriptionContent() {
       const data = await res.json();
 
       if (data.checkout_url) {
-        // Save payment ID for verification on return
-        if (data.payment_id) {
-          localStorage.setItem("pending_payment_id", data.payment_id);
+        // Save payment ref for verification on return
+        if (data.payment_ref) {
+          localStorage.setItem("pending_payment_ref", data.payment_ref);
         }
-        // Redirect to Moneroo checkout
+        // Redirect to Monetbil checkout
         window.location.href = data.checkout_url;
       } else {
         alert(data.error || "Failed to start payment. Please try again.");
@@ -192,7 +192,7 @@ function SubscriptionContent() {
 
             <div className="mt-3 flex items-center justify-center gap-2 text-xs text-neutral-400">
               <Shield className="h-3.5 w-3.5" />
-              Secure payment via Moneroo · Mobile Money & Cards accepted
+              Secure payment via Monetbil · Mobile Money & Cards accepted
             </div>
           </div>
         </Card>
