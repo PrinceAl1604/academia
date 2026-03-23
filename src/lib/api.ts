@@ -381,3 +381,68 @@ export async function createInstructor(instructor: {
   if (error) throw error;
   return data;
 }
+
+// ─── Progress Tracking ──────────────────────────────────────────────────
+
+/**
+ * Get completed lesson IDs for a user.
+ */
+export async function getCompletedLessons(userId: string): Promise<string[]> {
+  const { data } = await supabase
+    .from("lesson_progress")
+    .select("lesson_id")
+    .eq("user_id", userId)
+    .eq("completed", true);
+
+  return (data ?? []).map((p) => p.lesson_id);
+}
+
+/**
+ * Mark a lesson as completed for a user.
+ */
+export async function markLessonComplete(
+  userId: string,
+  lessonId: string
+): Promise<void> {
+  await supabase.from("lesson_progress").insert({
+    user_id: userId,
+    lesson_id: lessonId,
+    completed: true,
+    completed_at: new Date().toISOString(),
+  });
+}
+
+/**
+ * Enroll a user in a course (if not already enrolled).
+ */
+export async function enrollInCourse(
+  userId: string,
+  courseId: string
+): Promise<void> {
+  // Check if already enrolled
+  const { data } = await supabase
+    .from("enrollments")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("course_id", courseId)
+    .single();
+
+  if (!data) {
+    await supabase.from("enrollments").insert({
+      user_id: userId,
+      course_id: courseId,
+    });
+  }
+}
+
+/**
+ * Get enrolled courses for a user with progress.
+ */
+export async function getEnrolledCourses(userId: string) {
+  const { data } = await supabase
+    .from("enrollments")
+    .select("course_id, progress, enrolled_at, completed_at")
+    .eq("user_id", userId);
+
+  return data ?? [];
+}

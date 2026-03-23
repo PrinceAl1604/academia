@@ -22,7 +22,7 @@ import {
   Play,
   Video,
 } from "lucide-react";
-import { getCourseBySlug, type CourseRow, type ModuleRow, type LessonRow } from "@/lib/api";
+import { getCourseBySlug, getCompletedLessons, markLessonComplete, enrollInCourse, type CourseRow, type ModuleRow, type LessonRow } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
 /**
@@ -38,7 +38,7 @@ function getYouTubeId(url: string): string | null {
 export default function CoursePlayerPage() {
   const params = useParams();
   const slug = params.slug as string;
-  const { isPro, isAuthenticated } = useAuth();
+  const { user, isPro, isAuthenticated } = useAuth();
 
   const [course, setCourse] = useState<(CourseRow & { modules: ModuleRow[] }) | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,15 +48,26 @@ export default function CoursePlayerPage() {
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    getCourseBySlug(slug).then((data) => {
+    async function load() {
+      const data = await getCourseBySlug(slug);
       setCourse(data);
       if (data?.modules?.[0]?.lessons?.[0]) {
         setActiveLesson(data.modules[0].lessons[0]);
         setExpandedModules([data.modules[0].id]);
       }
+
+      // Load saved progress from Supabase
+      if (user && data) {
+        const completed = await getCompletedLessons(user.id);
+        setCompletedLessons(new Set(completed));
+        // Auto-enroll when opening the player
+        enrollInCourse(user.id, data.id).catch(() => {});
+      }
+
       setLoading(false);
-    });
-  }, [slug]);
+    }
+    load();
+  }, [slug, user]);
 
   if (loading) {
     return (
@@ -128,8 +139,11 @@ export default function CoursePlayerPage() {
   };
 
   const markComplete = () => {
-    if (!activeLesson) return;
+    if (!activeLesson || !user) return;
     setCompletedLessons((prev) => new Set([...prev, activeLesson.id]));
+
+    // Save to Supabase
+    markLessonComplete(user.id, activeLesson.id).catch(() => {});
 
     // Auto-advance to next lesson
     const currentIdx = allLessons.findIndex((l) => l.id === activeLesson.id);
