@@ -19,6 +19,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { SUBSCRIPTION_PRICE, SUBSCRIPTION_CURRENCY } from "@/lib/licence";
 
 const FEATURES = [
@@ -46,6 +47,7 @@ export default function SubscriptionPage() {
 
 function SubscriptionContent() {
   const { user, isPro } = useAuth();
+  const { t } = useLanguage();
   const [licenceKey, setLicenceKey] = useState("");
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,8 +86,8 @@ function SubscriptionContent() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">Subscription</h1>
-        <p className="mt-1 text-neutral-500">Manage your membership plan</p>
+        <h1 className="text-2xl font-bold text-neutral-900">{t.subscription.title}</h1>
+        <p className="mt-1 text-neutral-500">{t.subscription.subtitle}</p>
       </div>
 
       {isPro ? (
@@ -99,12 +101,12 @@ function SubscriptionContent() {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-semibold text-neutral-900">
-                    Pro Plan
+                    {t.subscription.proPlan}
                   </h3>
-                  <Badge className="bg-green-100 text-green-700">Active</Badge>
+                  <Badge className="bg-green-100 text-green-700">{t.subscription.active}</Badge>
                 </div>
                 <p className="text-sm text-neutral-500">
-                  Full access to all courses and content
+                  {t.subscription.fullAccess}
                 </p>
               </div>
             </div>
@@ -268,7 +270,7 @@ function SubscriptionContent() {
       {/* Features */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-neutral-900">
-          {isPro ? "What's included" : "What you'll get with Pro"}
+          {t.subscription.whatsIncluded}
         </h3>
         <Separator className="my-4" />
         <ul className="space-y-3">

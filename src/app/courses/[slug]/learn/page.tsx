@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { getCourseBySlug, getCompletedLessons, markLessonComplete, enrollInCourse, type CourseRow, type ModuleRow, type LessonRow } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 /**
  * Extract YouTube video ID from various URL formats
@@ -39,6 +40,7 @@ export default function CoursePlayerPage() {
   const params = useParams();
   const slug = params.slug as string;
   const { user, isPro, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
 
   const [course, setCourse] = useState<(CourseRow & { modules: ModuleRow[] }) | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,13 +94,13 @@ export default function CoursePlayerPage() {
       <div className="flex h-screen flex-col items-center justify-center gap-4 bg-white p-8 text-center">
         <Lock className="h-12 w-12 text-neutral-300" />
         <h1 className="text-xl font-semibold text-neutral-900">
-          Sign in to watch this course
+          {t.auth.signIn}
         </h1>
         <p className="max-w-md text-neutral-500">
-          Create a free account or sign in to start learning.
+          {t.auth.signUp}
         </p>
         <Button className="mt-2 gap-2" render={<Link href="/sign-in" />}>
-          Sign In
+          {t.auth.signIn}
         </Button>
       </div>
     );
@@ -109,13 +111,13 @@ export default function CoursePlayerPage() {
       <div className="flex h-screen flex-col items-center justify-center gap-4 bg-white p-8 text-center">
         <Lock className="h-12 w-12 text-neutral-300" />
         <h1 className="text-xl font-semibold text-neutral-900">
-          Pro membership required
+          {t.nav.signIn === "Sign In" ? "Pro membership required" : "Abonnement Pro requis"}
         </h1>
         <p className="max-w-md text-neutral-500">
-          Subscribe to unlock all courses — 15,000 FCFA/month.
+          {t.nav.signIn === "Sign In" ? "Subscribe to unlock all courses — 15,000 FCFA/month." : "Abonnez-vous pour débloquer tous les cours — 15 000 FCFA/mois."}
         </p>
         <Button className="mt-2 gap-2" render={<Link href="/dashboard/subscription" />}>
-          Subscribe Now
+          {t.nav.signIn === "Sign In" ? "Subscribe Now" : "S'abonner"}
         </Button>
       </div>
     );
@@ -196,7 +198,7 @@ export default function CoursePlayerPage() {
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             <BookOpen className="mr-1.5 h-4 w-4" />
-            Curriculum
+            {t.player.curriculum}
           </Button>
         </div>
       </header>
@@ -254,8 +256,8 @@ export default function CoursePlayerPage() {
               >
                 <Check className="h-4 w-4" />
                 {activeLesson && completedLessons.has(activeLesson.id)
-                  ? "Completed"
-                  : "Mark as Complete"}
+                  ? (t.nav.signIn === "Sign In" ? "Completed" : "Terminé")
+                  : t.player.markComplete}
               </Button>
             </div>
           </div>
@@ -265,9 +267,9 @@ export default function CoursePlayerPage() {
         {sidebarOpen && (
           <aside className="hidden w-80 flex-shrink-0 border-l bg-neutral-50 md:block">
             <div className="border-b p-4">
-              <h3 className="font-semibold text-neutral-900">Course Content</h3>
+              <h3 className="font-semibold text-neutral-900">{t.player.courseContent}</h3>
               <p className="mt-0.5 text-xs text-neutral-500">
-                {completedCount}/{totalLessons} lessons completed
+                {completedCount}/{totalLessons} {t.player.lessonsCompleted}
               </p>
               <Progress value={progress} className="mt-2 h-1.5" />
             </div>

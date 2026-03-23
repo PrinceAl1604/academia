@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { getCourseBySlug, type CourseRow, type ModuleRow } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { MembershipPopover } from "@/components/shared/upgrade-popover";
 
 interface PageProps {
@@ -40,6 +41,7 @@ interface PageProps {
 export default function CourseDetailPage({ params }: PageProps) {
   const { slug } = use(params);
   const { isPro, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const [course, setCourse] = useState<(CourseRow & { modules: ModuleRow[] }) | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,7 +100,7 @@ export default function CourseDetailPage({ params }: PageProps) {
             className="mb-6 inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-neutral-900 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to courses
+            {t.nav.courses}
           </Link>
 
           {/* Course Header */}
@@ -127,7 +129,7 @@ export default function CourseDetailPage({ params }: PageProps) {
               )}
               <span className="flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
-                {course.students_count.toLocaleString()} students
+                {course.students_count.toLocaleString()} {t.courseDetail.students}
               </span>
               <span className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
@@ -135,7 +137,7 @@ export default function CourseDetailPage({ params }: PageProps) {
               </span>
               <span className="flex items-center gap-1.5">
                 <BookOpen className="h-4 w-4" />
-                {totalLessons} lessons
+                {totalLessons} {t.courseDetail.lessons}
               </span>
             </div>
 
@@ -170,10 +172,10 @@ export default function CourseDetailPage({ params }: PageProps) {
             {/* Curriculum - left side */}
             <div className="lg:col-span-2">
               <h2 className="text-lg font-semibold text-neutral-900">
-                Course Curriculum
+                {t.courseDetail.curriculum}
               </h2>
               <p className="mt-1 text-sm text-neutral-500">
-                {course.modules.length} modules · {totalLessons} lessons ·{" "}
+                {course.modules.length} {t.courseDetail.modules} · {totalLessons} {t.courseDetail.lessons} ·{" "}
                 {durationLabel}
               </p>
 
@@ -187,10 +189,10 @@ export default function CourseDetailPage({ params }: PageProps) {
                       <AccordionTrigger className="text-left hover:no-underline">
                         <div className="flex-1">
                           <span className="text-sm font-semibold">
-                            Module {idx + 1}: {module.title}
+                            {t.courseDetail.module} {idx + 1}: {module.title}
                           </span>
                           <p className="mt-0.5 text-xs text-neutral-500">
-                            {module.lessons.length} lessons
+                            {module.lessons.length} {t.courseDetail.lessons}
                           </p>
                         </div>
                       </AccordionTrigger>
@@ -211,7 +213,7 @@ export default function CourseDetailPage({ params }: PageProps) {
                                     variant="secondary"
                                     className="text-[10px] px-1.5 py-0"
                                   >
-                                    Free
+                                    {t.courseDetail.free}
                                   </Badge>
                                 )}
                               </div>
@@ -230,7 +232,7 @@ export default function CourseDetailPage({ params }: PageProps) {
                 </Accordion>
               ) : (
                 <p className="mt-5 text-sm text-neutral-400">
-                  Curriculum coming soon.
+                  {t.courseDetail.curriculum}...
                 </p>
               )}
 
@@ -238,7 +240,7 @@ export default function CourseDetailPage({ params }: PageProps) {
               {course.tags && course.tags.length > 0 && (
                 <div className="mt-10">
                   <h3 className="text-sm font-semibold text-neutral-900">
-                    Skills you&apos;ll learn
+                    {t.courseDetail.skillsYoullLearn}
                   </h3>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {course.tags.map((tag) => (
@@ -271,15 +273,15 @@ export default function CourseDetailPage({ params }: PageProps) {
 
                 <p className="text-xs text-neutral-500 mb-3">
                   {isLocked
-                    ? "Pro membership required"
-                    : "Included in your plan"}
+                    ? (t.nav.signIn === "Sign In" ? "Pro membership required" : "Abonnement Pro requis")
+                    : t.courseDetail.includedInSub}
                 </p>
 
                 {isLocked ? (
                   <MembershipPopover>
                     <Button className="h-10 w-full gap-2 text-sm">
                       <Lock className="h-4 w-4" />
-                      Get Membership
+                      {t.nav.signIn === "Sign In" ? "Get Membership" : "S'abonner"}
                     </Button>
                   </MembershipPopover>
                 ) : !isAuthenticated ? (
@@ -287,7 +289,7 @@ export default function CourseDetailPage({ params }: PageProps) {
                     className="h-10 w-full text-sm"
                     render={<Link href="/sign-in" />}
                   >
-                    Sign In to Start
+                    {t.auth.signIn}
                   </Button>
                 ) : (
                   <Button
@@ -296,14 +298,14 @@ export default function CourseDetailPage({ params }: PageProps) {
                       <Link href={`/courses/${course.slug}/learn`} />
                     }
                   >
-                    Start Learning
+                    {t.courseDetail.startLearning}
                   </Button>
                 )}
                 <Button
                   variant="outline"
                   className="mt-2 h-10 w-full text-sm"
                 >
-                  Preview Course
+                  {t.courseDetail.previewCourse}
                 </Button>
 
                 <Separator className="my-4" />
@@ -311,19 +313,19 @@ export default function CourseDetailPage({ params }: PageProps) {
                 <ul className="space-y-2.5 text-xs">
                   <li className="flex items-center gap-2 text-neutral-600">
                     <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                    {durationLabel} of content
+                    {durationLabel} {t.courseDetail.ofContent}
                   </li>
                   <li className="flex items-center gap-2 text-neutral-600">
                     <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                    {totalLessons} lessons
+                    {totalLessons} {t.courseDetail.lessons}
                   </li>
                   <li className="flex items-center gap-2 text-neutral-600">
                     <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                    Certificate of completion
+                    {t.courseDetail.certificateCompletion}
                   </li>
                   <li className="flex items-center gap-2 text-neutral-600">
                     <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                    Lifetime access
+                    {t.courseDetail.lifetimeAccess}
                   </li>
                 </ul>
               </div>
