@@ -418,34 +418,55 @@ function LessonEditor({
         </Button>
       </div>
 
-      {/* Row 2: YouTube URL + Duration */}
+      {/* Row 2: Video Embed + Duration */}
       {lesson.type === "video" && (
-        <div className="flex items-center gap-2 pl-9">
-          <div className="relative flex-1">
-            <Youtube className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-red-400" />
-            <Input
-              className="h-8 pl-8 text-xs font-mono"
-              placeholder="https://www.youtube.com/watch?v=..."
-              value={youtubeUrl}
-              onChange={(e) => setYoutubeUrl(e.target.value)}
-              onBlur={() =>
-                youtubeUrl !== (lesson.youtube_url || "") &&
-                onUpdate({ youtube_url: youtubeUrl || undefined })
-              }
-            />
+        <div className="space-y-2 pl-9">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Youtube className="absolute left-2.5 top-2 h-3.5 w-3.5 text-red-400" />
+              <textarea
+                className="w-full rounded-md border border-neutral-200 bg-white py-1.5 pl-8 pr-3 text-xs font-mono placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 resize-none"
+                placeholder='Paste embed code — <iframe src="https://www.youtube.com/embed/...">'
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                onBlur={() =>
+                  youtubeUrl !== (lesson.youtube_url || "") &&
+                  onUpdate({ youtube_url: youtubeUrl || undefined })
+                }
+                rows={2}
+              />
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <Input
+                className="h-8 w-16 text-xs text-center"
+                type="number"
+                min="0"
+                placeholder="0"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                onBlur={() =>
+                  onUpdate({ duration_minutes: parseInt(duration) || 0 })
+                }
+              />
+              <span className="text-xs text-neutral-400">min</span>
+            </div>
           </div>
-          <Input
-            className="h-8 w-20 text-xs text-center"
-            type="number"
-            min="0"
-            placeholder="min"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            onBlur={() =>
-              onUpdate({ duration_minutes: parseInt(duration) || 0 })
-            }
-          />
-          <span className="text-xs text-neutral-400 shrink-0">min</span>
+          {/* Live preview */}
+          {youtubeUrl && (() => {
+            const idMatch = youtubeUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            const videoId = idMatch?.[1];
+            return videoId ? (
+              <div className="aspect-video w-full max-w-md overflow-hidden rounded-lg border bg-black">
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+                  className="h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={lesson.title}
+                />
+              </div>
+            ) : null;
+          })()}
         </div>
       )}
     </div>

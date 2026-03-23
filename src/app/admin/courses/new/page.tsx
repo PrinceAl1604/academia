@@ -544,30 +544,45 @@ export default function AdminCourseNewPage() {
                               className="text-sm"
                             />
 
-                            <div className="grid gap-3 sm:grid-cols-4">
-                              <div className="sm:col-span-3 space-y-1">
-                                <Label className="text-xs">YouTube URL</Label>
-                                <Input
-                                  placeholder="https://www.youtube.com/watch?v=..."
-                                  value={lesson.youtubeUrl}
-                                  onChange={(e) => updateLesson(chapter.id, lesson.id, "youtubeUrl", e.target.value)}
-                                  className="text-xs font-mono"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs">{isEn ? "Duration" : "Durée"}</Label>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs">{isEn ? "Video Embed Code" : "Code d'intégration vidéo"}</Label>
                                 <div className="flex items-center gap-1">
+                                  <Label className="text-xs text-neutral-400">{isEn ? "Duration" : "Durée"}</Label>
                                   <Input
                                     type="number"
                                     min="0"
                                     placeholder="0"
                                     value={lesson.durationMinutes}
                                     onChange={(e) => updateLesson(chapter.id, lesson.id, "durationMinutes", e.target.value)}
-                                    className="text-xs"
+                                    className="h-7 w-16 text-xs"
                                   />
                                   <span className="text-xs text-neutral-400">min</span>
                                 </div>
                               </div>
+                              <Textarea
+                                placeholder={isEn ? 'Paste YouTube embed code here — e.g. <iframe src="https://www.youtube.com/embed/...">' : 'Collez le code d\'intégration YouTube — ex. <iframe src="https://www.youtube.com/embed/...">'}
+                                value={lesson.youtubeUrl}
+                                onChange={(e) => updateLesson(chapter.id, lesson.id, "youtubeUrl", e.target.value)}
+                                rows={2}
+                                className="text-xs font-mono"
+                              />
+                              {/* Live video preview */}
+                              {lesson.youtubeUrl && (() => {
+                                const idMatch = lesson.youtubeUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                                const videoId = idMatch?.[1];
+                                return videoId ? (
+                                  <div className="aspect-video w-full overflow-hidden rounded-lg border bg-black">
+                                    <iframe
+                                      src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+                                      className="h-full w-full"
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      allowFullScreen
+                                      title={lesson.title || "Preview"}
+                                    />
+                                  </div>
+                                ) : null;
+                              })()}
                             </div>
                           </div>
                         ))}
