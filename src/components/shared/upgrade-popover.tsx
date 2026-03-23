@@ -75,7 +75,7 @@ export function MembershipPopover({ children }: MembershipPopoverProps) {
             render={<Link href="/dashboard/subscription" />}
           >
             <Crown className="h-3.5 w-3.5" />
-            Subscribe Now
+            Get a Licence Key
             <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </div>

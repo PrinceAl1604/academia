@@ -1,14 +1,25 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Check, Crown, Loader2, Shield } from "lucide-react";
+import {
+  Check,
+  Crown,
+  Loader2,
+  Shield,
+  Key,
+  ExternalLink,
+  ArrowRight,
+  CheckCircle,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { SUBSCRIPTION_PRICE } from "@/lib/payment";
+import { SUBSCRIPTION_PRICE, SUBSCRIPTION_CURRENCY, CHARIOW_PRODUCT_URL } from "@/lib/licence";
 
 const FEATURES = [
   "Access to all courses",
@@ -21,7 +32,13 @@ const FEATURES = [
 
 export default function SubscriptionPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-neutral-400" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        </div>
+      }
+    >
       <SubscriptionContent />
     </Suspense>
   );
@@ -29,84 +46,48 @@ export default function SubscriptionPage() {
 
 function SubscriptionContent() {
   const { user, isPro } = useAuth();
-  const searchParams = useSearchParams();
-  const [paying, setPaying] = useState(false);
-  const [verifying, setVerifying] = useState(false);
+  const [licenceKey, setLicenceKey] = useState("");
+  const [activating, setActivating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  // Handle payment callback from Monetbil
-  useEffect(() => {
-    const isCallback = searchParams.get("payment") === "callback";
-    const paymentRef = searchParams.get("ref") || localStorage.getItem("pending_payment_ref");
-
-    if (isCallback && paymentRef && user && !isPro) {
-      setVerifying(true);
-      fetch("/api/payment/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payment_ref: paymentRef, user_id: user.id }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          localStorage.removeItem("pending_payment_ref");
-          if (data.success) {
-            window.location.href = "/dashboard/subscription";
-          }
-          setVerifying(false);
-        })
-        .catch(() => setVerifying(false));
-    }
-  }, [searchParams, user, isPro]);
-
-  const handleSubscribe = async (provider: "monetbil" | "magma") => {
-    if (!user) return;
-    setPaying(true);
-
-    const endpoint = provider === "magma" ? "/api/payment/magma" : "/api/payment/initialize";
+  const handleActivate = async () => {
+    if (!licenceKey.trim() || !user) return;
+    setActivating(true);
+    setError(null);
 
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch("/api/licence/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          key: licenceKey.trim(),
           user_id: user.id,
-          email: user.email,
-          name: user.user_metadata?.full_name || "",
         }),
       });
 
       const data = await res.json();
 
-      if (data.checkout_url) {
-        if (data.payment_ref) {
-          localStorage.setItem("pending_payment_ref", data.payment_ref);
-        }
-        window.location.href = data.checkout_url;
+      if (data.success) {
+        setSuccess(true);
+        // Reload after a moment to reflect Pro status
+        setTimeout(() => window.location.reload(), 2000);
       } else {
-        alert(data.error || "Failed to start payment. Please try again.");
-        setPaying(false);
+        setError(data.error || "Invalid licence key. Please try again.");
       }
     } catch {
-      alert("Something went wrong. Please try again.");
-      setPaying(false);
+      setError("Something went wrong. Please try again.");
     }
+    setActivating(false);
   };
 
-  if (verifying) {
-    return (
-      <div className="mx-auto max-w-2xl py-20 text-center">
-        <Loader2 className="mx-auto h-8 w-8 animate-spin text-neutral-400" />
-        <p className="mt-4 text-neutral-500">Verifying your payment...</p>
-      </div>
-    );
-  }
+  const chariowUrl = CHARIOW_PRODUCT_URL || "#";
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-neutral-900">Subscription</h1>
-        <p className="mt-1 text-neutral-500">
-          Manage your membership plan
-        </p>
+        <p className="mt-1 text-neutral-500">Manage your membership plan</p>
       </div>
 
       {isPro ? (
@@ -129,18 +110,13 @@ function SubscriptionContent() {
                 </p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-neutral-900">
-                {SUBSCRIPTION_PRICE.toLocaleString()}
-              </p>
-              <p className="text-xs text-neutral-500">FCFA / month</p>
-            </div>
           </div>
         </Card>
       ) : (
         /* ─── Free Plan → Upgrade ────────────────────────────────── */
-        <Card className="overflow-hidden">
-          <div className="border-b bg-neutral-50 p-6">
+        <>
+          {/* Current plan */}
+          <Card className="border-b bg-neutral-50 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900">
@@ -152,66 +128,128 @@ function SubscriptionContent() {
               </div>
               <Badge variant="secondary">Current Plan</Badge>
             </div>
-          </div>
+          </Card>
 
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
-                <Crown className="h-5 w-5 text-amber-600" />
+          {/* Step 1: Buy on Chariow */}
+          <Card className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold text-white shrink-0">
+                1
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold text-neutral-900">
-                  Upgrade to Pro
+                  Get your licence key
                 </h3>
-                <p className="text-sm text-neutral-500">
-                  Unlock all courses and premium content
+                <p className="mt-1 text-sm text-neutral-500">
+                  Purchase a Pro subscription on our shop. You'll receive a
+                  licence key instantly via email.
+                </p>
+
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="text-3xl font-bold text-neutral-900">
+                    {SUBSCRIPTION_PRICE.toLocaleString()}
+                  </span>
+                  <span className="text-lg text-neutral-500">
+                    {SUBSCRIPTION_CURRENCY}
+                  </span>
+                  <span className="text-sm text-neutral-400">/ month</span>
+                </div>
+
+                <Button
+                  className="mt-4 h-11 gap-2"
+                  onClick={() => window.open(chariowUrl, "_blank")}
+                >
+                  <Crown className="h-4 w-4" />
+                  Buy on Chariow
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+
+                <p className="mt-2 text-xs text-neutral-400">
+                  Mobile Money · Wave · Orange Money · Visa/Mastercard
                 </p>
               </div>
             </div>
+          </Card>
 
-            <div className="mb-6 flex items-baseline gap-1">
-              <span className="text-4xl font-bold text-neutral-900">
-                {SUBSCRIPTION_PRICE.toLocaleString()}
-              </span>
-              <span className="text-lg text-neutral-500">FCFA</span>
-              <span className="text-sm text-neutral-400">/ month</span>
-            </div>
+          {/* Step 2: Enter licence key */}
+          <Card className="p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold text-white shrink-0">
+                2
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-neutral-900">
+                  Activate your licence key
+                </h3>
+                <p className="mt-1 text-sm text-neutral-500">
+                  Enter the key you received after purchase to unlock all
+                  courses.
+                </p>
 
-            <div className="space-y-3">
-              <Button
-                className="h-12 w-full gap-2 text-base"
-                onClick={() => handleSubscribe("monetbil")}
-                disabled={paying}
-              >
-                {paying ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                {success ? (
+                  <div className="mt-4 flex items-center gap-3 rounded-lg bg-green-50 p-4">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div>
+                      <p className="font-medium text-green-900">
+                        Pro activated!
+                      </p>
+                      <p className="text-sm text-green-700">
+                        Refreshing your account...
+                      </p>
+                    </div>
+                  </div>
                 ) : (
-                  <Crown className="h-5 w-5" />
-                )}
-                {paying ? "Redirecting..." : "Pay with Monetbil"}
-              </Button>
+                  <div className="mt-4 space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="licence-key">Licence Key</Label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                          <Input
+                            id="licence-key"
+                            placeholder="EDU-PRO-XXXX-XXXX-XXXX"
+                            className="h-11 pl-10 font-mono text-sm tracking-wider uppercase"
+                            value={licenceKey}
+                            onChange={(e) => {
+                              setLicenceKey(e.target.value);
+                              setError(null);
+                            }}
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && handleActivate()
+                            }
+                            disabled={activating}
+                          />
+                        </div>
+                        <Button
+                          className="h-11 gap-2"
+                          onClick={handleActivate}
+                          disabled={
+                            activating || !licenceKey.trim()
+                          }
+                        >
+                          {activating ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ArrowRight className="h-4 w-4" />
+                          )}
+                          Activate
+                        </Button>
+                      </div>
+                      {error && (
+                        <p className="text-sm text-red-500">{error}</p>
+                      )}
+                    </div>
 
-              <Button
-                variant="outline"
-                className="h-12 w-full gap-2 text-base"
-                onClick={() => handleSubscribe("magma")}
-                disabled={paying}
-              >
-                {paying ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Crown className="h-5 w-5" />
+                    <div className="flex items-center gap-2 text-xs text-neutral-400">
+                      <Shield className="h-3.5 w-3.5" />
+                      Your key is single-use and tied to your account
+                    </div>
+                  </div>
                 )}
-                {paying ? "Redirecting..." : "Pay with Magma OnePay"}
-              </Button>
+              </div>
             </div>
-
-            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-neutral-400">
-              <Shield className="h-3.5 w-3.5" />
-              Secure payment · Mobile Money & Cards accepted
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </>
       )}
 
       {/* Features */}
@@ -222,7 +260,10 @@ function SubscriptionContent() {
         <Separator className="my-4" />
         <ul className="space-y-3">
           {FEATURES.map((feature) => (
-            <li key={feature} className="flex items-center gap-2 text-sm text-neutral-700">
+            <li
+              key={feature}
+              className="flex items-center gap-2 text-sm text-neutral-700"
+            >
               <Check className="h-4 w-4 text-green-600" />
               {feature}
             </li>
