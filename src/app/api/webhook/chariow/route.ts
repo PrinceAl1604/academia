@@ -54,16 +54,22 @@ export async function POST(request: Request) {
     // 1. Find user by email and auto-upgrade to Pro
     const { data: user } = await supabase
       .from("users")
-      .select("id, name, email")
+      .select("id, name, email, pro_expires_at")
       .eq("email", buyerEmail)
       .single();
 
     if (user) {
-      // User exists — upgrade to Pro
+      // User exists — upgrade to Pro with 30-day expiry
+      // If already Pro, extend from current expiry date
+      const currentExpiry = user.pro_expires_at ? new Date(user.pro_expires_at) : new Date();
+      const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
+      const newExpiry = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+
       await supabase
         .from("users")
         .update({
           subscription_tier: "pro",
+          pro_expires_at: newExpiry.toISOString(),
           last_active_at: new Date().toISOString(),
         })
         .eq("id", user.id);

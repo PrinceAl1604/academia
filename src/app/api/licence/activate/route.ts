@@ -51,11 +51,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Upgrade user to Pro
+    // Upgrade user to Pro with 30-day expiry
+    const newExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     const { error: updateError } = await supabase
       .from("users")
       .update({
         subscription_tier: "pro",
+        pro_expires_at: newExpiry.toISOString(),
         licence_key_id: licence.id,
         last_active_at: new Date().toISOString(),
       })

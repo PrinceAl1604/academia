@@ -42,6 +42,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/shared/logo";
+import { ExpiryBanner } from "@/components/shared/expiry-banner";
 import { supabase } from "@/lib/supabase";
 
 interface Notification {
@@ -124,6 +125,8 @@ export function DashboardTopbar() {
   }, []);
 
   return (
+    <>
+    <ExpiryBanner />
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/80 px-4 backdrop-blur-md lg:px-8">
       {/* Mobile menu */}
       <Sheet>
@@ -292,5 +295,6 @@ export function DashboardTopbar() {
         )}
       </div>
     </header>
+    </>
   );
 }

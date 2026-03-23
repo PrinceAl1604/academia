@@ -24,12 +24,15 @@ interface AuthContextType {
   isPro: boolean;
   userName: string | null;
   loading: boolean;
+  proExpiresAt: string | null;
+  daysUntilExpiry: number | null;
+  isExpiringSoon: boolean; // true if < 5 days left
+  isExpired: boolean;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Routes that require NO auth (public pages)
 const AUTH_ROUTES = ["/sign-in", "/sign-up", "/reset-password", "/auth/callback"];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -37,10 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<Role>(null);
   const [plan, setPlan] = useState<Plan>("free");
+  const [proExpiresAt, setProExpiresAt] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
-  // Listen to auth state changes
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setRole(null);
           setPlan("free");
+          setProExpiresAt(null);
         }
         setLoading(false);
       }
@@ -66,29 +70,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Redirect logged-in users away from auth pages
   useEffect(() => {
     if (loading) return;
     const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
-
     if (user && isAuthRoute) {
       router.push("/");
     }
   }, [user, loading, pathname, router]);
 
   const loadUserProfile = async (userId: string) => {
-    // Fetch role and plan from the users table in Supabase
     const { data, error } = await supabase
       .from("users")
-      .select("role, subscription_tier")
+      .select("role, subscription_tier, pro_expires_at")
       .eq("id", userId)
       .single();
 
     if (data && !error) {
-      setRole((data.role as Role) || "user");
-      setPlan((data.subscription_tier as Plan) || "free");
+      const userRole = (data.role as Role) || "user";
+      setRole(userRole);
+      setProExpiresAt(data.pro_expires_at || null);
+
+      // Check if Pro has expired
+      if (data.subscription_tier === "pro" && data.pro_expires_at) {
+        const expiresAt = new Date(data.pro_expires_at);
+        if (expiresAt < new Date() && userRole !== "admin") {
+          // Pro expired — downgrade to free
+          setPlan("free");
+          await supabase
+            .from("users")
+            .update({ subscription_tier: "free" })
+            .eq("id", userId);
+        } else {
+          setPlan("pro");
+        }
+      } else {
+        setPlan((data.subscription_tier as Plan) || "free");
+      }
     } else {
-      // User not in users table yet — default to free student
       setRole("user");
       setPlan("free");
     }
@@ -99,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setRole(null);
     setPlan("free");
+    setProExpiresAt(null);
     router.push("/");
   }, [router]);
 
@@ -107,6 +126,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user?.email?.split("@")[0] ||
     null;
 
+  // Calculate days until expiry
+  const daysUntilExpiry = proExpiresAt
+    ? Math.ceil((new Date(proExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
+  const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry > 0 && daysUntilExpiry <= 5;
+  const isExpired = daysUntilExpiry !== null && daysUntilExpiry <= 0 && role !== "admin";
+
   return (
     <AuthContext.Provider
       value={{
@@ -114,10 +141,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isAdmin: role === "admin",
         role,
-        plan,
-        isPro: plan === "pro",
+        plan: isExpired ? "free" : plan,
+        isPro: isExpired ? false : plan === "pro",
         userName,
         loading,
+        proExpiresAt,
+        daysUntilExpiry,
+        isExpiringSoon,
+        isExpired,
         logout,
       }}
     >

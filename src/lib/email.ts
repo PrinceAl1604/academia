@@ -157,3 +157,48 @@ export async function sendSubscriptionEmail({
 </html>`,
   });
 }
+
+/**
+ * Send a renewal reminder email when Pro is about to expire.
+ */
+export async function sendRenewalReminderEmail({
+  to,
+  name,
+  daysLeft,
+}: {
+  to: string;
+  name: string;
+  daysLeft: number;
+}) {
+  const firstName = name.split(" ")[0] || name;
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `Your Pro plan expires in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`,
+    html: `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 560px; margin: 0 auto; padding: 40px 20px; color: #171717;">
+  <h1 style="font-size: 24px; margin-bottom: 16px;">Hi ${firstName},</h1>
+  <p style="font-size: 16px; line-height: 1.6; color: #525252;">
+    Your Pro plan on ${APP_NAME} expires in <strong>${daysLeft} day${daysLeft !== 1 ? "s" : ""}</strong>.
+    Renew now to keep unlimited access to all courses.
+  </p>
+  <div style="text-align: center; margin: 24px 0;">
+    <a href="https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout"
+       style="display: inline-block; background: #171717; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+      Renew Pro — $27
+    </a>
+  </div>
+  <p style="font-size: 14px; color: #a3a3a3;">
+    If you don't renew, your account will switch to the Free plan and you'll lose access to premium courses.
+  </p>
+  <p style="font-size: 14px; color: #a3a3a3; margin-top: 32px;">
+    — Alex Landrin, ${APP_NAME}
+  </p>
+</body>
+</html>`,
+  });
+}

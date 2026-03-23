@@ -97,8 +97,9 @@ const CURRENCIES = [
 ];
 
 function SubscriptionContent() {
-  const { user, isPro } = useAuth();
+  const { user, isPro, proExpiresAt, daysUntilExpiry, isExpiringSoon, isExpired } = useAuth();
   const { t } = useLanguage();
+  const isEn = t.nav.signIn === "Sign In";
   const [licenceKey, setLicenceKey] = useState("");
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -168,7 +169,7 @@ function SubscriptionContent() {
 
       {isPro ? (
         /* ─── Active Pro Plan ─────────────────────────────────────── */
-        <Card className="p-6">
+        <Card className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
@@ -179,7 +180,11 @@ function SubscriptionContent() {
                   <h3 className="text-lg font-semibold text-neutral-900">
                     {t.subscription.proPlan}
                   </h3>
-                  <Badge className="bg-green-100 text-green-700">{t.subscription.active}</Badge>
+                  <Badge className={isExpiringSoon ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}>
+                    {isExpiringSoon
+                      ? (isEn ? `${daysUntilExpiry}d left` : `${daysUntilExpiry}j restants`)
+                      : t.subscription.active}
+                  </Badge>
                 </div>
                 <p className="text-sm text-neutral-500">
                   {t.subscription.fullAccess}
@@ -187,6 +192,30 @@ function SubscriptionContent() {
               </div>
             </div>
           </div>
+
+          {/* Expiry info */}
+          {proExpiresAt && (
+            <div className="flex items-center justify-between rounded-lg bg-neutral-50 px-4 py-3">
+              <div>
+                <p className="text-xs text-neutral-500">
+                  {isEn ? "Expires on" : "Expire le"}
+                </p>
+                <p className="text-sm font-medium text-neutral-900">
+                  {new Date(proExpiresAt).toLocaleDateString(isEn ? "en-US" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                </p>
+              </div>
+              {isExpiringSoon && (
+                <Button
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => window.location.href = "https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout"}
+                >
+                  <Crown className="h-3.5 w-3.5" />
+                  {isEn ? "Renew" : "Renouveler"}
+                </Button>
+              )}
+            </div>
+          )}
         </Card>
       ) : (
         /* ─── Free Plan → Upgrade ────────────────────────────────── */
