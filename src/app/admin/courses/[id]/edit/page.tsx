@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   getCategories,
-  getInstructors,
   updateCourse,
   type CategoryRow,
 } from "@/lib/api";
@@ -34,7 +33,6 @@ export default function AdminCourseEditPage({ params }: PageProps) {
   const router = useRouter();
 
   const [categories, setCategories] = useState<CategoryRow[]>([]);
-  const [instructors, setInstructors] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +42,6 @@ export default function AdminCourseEditPage({ params }: PageProps) {
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [instructorId, setInstructorId] = useState("");
   const [level, setLevel] = useState("Beginner");
   const [durationHours, setDurationHours] = useState("");
   const [totalLessons, setTotalLessons] = useState("");
@@ -55,12 +52,8 @@ export default function AdminCourseEditPage({ params }: PageProps) {
 
   useEffect(() => {
     async function load() {
-      const [cats, insts] = await Promise.all([
-        getCategories(),
-        getInstructors(),
-      ]);
+      const cats = await getCategories();
       setCategories(cats);
-      setInstructors(insts);
 
       // Load existing course
       const { data: course } = await supabase
@@ -74,7 +67,6 @@ export default function AdminCourseEditPage({ params }: PageProps) {
         setSlug(course.slug || "");
         setDescription(course.description || "");
         setCategoryId(course.category_id || "");
-        setInstructorId(course.instructor_id || "");
         setLevel(course.level || "Beginner");
         setDurationHours(String(course.duration_hours || ""));
         setTotalLessons(String(course.total_lessons || ""));
@@ -104,7 +96,6 @@ export default function AdminCourseEditPage({ params }: PageProps) {
         slug,
         description: description.trim(),
         category_id: categoryId || undefined,
-        instructor_id: instructorId || undefined,
         level,
         duration_hours: parseInt(durationHours) || 0,
         total_lessons: parseInt(totalLessons) || 0,
@@ -235,26 +226,6 @@ export default function AdminCourseEditPage({ params }: PageProps) {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            {/* Instructor */}
-            <div className="space-y-2">
-              <Label>Instructor</Label>
-              <Select
-                value={instructorId}
-                onValueChange={(v) => setInstructorId(v ?? "")}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select instructor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {instructors.map((inst) => (
-                    <SelectItem key={inst.id} value={inst.id}>
-                      {inst.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Duration + Lessons */}

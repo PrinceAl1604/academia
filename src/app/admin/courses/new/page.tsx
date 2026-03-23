@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
 import {
   getCategories,
-  getInstructors,
   createCourse,
   type CategoryRow,
 } from "@/lib/api";
@@ -37,7 +36,6 @@ export default function AdminCourseNewPage() {
   const router = useRouter();
 
   const [categories, setCategories] = useState<CategoryRow[]>([]);
-  const [instructors, setInstructors] = useState<{ id: string; name: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +44,6 @@ export default function AdminCourseNewPage() {
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [instructorId, setInstructorId] = useState("");
   const [level, setLevel] = useState("Beginner");
   const [durationHours, setDurationHours] = useState("");
   const [totalLessons, setTotalLessons] = useState("");
@@ -56,12 +53,7 @@ export default function AdminCourseNewPage() {
   const [isPublished, setIsPublished] = useState(false);
 
   useEffect(() => {
-    Promise.all([getCategories(), getInstructors()]).then(
-      ([cats, insts]) => {
-        setCategories(cats);
-        setInstructors(insts);
-      }
-    );
+    getCategories().then(setCategories);
   }, []);
 
   // Auto-generate slug from title
@@ -85,7 +77,7 @@ export default function AdminCourseNewPage() {
         slug: slug || slugify(title),
         description: description.trim() || undefined,
         category_id: categoryId || undefined,
-        instructor_id: instructorId || undefined,
+        instructor_id: "9febd714-0bea-4710-acea-90d8d14b32db", // Auto-assign to Alex Landrin
         level,
         duration_hours: parseInt(durationHours) || 0,
         total_lessons: parseInt(totalLessons) || 0,
@@ -197,26 +189,6 @@ export default function AdminCourseNewPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            {/* Instructor */}
-            <div className="space-y-2">
-              <Label>Instructor</Label>
-              <Select
-                value={instructorId}
-                onValueChange={(v) => setInstructorId(v ?? "")}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an instructor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {instructors.map((inst) => (
-                    <SelectItem key={inst.id} value={inst.id}>
-                      {inst.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Duration + Lessons row */}
