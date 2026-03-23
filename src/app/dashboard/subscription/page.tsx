@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import Script from "next/script";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,11 @@ import {
   Loader2,
   Shield,
   Key,
-  ExternalLink,
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { SUBSCRIPTION_PRICE, SUBSCRIPTION_CURRENCY, CHARIOW_PRODUCT_URL } from "@/lib/licence";
+import { SUBSCRIPTION_PRICE, SUBSCRIPTION_CURRENCY } from "@/lib/licence";
 
 const FEATURES = [
   "Access to all courses",
@@ -81,8 +81,6 @@ function SubscriptionContent() {
     setActivating(false);
   };
 
-  const chariowUrl = CHARIOW_PRODUCT_URL || "#";
-
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
@@ -130,7 +128,7 @@ function SubscriptionContent() {
             </div>
           </Card>
 
-          {/* Step 1: Buy on Chariow */}
+          {/* Step 1: Buy via Chariow Snap */}
           <Card className="p-6">
             <div className="flex items-start gap-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold text-white shrink-0">
@@ -141,7 +139,7 @@ function SubscriptionContent() {
                   Get your licence key
                 </h3>
                 <p className="mt-1 text-sm text-neutral-500">
-                  Purchase a Pro subscription on our shop. You'll receive a
+                  Purchase a Pro subscription. You'll receive a
                   licence key instantly via email.
                 </p>
 
@@ -155,16 +153,23 @@ function SubscriptionContent() {
                   <span className="text-sm text-neutral-400">/ month</span>
                 </div>
 
-                <Button
-                  className="mt-4 h-11 gap-2"
-                  onClick={() => window.open(chariowUrl, "_blank")}
-                >
-                  <Crown className="h-4 w-4" />
-                  Buy on Chariow
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
+                {/* Chariow Snap Widget */}
+                <div className="mt-4">
+                  <div
+                    id="chariow-widget"
+                    data-product-id="prd_o6clpf"
+                    data-store-domain="jwxfcqrf.mychariow.shop"
+                    data-style="tap"
+                    data-border-style="rounded"
+                    data-cta-width="xs"
+                  />
+                  <Script
+                    src="https://cdn.chariow.com/snap.js"
+                    strategy="lazyOnload"
+                  />
+                </div>
 
-                <p className="mt-2 text-xs text-neutral-400">
+                <p className="mt-3 text-xs text-neutral-400">
                   Mobile Money · Wave · Orange Money · Visa/Mastercard
                 </p>
               </div>
