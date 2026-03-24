@@ -227,7 +227,7 @@ export default function CoursePlayerPage() {
           <div className="aspect-video w-full bg-neutral-900">
             {youtubeId ? (
               <iframe
-                src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1`}
+                src={`https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&color=white`}
                 className="h-full w-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen

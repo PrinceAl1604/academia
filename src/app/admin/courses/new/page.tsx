@@ -574,7 +574,7 @@ export default function AdminCourseNewPage() {
                                 return videoId ? (
                                   <div className="aspect-video w-full overflow-hidden rounded-lg border bg-black">
                                     <iframe
-                                      src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+                                      src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&color=white`}
                                       className="h-full w-full"
                                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                       allowFullScreen
