@@ -50,6 +50,7 @@ export interface LessonRow {
   id: string;
   module_id: string;
   title: string;
+  description: string | null;
   type: "video" | "article" | "quiz";
   youtube_url: string | null;
   duration_minutes: number;
