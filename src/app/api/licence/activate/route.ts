@@ -11,11 +11,12 @@ function getSupabaseAdmin() {
 /**
  * POST /api/licence/activate
  *
- * Simple flow:
- * 1. Student enters Chariow licence key (format: XXXX-XXXX-XXXX-XXXX)
- * 2. Check if key was already used in our DB
- *    - Already used → "Key already activated"
- *    - New key → save it, activate Pro for 30 days
+ * Flow:
+ * 1. Student enters licence key from Chariow
+ * 2. App checks: does this key exist in DB with status "created"?
+ *    YES → activate Pro 30 days, change status to "active"
+ *    NO (already active) → "Key already activated"
+ *    NO (not found) → "Invalid key"
  */
 export async function POST(request: Request) {
   try {
@@ -31,7 +32,6 @@ export async function POST(request: Request) {
     const supabase = getSupabaseAdmin();
     const trimmedKey = key.trim().toUpperCase();
 
-    // Validate format: must have at least 4 characters
     if (trimmedKey.length < 4) {
       return NextResponse.json(
         { error: "Invalid licence key format." },
@@ -39,47 +39,52 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if this key was already used
-    const { data: existingKey } = await supabase
+    // Find the key in database
+    const { data: licence } = await supabase
       .from("licence_keys")
       .select("id, status, activated_by")
       .eq("key", trimmedKey)
       .single();
 
-    if (existingKey && existingKey.activated_by) {
+    // Key not found
+    if (!licence) {
+      return NextResponse.json(
+        { error: "Invalid licence key. Please check and try again." },
+        { status: 400 }
+      );
+    }
+
+    // Key already activated
+    if (licence.status === "active" && licence.activated_by) {
       return NextResponse.json(
         { error: "This licence key has already been activated." },
         { status: 400 }
       );
     }
 
-    // Activate — save key and upgrade user
+    // Key must be in "created" status
+    if (licence.status !== "created") {
+      return NextResponse.json(
+        { error: "This licence key is no longer valid." },
+        { status: 400 }
+      );
+    }
+
+    // Activate the key
     const now = new Date().toISOString();
     const proExpiresAt = new Date(
       Date.now() + 30 * 24 * 60 * 60 * 1000
     ).toISOString();
 
-    if (existingKey) {
-      // Key exists in DB (pre-registered) — update it
-      await supabase
-        .from("licence_keys")
-        .update({
-          status: "active",
-          activated_by: user_id,
-          activated_at: now,
-        })
-        .eq("id", existingKey.id);
-    } else {
-      // New key from Chariow — insert it
-      await supabase.from("licence_keys").insert({
-        key: trimmedKey,
-        type: "student",
+    // Update key status to "active"
+    await supabase
+      .from("licence_keys")
+      .update({
         status: "active",
         activated_by: user_id,
         activated_at: now,
-        expires_at: proExpiresAt,
-      });
-    }
+      })
+      .eq("id", licence.id);
 
     // Upgrade user to Pro
     await supabase
