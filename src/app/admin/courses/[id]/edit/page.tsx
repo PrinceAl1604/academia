@@ -185,7 +185,9 @@ export default function AdminCourseEditPage({ params }: PageProps) {
                   onValueChange={(v) => setCategoryId(v ?? "")}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder="Select category">
+                      {categories.find((c) => c.id === categoryId)?.name || "Select category"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
