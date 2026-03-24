@@ -39,8 +39,9 @@ export async function POST(request: Request) {
     const buyerEmail = body.email || body.customer_email || body.buyer_email;
     const transactionId = body.transaction_id || body.id || body.order_id;
     const buyerName = body.name || body.customer_name || body.first_name || "";
+    const chariowKey = body.licence_key || body.license_key || body.key || body.product_key || body.code || null;
 
-    console.log("[Chariow Webhook] Received:", { buyerEmail, transactionId, buyerName });
+    console.log("[Chariow Webhook] Received:", { buyerEmail, transactionId, buyerName, chariowKey });
 
     if (!buyerEmail) {
       return NextResponse.json(
@@ -79,8 +80,8 @@ export async function POST(request: Request) {
       console.log("[Chariow Webhook] No user found with email:", buyerEmail, "— key will be stored for later activation");
     }
 
-    // 2. Generate and store licence key (for record-keeping + fallback)
-    const licenceKey = generateLicenceKey();
+    // 2. Store licence key (use Chariow's key or generate one as fallback)
+    const licenceKey = chariowKey || generateLicenceKey();
     await supabase.from("licence_keys").insert({
       key: licenceKey,
       type: "student",
