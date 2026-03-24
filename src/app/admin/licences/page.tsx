@@ -31,6 +31,8 @@ interface LicenceKey {
   status: string;
   assigned_to: string | null;
   assigned_email: string | null;
+  activated_by: string | null;
+  activated_at: string | null;
   expires_at: string | null;
   created_at: string;
 }
@@ -70,8 +72,10 @@ export default function AdminLicencesPage() {
 
   const statusColor = (status: string) => {
     switch (status) {
+      case "created": return "bg-amber-100 text-amber-700";
       case "active": return "bg-green-100 text-green-700";
       case "inactive": return "bg-neutral-100 text-neutral-500";
+      case "used": return "bg-neutral-100 text-neutral-500";
       case "expired": return "bg-red-100 text-red-600";
       default: return "bg-neutral-100 text-neutral-500";
     }
@@ -255,6 +259,18 @@ export default function AdminLicencesPage() {
                     </p>
                   </div>
                 </div>
+
+                {selectedKey.activated_at && (
+                  <div className="flex items-center gap-3">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <div className="flex-1">
+                      <p className="text-xs text-neutral-500">Activated</p>
+                      <p className="text-sm text-neutral-900">
+                        {new Date(selectedKey.activated_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {selectedKey.expires_at && (
                   <div className="flex items-center gap-3">

@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { generateLicenceKey } from "@/lib/licence";
-import { sendSubscriptionEmail } from "@/lib/email";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -14,105 +12,55 @@ function getSupabaseAdmin() {
  * POST /api/webhook/chariow
  *
  * Called by Chariow after a successful purchase.
- * This endpoint:
- * 1. Finds the user by buyer email
- * 2. Auto-upgrades them to Pro (no manual key entry needed)
- * 3. Generates a licence key for record-keeping
- * 4. Sends a confirmation email
+ * Stores the licence key in the database with status "created".
+ * The student will later enter this key to activate Pro.
  *
- * Set webhook URL in Chariow: https://academia-vert-phi.vercel.app/api/webhook/chariow
+ * Webhook URL: https://academia-vert-phi.vercel.app/api/webhook/chariow
  */
 export async function POST(request: Request) {
   try {
-    // Verify webhook secret (optional but recommended)
-    const webhookSecret = process.env.CHARIOW_WEBHOOK_SECRET;
-    if (webhookSecret) {
-      const signature = request.headers.get("x-chariow-signature") ||
-                        request.headers.get("x-webhook-secret");
-      if (signature !== webhookSecret) {
-        console.error("[Chariow Webhook] Invalid signature");
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-    }
-
     const body = await request.json();
-    const buyerEmail = body.email || body.customer_email || body.buyer_email;
-    const transactionId = body.transaction_id || body.id || body.order_id;
-    const buyerName = body.name || body.customer_name || body.first_name || "";
+
+    // Extract data from Chariow payload (try multiple field names)
+    const buyerEmail = body.email || body.customer_email || body.buyer_email || null;
+    const buyerName = body.name || body.customer_name || body.first_name || null;
     const chariowKey = body.licence_key || body.license_key || body.key || body.product_key || body.code || null;
+    const transactionId = body.transaction_id || body.id || body.order_id || null;
 
-    console.log("[Chariow Webhook] Received:", { buyerEmail, transactionId, buyerName, chariowKey });
+    console.log("[Chariow Webhook] Received:", { buyerEmail, buyerName, chariowKey, transactionId });
 
-    if (!buyerEmail) {
+    if (!chariowKey) {
       return NextResponse.json(
-        { error: "Missing buyer email" },
+        { error: "Missing licence key in webhook payload" },
         { status: 400 }
       );
     }
 
     const supabase = getSupabaseAdmin();
 
-    // 1. Find user by email and auto-upgrade to Pro
-    const { data: user } = await supabase
-      .from("users")
-      .select("id, name, email, pro_expires_at")
-      .eq("email", buyerEmail)
-      .single();
-
-    if (user) {
-      // User exists — upgrade to Pro with 30-day expiry
-      // If already Pro, extend from current expiry date
-      const currentExpiry = user.pro_expires_at ? new Date(user.pro_expires_at) : new Date();
-      const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
-      const newExpiry = new Date(baseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-      await supabase
-        .from("users")
-        .update({
-          subscription_tier: "pro",
-          pro_expires_at: newExpiry.toISOString(),
-          last_active_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      console.log("[Chariow Webhook] User upgraded to Pro:", user.email);
-    } else {
-      console.log("[Chariow Webhook] No user found with email:", buyerEmail, "— key will be stored for later activation");
-    }
-
-    // 2. Store licence key (use Chariow's key or generate one as fallback)
-    const licenceKey = chariowKey || generateLicenceKey();
-    await supabase.from("licence_keys").insert({
-      key: licenceKey,
+    // Store the licence key with status "created"
+    const { error } = await supabase.from("licence_keys").insert({
+      key: chariowKey.trim().toUpperCase(),
       type: "student",
-      status: user ? "inactive" : "active", // inactive if auto-activated, active if user needs manual activation
+      status: "created",
       assigned_email: buyerEmail,
-      assigned_to: buyerName || buyerEmail.split("@")[0],
-      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+      assigned_to: buyerName || (buyerEmail ? buyerEmail.split("@")[0] : null),
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
-    // 3. Send confirmation email
-    if (user) {
-      sendSubscriptionEmail({
-        to: buyerEmail,
-        name: user.name || buyerName || buyerEmail.split("@")[0],
-      }).catch(() => {});
+    if (error) {
+      console.error("[Chariow Webhook] DB error:", error);
+      return NextResponse.json(
+        { error: "Failed to store licence key" },
+        { status: 500 }
+      );
     }
 
-    console.log("[Chariow Webhook] Complete:", {
-      email: buyerEmail,
-      key: licenceKey,
-      autoActivated: !!user,
-      transaction: transactionId,
-    });
+    console.log("[Chariow Webhook] Key stored:", chariowKey, "status: created");
 
     return NextResponse.json({
       success: true,
-      licence_key: licenceKey,
-      auto_activated: !!user,
-      message: user
-        ? "Account upgraded to Pro automatically"
-        : `Licence key generated: ${licenceKey}`,
+      message: "Licence key registered",
     });
   } catch (err) {
     console.error("[Chariow Webhook] Error:", err);

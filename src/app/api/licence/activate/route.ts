@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendSubscriptionEmail } from "@/lib/email";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -12,7 +11,8 @@ function getSupabaseAdmin() {
 /**
  * POST /api/licence/activate
  *
- * Validates a licence key and upgrades the user to Pro.
+ * Student enters a licence key → validates against DB →
+ * if key exists with status "created" → upgrade to Pro, change status to "active"
  */
 export async function POST(request: Request) {
   try {
@@ -28,75 +28,94 @@ export async function POST(request: Request) {
     const supabase = getSupabaseAdmin();
     const trimmedKey = key.trim().toUpperCase();
 
-    // Find the licence key
+    // 1. Find the licence key with status "created"
     const { data: licence, error: findError } = await supabase
       .from("licence_keys")
       .select("*")
       .eq("key", trimmedKey)
-      .eq("status", "active")
+      .eq("status", "created")
       .single();
 
     if (findError || !licence) {
+      // Check if key exists but already used
+      const { data: usedKey } = await supabase
+        .from("licence_keys")
+        .select("status")
+        .eq("key", trimmedKey)
+        .single();
+
+      if (usedKey?.status === "active") {
+        return NextResponse.json(
+          { error: "This licence key has already been activated." },
+          { status: 400 }
+        );
+      }
+
       return NextResponse.json(
-        { error: "Invalid or already used licence key" },
+        { error: "Invalid licence key. Please check and try again." },
         { status: 400 }
       );
     }
 
-    // Check expiration
+    // 2. Check if expired
     if (licence.expires_at && new Date(licence.expires_at) < new Date()) {
       return NextResponse.json(
-        { error: "This licence key has expired" },
+        { error: "This licence key has expired." },
         { status: 400 }
       );
     }
 
-    // Upgrade user to Pro with 30-day expiry
-    const newExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({
-        subscription_tier: "pro",
-        pro_expires_at: newExpiry.toISOString(),
-        licence_key_id: licence.id,
-        last_active_at: new Date().toISOString(),
-      })
-      .eq("id", user_id);
+    // 3. Activate the key — change status to "active"
+    const now = new Date().toISOString();
+    const proExpiresAt = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000
+    ).toISOString();
 
-    if (updateError) {
-      return NextResponse.json(
-        { error: "Failed to upgrade account" },
-        { status: 500 }
-      );
-    }
-
-    // Mark key as used (change status to inactive so it can't be reused)
     await supabase
       .from("licence_keys")
       .update({
-        status: "inactive",
-        assigned_to: user_id,
+        status: "active",
+        activated_by: user_id,
+        activated_at: now,
       })
       .eq("id", licence.id);
 
-    // Send confirmation email
+    // 4. Upgrade the user to Pro
+    await supabase
+      .from("users")
+      .update({
+        subscription_tier: "pro",
+        pro_expires_at: proExpiresAt,
+      })
+      .eq("id", user_id);
+
+    // 5. Get user info for email
     const { data: userData } = await supabase
       .from("users")
       .select("email, name")
       .eq("id", user_id)
       .single();
 
+    // 6. Send confirmation email (non-blocking)
     if (userData?.email) {
-      sendSubscriptionEmail({
-        to: userData.email,
-        name: userData.name || userData.email.split("@")[0],
-      }).catch(() => {});
+      try {
+        const { sendSubscriptionEmail } = await import("@/lib/email");
+        sendSubscriptionEmail({
+          to: userData.email,
+          name: userData.name || userData.email.split("@")[0],
+        }).catch(() => {});
+      } catch {}
     }
 
-    return NextResponse.json({ success: true, plan: "pro" });
-  } catch {
+    return NextResponse.json({
+      success: true,
+      plan: "pro",
+      pro_expires_at: proExpiresAt,
+    });
+  } catch (err) {
+    console.error("[Licence Activate] Error:", err);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Something went wrong. Please try again." },
       { status: 500 }
     );
   }
