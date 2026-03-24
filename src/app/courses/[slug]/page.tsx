@@ -212,21 +212,21 @@ export default function CourseDetailPage({ params }: PageProps) {
                     <div className="p-5 space-y-3">
                       {isLocked ? (
                         <MembershipPopover>
-                          <Button className="h-11 w-full gap-2 text-sm bg-white text-neutral-900 hover:bg-neutral-100">
+                          <Button className="h-11 w-full gap-2 text-sm !bg-white !text-neutral-900 hover:!bg-neutral-200">
                             <Lock className="h-4 w-4" />
                             {isEn ? "Get Membership" : "S'abonner"}
                           </Button>
                         </MembershipPopover>
                       ) : !isAuthenticated ? (
                         <Button
-                          className="h-11 w-full text-sm bg-white text-neutral-900 hover:bg-neutral-100"
+                          className="h-11 w-full text-sm !bg-white !text-neutral-900 hover:!bg-neutral-200"
                           render={<Link href="/sign-in" />}
                         >
                           {t.courseDetail.startLearning}
                         </Button>
                       ) : (
                         <Button
-                          className="h-11 w-full text-sm bg-white text-neutral-900 hover:bg-neutral-100"
+                          className="h-11 w-full text-sm !bg-white !text-neutral-900 hover:!bg-neutral-200"
                           render={<Link href={`/courses/${course.slug}/learn`} />}
                         >
                           {t.courseDetail.startLearning}
