@@ -71,6 +71,13 @@ export function CourseCard({
           <div
             className={`relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-gradient-to-br ${gradient}`}
           >
+            {(course.cover_url || course.thumbnail_url) && (
+              <img
+                src={(course.cover_url || course.thumbnail_url)!}
+                alt={course.title}
+                className="h-full w-full object-cover"
+              />
+            )}
             {locked && (
               <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/30 rounded-lg">
                 <Lock className="h-4 w-4 text-white" />
@@ -122,9 +129,9 @@ export function CourseCard({
         <div
           className={`relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-gradient-to-br ${gradient}`}
         >
-          {course.thumbnail_url ? (
+          {(course.cover_url || course.thumbnail_url) ? (
             <img
-              src={course.thumbnail_url}
+              src={(course.cover_url || course.thumbnail_url)!}
               alt={course.title}
               className="h-full w-full object-cover"
             />

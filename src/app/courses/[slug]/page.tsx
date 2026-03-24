@@ -186,27 +186,32 @@ export default function CourseDetailPage({ params }: PageProps) {
                 {/* Right — Video Preview + CTA */}
                 <div className="lg:col-span-2">
                   <div className="rounded-xl overflow-hidden border border-white/10 bg-neutral-800/50 backdrop-blur">
-                    {/* Video thumbnail */}
-                    {previewVideoId ? (
-                      <div className="aspect-video relative group cursor-pointer">
-                        <img
-                          src={`https://img.youtube.com/vi/${previewVideoId}/maxresdefault.jpg`}
-                          alt={course.title}
-                          className="h-full w-full object-cover"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg group-hover:scale-110 transition-transform">
-                            <Play className="h-6 w-6 text-neutral-900 ml-0.5" fill="currentColor" />
+                    {/* Course preview image */}
+                    {(() => {
+                      const imgSrc = course.cover_url
+                        || (previewVideoId ? `https://img.youtube.com/vi/${previewVideoId}/maxresdefault.jpg` : null);
+
+                      return imgSrc ? (
+                        <div className="aspect-video relative group cursor-pointer">
+                          <img
+                            src={imgSrc}
+                            alt={course.title}
+                            className="h-full w-full object-cover"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg group-hover:scale-110 transition-transform">
+                              <Play className="h-6 w-6 text-neutral-900 ml-0.5" fill="currentColor" />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="aspect-video flex items-center justify-center bg-gradient-to-br from-neutral-700 to-neutral-800">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur">
-                          <Play className="h-6 w-6 text-white" fill="currentColor" />
+                      ) : (
+                        <div className="aspect-video flex items-center justify-center bg-gradient-to-br from-neutral-700 to-neutral-800">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur">
+                            <Play className="h-6 w-6 text-white" fill="currentColor" />
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* CTA area */}
                     <div className="p-5 space-y-3">
