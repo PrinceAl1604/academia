@@ -18,6 +18,7 @@ export interface CourseRow {
   rating: number;
   students_count: number;
   youtube_preview_url: string | null;
+  cover_url: string | null;
   tags: string[];
   created_at: string;
   updated_at: string;
@@ -179,6 +180,7 @@ export async function createCourse(course: {
   is_free?: boolean;
   is_published?: boolean;
   youtube_preview_url?: string;
+  cover_url?: string;
   tags?: string[];
 }) {
   const { data, error } = await supabase
@@ -211,6 +213,7 @@ export async function updateCourse(
     youtube_preview_url: string;
     tags: string[];
     thumbnail_url: string;
+    cover_url: string;
   }>
 ) {
   const { data, error } = await supabase

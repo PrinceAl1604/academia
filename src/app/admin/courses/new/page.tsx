@@ -38,6 +38,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { CoverUpload } from "@/components/admin/cover-upload";
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -83,6 +84,7 @@ export default function AdminCourseNewPage() {
   const [tags, setTags] = useState("");
   const [isFree, setIsFree] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
 
   // Chapters (modules + lessons)
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -210,6 +212,7 @@ export default function AdminCourseNewPage() {
         total_lessons: totalLessons,
         is_free: isFree,
         is_published: isPublished,
+        cover_url: coverUrl || undefined,
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
       });
 
@@ -278,6 +281,12 @@ export default function AdminCourseNewPage() {
         <div className="space-y-6">
         <Card>
           <CardContent className="space-y-6 pt-6">
+            {/* Cover Image */}
+            <div className="space-y-2">
+              <Label>{isEn ? "Cover Image" : "Image de couverture"}</Label>
+              <CoverUpload value={coverUrl} onChange={setCoverUrl} courseSlug={slug} />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="title">{t.admin.courseTitle} *</Label>
               <Input
