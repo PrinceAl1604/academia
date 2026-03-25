@@ -10,9 +10,9 @@ import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Brightroots — Learn more skills online",
+  title: "Educator — Learn from the best",
   description:
-    "Discover new abilities and enhance your knowledge from anywhere with online learning.",
+    "Access premium courses taught by industry experts. One subscription, unlimited learning.",
   icons: {
     icon: "/logo.svg",
   },

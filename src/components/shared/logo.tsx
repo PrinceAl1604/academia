@@ -10,12 +10,12 @@ export function Logo({ className = "h-5" }: { className?: string }) {
     <>
       <img
         src="/logo-dark.svg"
-        alt="Brightroots"
+        alt="Educator"
         className={`${className} block dark:hidden`}
       />
       <img
         src="/logo-light.svg"
-        alt="Brightroots"
+        alt="Educator"
         className={`${className} hidden dark:block`}
       />
     </>

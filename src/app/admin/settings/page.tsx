@@ -56,7 +56,7 @@ export default function AdminSettingsPage() {
           <Separator />
           <div className="space-y-2">
             <Label>Platform Name</Label>
-            <Input defaultValue="Brightroots" />
+            <Input defaultValue="Educator" />
           </div>
           <div className="space-y-2">
             <Label>Platform URL</Label>

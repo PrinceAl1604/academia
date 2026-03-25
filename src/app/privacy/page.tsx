@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-[#FFF0EB]">
+    <div className="min-h-screen bg-[#faf9f7]">
       <div className="p-8">
         <Link href="/" className="inline-block">
           <Logo className="h-6" />

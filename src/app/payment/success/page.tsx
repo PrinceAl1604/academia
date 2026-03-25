@@ -18,7 +18,7 @@ export default function PaymentSuccessPage() {
 
   if (checking) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#FFF0EB] px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#faf9f7] px-4">
         <Loader2 className="h-10 w-10 animate-spin text-neutral-400" />
         <p className="mt-4 text-neutral-500">Activating your account...</p>
       </div>
@@ -26,7 +26,7 @@ export default function PaymentSuccessPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#FFF0EB] px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#faf9f7] px-4">
       <div className="w-full max-w-md text-center space-y-6">
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
           <CheckCircle className="h-10 w-10 text-green-600" />
