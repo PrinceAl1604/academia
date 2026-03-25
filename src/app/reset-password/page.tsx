@@ -33,7 +33,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf9f7]">
+    <div className="flex min-h-screen flex-col bg-[#FFF0EB]">
       <div className="flex items-center justify-between p-8">
         <Link href="/sign-in" className="inline-block">
           <Logo className="h-6" />

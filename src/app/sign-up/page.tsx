@@ -57,7 +57,7 @@ export default function SignUpPage() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen flex-col bg-[#faf9f7]">
+      <div className="flex min-h-screen flex-col bg-[#FFF0EB]">
         <div className="p-8">
           <Link href="/sign-in" className="inline-block">
             <Logo className="h-6" />
@@ -84,7 +84,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf9f7]">
+    <div className="flex min-h-screen flex-col bg-[#FFF0EB]">
       <div className="flex items-center justify-between p-8">
         <Link href="/sign-in" className="inline-block">
           <Logo className="h-6" />
@@ -131,7 +131,7 @@ export default function SignUpPage() {
 
             {error && <p className="text-sm text-red-500">{error}</p>}
 
-            <Button type="submit" className="h-12 w-full rounded-lg bg-neutral-800 text-base font-medium text-white hover:bg-neutral-700"
+            <Button type="submit" className="h-12 w-full rounded-lg bg-[#7B2FF2] text-base font-medium text-white hover:bg-[#6a20e0]"
               disabled={loading || !email || !password || !name}>
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t.auth.createAccount}
             </Button>

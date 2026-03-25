@@ -42,7 +42,7 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf9f7]">
+    <div className="flex min-h-screen flex-col bg-[#FFF0EB]">
       {/* Logo + Language Toggle */}
       <div className="flex items-center justify-between p-8">
         <Link href="/sign-in" className="inline-block">
@@ -100,7 +100,7 @@ export default function SignInPage() {
 
             <Button
               type="submit"
-              className="h-12 w-full rounded-lg bg-neutral-800 text-base font-medium text-white hover:bg-neutral-700"
+              className="h-12 w-full rounded-lg bg-[#7B2FF2] text-base font-medium text-white hover:bg-[#6a20e0]"
               disabled={loading || !email || !password}
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t.auth.continueEmail}

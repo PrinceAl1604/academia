@@ -4,8 +4,8 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
-const FROM_EMAIL = process.env.FROM_EMAIL || "Educator <noreply@resend.dev>";
-const APP_NAME = "Educator";
+const FROM_EMAIL = process.env.FROM_EMAIL || "Brightroots <noreply@resend.dev>";
+const APP_NAME = "Brightroots";
 
 /**
  * Send a welcome email when a new user signs up.
