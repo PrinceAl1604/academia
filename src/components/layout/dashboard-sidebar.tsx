@@ -14,6 +14,7 @@ import {
   BarChart3,
   KeyRound,
   FolderOpen,
+  Users,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -26,6 +27,7 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const { isAdmin, isAuthenticated, isPro, logout, userName } = useAuth();
   const { t } = useLanguage();
+  const isEn = t.nav.signIn === "Sign In";
 
   // ─── Student navigation ───────────────────────────────────────────────
   const studentNav = [
@@ -45,6 +47,7 @@ export function DashboardSidebar() {
     { label: t.admin.manageCourses, href: "/admin/courses", icon: BookOpen },
     { label: t.nav.signIn === "Sign In" ? "Categories" : "Catégories", href: "/admin/categories", icon: FolderOpen },
     { label: t.admin.licences, href: "/admin/licences", icon: KeyRound },
+    { label: isEn ? "Students" : "Étudiants", href: "/admin/students", icon: Users },
     { label: t.admin.analytics, href: "/admin/analytics", icon: BarChart3 },
   ];
 
