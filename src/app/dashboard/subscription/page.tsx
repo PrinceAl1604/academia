@@ -21,13 +21,22 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { SUBSCRIPTION_PRICE, SUBSCRIPTION_CURRENCY } from "@/lib/licence";
 
-const FEATURES = [
+const FEATURES_EN = [
   "Access to all courses",
   "Certificate of completion",
   "Downloadable resources",
   "Community access",
   "Priority support",
   "New courses as they launch",
+];
+
+const FEATURES_FR = [
+  "Accès à tous les cours",
+  "Certificat de complétion",
+  "Ressources téléchargeables",
+  "Accès à la communauté",
+  "Support prioritaire",
+  "Nouveaux cours dès leur sortie",
 ];
 
 export default function SubscriptionPage() {
@@ -423,7 +432,7 @@ function SubscriptionContent() {
         </h3>
         <Separator className="my-4" />
         <ul className="space-y-3">
-          {FEATURES.map((feature) => (
+          {(isEn ? FEATURES_EN : FEATURES_FR).map((feature) => (
             <li
               key={feature}
               className="flex items-center gap-2 text-sm text-neutral-700"
