@@ -16,7 +16,7 @@ export default function TermsPage() {
         <div className="mt-8 space-y-6 text-sm leading-relaxed text-neutral-700">
           <section>
             <h2 className="text-lg font-semibold text-neutral-900">1. Acceptance of Terms</h2>
-            <p className="mt-2">By using Educator, you agree to these terms. If you do not agree, please do not use our platform.</p>
+            <p className="mt-2">By using Brightroots, you agree to these terms. If you do not agree, please do not use our platform.</p>
           </section>
 
           <section>
@@ -31,7 +31,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-neutral-900">4. Content</h2>
-            <p className="mt-2">All course content is owned by Educator. You may not reproduce, distribute, or share course materials without written permission.</p>
+            <p className="mt-2">All course content is owned by Brightroots. You may not reproduce, distribute, or share course materials without written permission.</p>
           </section>
 
           <section>

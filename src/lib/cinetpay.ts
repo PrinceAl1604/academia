@@ -10,7 +10,7 @@
 // Subscription pricing
 export const SUBSCRIPTION_PRICE = 15000; // FCFA
 export const SUBSCRIPTION_CURRENCY = "XOF";
-export const SUBSCRIPTION_NAME = "Educator Pro - Monthly";
+export const SUBSCRIPTION_NAME = "Brightroots Pro - Monthly";
 
 /**
  * Generate a unique transaction ID

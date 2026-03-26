@@ -1,21 +1,21 @@
 "use client";
 
 /**
- * Logo component that switches between dark and light versions.
- * - Light mode: shows black logo (logo-dark.svg)
- * - Dark mode: shows white logo (logo-light.svg)
+ * Logo component — uses the Brightroots logo SVG.
+ * Shows the same logo in both light and dark modes
+ * (the SVG itself handles the color via its internal styling).
  */
 export function Logo({ className = "h-5" }: { className?: string }) {
   return (
     <>
       <img
-        src="/logo-dark.svg"
-        alt="Educator"
+        src="/logo-brightroots.svg"
+        alt="Brightroots"
         className={`${className} block dark:hidden`}
       />
       <img
-        src="/logo-light.svg"
-        alt="Educator"
+        src="/logo-brightroots.svg"
+        alt="Brightroots"
         className={`${className} hidden dark:block`}
       />
     </>
