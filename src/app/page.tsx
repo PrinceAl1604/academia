@@ -86,8 +86,8 @@ export default function HomePage() {
               onClick={() => setSelectedCategory("All")}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                 selectedCategory === "All"
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50"
+                  ? "border-[#7B2FF2] bg-[#7B2FF2] text-white"
+                  : "border-neutral-200 bg-white text-neutral-600 hover:border-[#7B2FF2]/30 hover:bg-[#EDE5FF]/50 hover:text-[#7B2FF2]"
               }`}
             >
               {t.catalog.all}
