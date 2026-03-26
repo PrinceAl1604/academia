@@ -2,21 +2,14 @@
 
 /**
  * Full Brightroots logo (icon + wordmark) — used only on auth pages.
- * Switches between light and dark mode versions.
+ * Uses the dark text version which is visible on the light auth background.
  */
-export function FullLogo({ className = "h-8" }: { className?: string }) {
+export function FullLogo({ className = "h-7" }: { className?: string }) {
   return (
-    <>
-      <img
-        src="/logo-login-light.svg"
-        alt="Brightroots"
-        className={`${className} block dark:hidden`}
-      />
-      <img
-        src="/logo-login-dark.svg"
-        alt="Brightroots"
-        className={`${className} hidden dark:block`}
-      />
-    </>
+    <img
+      src="/logo-login.svg"
+      alt="Brightroots"
+      className={className}
+    />
   );
 }

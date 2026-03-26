@@ -60,7 +60,7 @@ export default function SignUpPage() {
       <div className="flex min-h-screen flex-col bg-[#faf9f7]">
         <div className="p-8">
           <Link href="/sign-in" className="inline-block">
-            <FullLogo className="h-10" />
+            <FullLogo className="h-7" />
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center px-4 pb-20">
@@ -87,7 +87,7 @@ export default function SignUpPage() {
     <div className="flex min-h-screen flex-col bg-[#faf9f7]">
       <div className="flex items-center justify-between p-8">
         <Link href="/sign-in" className="inline-block">
-          <FullLogo className="h-10" />
+          <FullLogo className="h-7" />
         </Link>
         <LanguageToggle />
       </div>

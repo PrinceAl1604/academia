@@ -46,7 +46,7 @@ export default function SignInPage() {
       {/* Logo + Language Toggle */}
       <div className="flex items-center justify-between p-8">
         <Link href="/sign-in" className="inline-block">
-          <FullLogo className="h-10" />
+          <FullLogo className="h-7" />
         </Link>
         <LanguageToggle />
       </div>
