@@ -2,12 +2,12 @@
 
 /**
  * Full Brightroots logo (icon + wordmark) — used only on auth pages.
- * Uses the dark text version which is visible on the light auth background.
+ * Auth pages have a light background (#faf9f7), so always use dark text version.
  */
 export function FullLogo({ className = "h-7" }: { className?: string }) {
   return (
     <img
-      src="/logo-login.svg"
+      src="/logo-login-dark.svg"
       alt="Brightroots"
       className={className}
     />
