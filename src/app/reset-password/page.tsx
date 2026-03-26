@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { Logo } from "@/components/shared/logo";
+import { FullLogo } from "@/components/shared/full-logo";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 
 export default function ResetPasswordPage() {
@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
     <div className="flex min-h-screen flex-col bg-[#faf9f7]">
       <div className="flex items-center justify-between p-8">
         <Link href="/sign-in" className="inline-block">
-          <Logo className="h-6" />
+          <FullLogo className="h-10" />
         </Link>
         <LanguageToggle />
       </div>
