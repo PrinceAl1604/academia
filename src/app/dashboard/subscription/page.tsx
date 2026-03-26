@@ -115,6 +115,38 @@ function SubscriptionContent() {
   const [success, setSuccess] = useState(false);
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [currencySearch, setCurrencySearch] = useState("");
+  const [paymentPending, setPaymentPending] = useState(false);
+
+  // Open Chariow checkout in a popup window and poll for it to close
+  const openCheckoutPopup = () => {
+    const checkoutUrl = "https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout";
+    const width = 500;
+    const height = 700;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    const popup = window.open(
+      checkoutUrl,
+      "brightroots-checkout",
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+
+    if (popup) {
+      setPaymentPending(true);
+      // Poll every 1s to check if popup is closed
+      const pollTimer = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(pollTimer);
+          setPaymentPending(false);
+          // Popup closed — user may have completed payment
+          // Show a message to enter their licence key
+        }
+      }, 1000);
+    } else {
+      // Popup blocked — fallback to new tab
+      window.open(checkoutUrl, "_blank");
+    }
+  };
   const [selectedCurrency, setSelectedCurrency] = useState(() => {
     // Auto-detect currency from browser locale
     try {
@@ -217,7 +249,7 @@ function SubscriptionContent() {
                 <Button
                   size="sm"
                   className="gap-1.5"
-                  onClick={() => window.location.href = "https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout"}
+                  onClick={openCheckoutPopup}
                 >
                   <Crown className="h-3.5 w-3.5" />
                   {isEn ? "Renew" : "Renouveler"}
@@ -331,10 +363,20 @@ function SubscriptionContent() {
 
                 <Button
                   className="mt-4 h-12 w-full gap-2 text-base"
-                  onClick={() => window.location.href = "https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout?success_url=" + encodeURIComponent(window.location.origin + "/payment/success")}
+                  onClick={openCheckoutPopup}
+                  disabled={paymentPending}
                 >
-                  <Crown className="h-5 w-5" />
-                  {t.nav.signIn === "Sign In" ? "Pay Now" : "Payer maintenant"}
+                  {paymentPending ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      {isEn ? "Waiting for payment..." : "En attente du paiement..."}
+                    </>
+                  ) : (
+                    <>
+                      <Crown className="h-5 w-5" />
+                      {isEn ? "Pay Now" : "Payer maintenant"}
+                    </>
+                  )}
                 </Button>
 
                 <p className="mt-3 text-xs text-neutral-400">
