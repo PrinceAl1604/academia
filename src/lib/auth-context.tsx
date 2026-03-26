@@ -85,6 +85,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("id", userId)
       .single();
 
+    // If user doesn't exist in users table, create them
+    if (error && error.code === "PGRST116") {
+      const session = (await supabase.auth.getSession()).data.session;
+      const meta = session?.user?.user_metadata;
+      await supabase.from("users").insert({
+        id: userId,
+        email: session?.user?.email || "",
+        name: meta?.full_name || session?.user?.email?.split("@")[0] || "",
+        role: "student",
+        subscription_tier: "free",
+      });
+      setRole("user");
+      setPlan("free");
+      return;
+    }
+
     if (data && !error) {
       const userRole = (data.role as Role) || "user";
       setRole(userRole);

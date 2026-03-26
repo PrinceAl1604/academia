@@ -106,14 +106,33 @@ export async function POST(request: Request) {
       })
       .eq("id", licence.id);
 
-    // Upgrade user to Pro
-    await supabase
+    // Upgrade user to Pro (upsert — create if missing)
+    const { data: existingUser } = await supabase
       .from("users")
-      .update({
+      .select("id")
+      .eq("id", user_id)
+      .single();
+
+    if (existingUser) {
+      await supabase
+        .from("users")
+        .update({
+          subscription_tier: "pro",
+          pro_expires_at: proExpiresAt,
+        })
+        .eq("id", user_id);
+    } else {
+      // User exists in auth but not in users table — create them
+      const { data: authData } = await supabase.auth.admin.getUserById(user_id);
+      await supabase.from("users").insert({
+        id: user_id,
+        email: authData?.user?.email || "",
+        name: authData?.user?.user_metadata?.full_name || authData?.user?.email?.split("@")[0] || "",
+        role: "student",
         subscription_tier: "pro",
         pro_expires_at: proExpiresAt,
-      })
-      .eq("id", user_id);
+      });
+    }
 
     // Send confirmation email (non-blocking)
     try {
