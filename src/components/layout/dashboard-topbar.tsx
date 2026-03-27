@@ -30,6 +30,8 @@ import {
   Trophy,
   UserPlus,
   BookPlus,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -50,6 +52,7 @@ interface Notification {
 
 export function DashboardTopbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const pathname = usePathname();
   const { isAdmin, isAuthenticated, userName, logout } = useAuth();
@@ -104,13 +107,20 @@ export function DashboardTopbar() {
     if (isAuthenticated) loadNotifications();
   }, [isAdmin, isAuthenticated]);
 
-  // Load dark mode from localStorage
+  // Load + toggle dark mode
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "dark") {
+      setDarkMode(true);
       document.documentElement.classList.add("dark");
     }
   }, []);
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    document.documentElement.classList.toggle("dark");
+    localStorage.setItem("theme", !darkMode ? "dark" : "light");
+  };
 
   return (
     <>
@@ -177,6 +187,11 @@ export function DashboardTopbar() {
       {/* Actions */}
       <div className="flex items-center gap-2">
         <LanguageToggle />
+
+        {/* Dark mode toggle */}
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleDarkMode}>
+          {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
 
         {isAuthenticated ? (
           <>
