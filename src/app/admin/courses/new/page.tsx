@@ -327,7 +327,11 @@ export default function AdminCourseNewPage() {
                 {categories.length > 0 ? (
                   <div className="space-y-2">
                     <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
-                      <SelectTrigger><SelectValue placeholder={t.admin.selectCategory} /></SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t.admin.selectCategory}>
+                          {categories.find((c) => c.id === categoryId)?.name || t.admin.selectCategory}
+                        </SelectValue>
+                      </SelectTrigger>
                       <SelectContent>
                         {categories.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>

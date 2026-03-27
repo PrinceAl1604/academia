@@ -174,10 +174,14 @@
   color: oklch(0.45 0 0) !important;
 }
 
-/* Buttons */
-.dark .bg-neutral-800 { background-color: oklch(0.90 0 0) !important; color: oklch(0.12 0 0) !important; }
-.dark .bg-neutral-900 { background-color: oklch(0.95 0 0) !important; color: oklch(0.12 0 0) !important; }
+/* Buttons — only override non-forced ones */
+.dark .bg-neutral-800:not([class*="!"]) { background-color: oklch(0.90 0 0) !important; color: oklch(0.12 0 0) !important; }
+.dark .bg-neutral-900:not([data-slot]):not(header):not(.border-neutral-900) { background-color: oklch(0.95 0 0) !important; color: oklch(0.12 0 0) !important; }
 .dark .hover\:bg-neutral-700:hover { background-color: oklch(0.85 0 0) !important; }
+
+/* Preserve explicitly forced white buttons in dark areas */
+.dark .\!bg-white { background-color: white !important; color: oklch(0.12 0 0) !important; }
+.dark .hover\:\!bg-neutral-200:hover { background-color: oklch(0.90 0 0) !important; }
 
 /* Category pills */
 .dark .border-neutral-900.bg-neutral-900 { background-color: oklch(0.95 0 0) !important; color: oklch(0.12 0 0) !important; border-color: oklch(0.95 0 0) !important; }
