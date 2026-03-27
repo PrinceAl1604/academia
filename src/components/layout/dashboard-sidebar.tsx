@@ -44,8 +44,9 @@ export function DashboardSidebar() {
   // ─── Admin navigation ─────────────────────────────────────────────────
   const adminNav = [
     { label: t.admin.dashboard, href: "/admin", icon: Shield },
+    { label: isEn ? "Explorer" : "Explorateur", href: "/admin/explorer", icon: LayoutDashboard },
     { label: t.admin.manageCourses, href: "/admin/courses", icon: BookOpen },
-    { label: t.nav.signIn === "Sign In" ? "Categories" : "Catégories", href: "/admin/categories", icon: FolderOpen },
+    { label: isEn ? "Categories" : "Catégories", href: "/admin/categories", icon: FolderOpen },
     { label: t.admin.licences, href: "/admin/licences", icon: KeyRound },
     { label: isEn ? "Students" : "Étudiants", href: "/admin/students", icon: Users },
     { label: t.admin.analytics, href: "/admin/analytics", icon: BarChart3 },
