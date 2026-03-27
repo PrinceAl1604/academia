@@ -22,16 +22,12 @@ import {
   Bell,
   Menu,
   Search,
-  User,
   Settings,
   LogOut,
   CreditCard,
   LayoutDashboard,
   BookOpen,
   Trophy,
-  HelpCircle,
-  Moon,
-  Sun,
   UserPlus,
   BookPlus,
 } from "lucide-react";
@@ -54,7 +50,6 @@ interface Notification {
 
 export function DashboardTopbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const pathname = usePathname();
   const { isAdmin, isAuthenticated, userName, logout } = useAuth();
@@ -109,17 +104,10 @@ export function DashboardTopbar() {
     if (isAuthenticated) loadNotifications();
   }, [isAdmin, isAuthenticated]);
 
-  // Dark mode toggle
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle("dark");
-    localStorage.setItem("theme", !darkMode ? "dark" : "light");
-  };
-
+  // Load dark mode from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "dark") {
-      setDarkMode(true);
       document.documentElement.classList.add("dark");
     }
   }, []);
@@ -253,27 +241,9 @@ export function DashboardTopbar() {
                 )}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem render={<Link href="/dashboard/profile" />} className="gap-2">
-                  <User className="h-4 w-4" />
-                  {t.profile.title}
-                </DropdownMenuItem>
-                <DropdownMenuItem render={<Link href="/dashboard/settings" />} className="gap-2">
+                <DropdownMenuItem render={<Link href={isAdmin ? "/admin/settings" : "/dashboard/settings"} />} className="gap-2">
                   <Settings className="h-4 w-4" />
                   {t.settings.title}
-                </DropdownMenuItem>
-                {!isAdmin && (
-                  <DropdownMenuItem render={<Link href="/dashboard/subscription" />} className="gap-2">
-                    <CreditCard className="h-4 w-4" />
-                    {t.subscription.title}
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                {/* Dark Mode Toggle */}
-                <DropdownMenuItem className="gap-2" onClick={toggleDarkMode}>
-                  {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                  {darkMode
-                    ? (t.nav.signIn === "Sign In" ? "Light Mode" : "Mode clair")
-                    : (t.nav.signIn === "Sign In" ? "Dark Mode" : "Mode sombre")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="gap-2 text-red-600" onClick={logout}>
