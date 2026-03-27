@@ -76,7 +76,7 @@ export async function getCourses(): Promise<CourseRow[]> {
     `
     )
     .eq("is_published", true)
-    .order("created_at", { ascending: true });
+    .order("sort_order", { ascending: true });
 
   if (error) {
     console.error("Error fetching courses:", error);
@@ -157,7 +157,7 @@ export async function getCategories(): Promise<CategoryRow[]> {
   const { data, error } = await supabase
     .from("categories")
     .select("*")
-    .order("name", { ascending: true });
+    .order("sort_order", { ascending: true });
 
   if (error) return [];
   return data ?? [];
