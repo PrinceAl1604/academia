@@ -182,7 +182,6 @@ function SubscriptionContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           key: licenceKey.trim(),
-          user_id: user.id,
         }),
       });
 

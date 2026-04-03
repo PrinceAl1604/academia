@@ -1,12 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import { validateUserAccess, getSupabaseAdmin } from "@/lib/supabase-server";
 
 // Simple in-memory rate limiter: max 5 attempts per IP per 15 minutes
 const attempts = new Map<string, { count: number; resetAt: number }>();
@@ -27,6 +20,15 @@ function checkRateLimit(ip: string): boolean {
 
 export async function POST(request: Request) {
   try {
+    // ─── Server-side auth check ─────────────────────────────────
+    const access = await validateUserAccess();
+    if (!access.authenticated || !access.user) {
+      return NextResponse.json(
+        { error: "You must be signed in to activate a licence key." },
+        { status: 401 }
+      );
+    }
+
     // Rate limiting
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -40,11 +42,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { key, user_id } = await request.json();
+    const { key } = await request.json();
+    // Use the server-validated user ID — never trust client-sent user_id
+    const user_id = access.user.id;
 
-    if (!key || !user_id) {
+    if (!key) {
       return NextResponse.json(
-        { error: "Missing key or user_id" },
+        { error: "Missing licence key" },
         { status: 400 }
       );
     }

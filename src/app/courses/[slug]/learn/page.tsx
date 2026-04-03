@@ -37,6 +37,23 @@ function getYouTubeId(url: string): string | null {
   return match?.[1] ?? null;
 }
 
+/**
+ * Fetch lesson content through the secure server API.
+ * The server checks Pro status and only returns youtube_url if authorized.
+ */
+async function fetchSecureLesson(
+  lessonId: string
+): Promise<{ youtube_url: string | null; locked: boolean } | null> {
+  try {
+    const res = await fetch(`/api/lessons/${lessonId}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return { youtube_url: data.youtube_url, locked: data.locked };
+  } catch {
+    return null;
+  }
+}
+
 export default function CoursePlayerPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -51,6 +68,8 @@ export default function CoursePlayerPage() {
   >(null);
   const [loading, setLoading] = useState(true);
   const [activeLesson, setActiveLesson] = useState<LessonRow | null>(null);
+  const [secureVideoUrl, setSecureVideoUrl] = useState<string | null>(null);
+  const [lessonLocked, setLessonLocked] = useState(false);
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(
@@ -89,6 +108,28 @@ export default function CoursePlayerPage() {
     load();
   }, [slug, user, lessonParam]);
 
+  // ─── Fetch video URL from secure API when lesson changes ────
+  useEffect(() => {
+    if (!activeLesson) {
+      setSecureVideoUrl(null);
+      setLessonLocked(false);
+      return;
+    }
+    let cancelled = false;
+    fetchSecureLesson(activeLesson.id).then((result) => {
+      if (cancelled) return;
+      if (result) {
+        setSecureVideoUrl(result.youtube_url);
+        setLessonLocked(result.locked);
+      } else {
+        // Fallback: use client-side data (for free lessons)
+        setSecureVideoUrl(activeLesson.youtube_url);
+        setLessonLocked(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [activeLesson?.id]);
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-white dark:bg-neutral-950">
@@ -105,6 +146,8 @@ export default function CoursePlayerPage() {
     );
   }
 
+  // Course-level lock (client-side, for the overall UI)
+  // The actual video URL is gated server-side via secureVideoUrl
   const isLocked = !isPro && !course.is_free;
 
   if (!isAuthenticated) {
@@ -144,8 +187,9 @@ export default function CoursePlayerPage() {
   const completedCount = allLessons.filter((l) => completedLessons.has(l.id)).length;
   const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
-  const youtubeId = activeLesson?.youtube_url
-    ? getYouTubeId(activeLesson.youtube_url)
+  // Use the server-verified video URL, not the client-side one
+  const youtubeId = secureVideoUrl
+    ? getYouTubeId(secureVideoUrl)
     : null;
 
   const toggleModule = (moduleId: string) => {
@@ -236,7 +280,22 @@ export default function CoursePlayerPage() {
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Video Player — always dark bg for the video */}
           <div className="relative w-full bg-black" style={{ aspectRatio: "16/9", maxHeight: "calc(100vh - 12rem)" }}>
-            {youtubeId ? (
+            {lessonLocked ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 backdrop-blur">
+                  <Lock className="h-7 w-7 text-neutral-400" />
+                </div>
+                <p className="text-sm text-neutral-300 font-medium">
+                  {isEn ? "Pro membership required" : "Abonnement Pro requis"}
+                </p>
+                <Link
+                  href="/dashboard/subscription"
+                  className="mt-1 rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
+                >
+                  {isEn ? "Upgrade to Pro" : "Passer au Pro"}
+                </Link>
+              </div>
+            ) : youtubeId ? (
               <iframe
                 src={`https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&color=white&autoplay=1`}
                 className="absolute inset-0 h-full w-full"
