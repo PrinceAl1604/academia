@@ -82,43 +82,43 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
           {t.dashboard.welcomeBack}, {firstName}!
         </h1>
-        <p className="mt-1 text-neutral-500">{t.dashboard.continueSubtitle}</p>
+        <p className="mt-1 text-neutral-500 dark:text-neutral-400">{t.dashboard.continueSubtitle}</p>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-              <BookOpen className="h-5 w-5 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/10">
+              <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-neutral-900">{enrolledCourses.length}</p>
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{enrolledCourses.length}</p>
               <p className="text-sm text-neutral-500">{t.dashboard.enrolledCourses}</p>
             </div>
           </div>
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
-              <Play className="h-5 w-5 text-green-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 dark:bg-green-500/10">
+              <Play className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-neutral-900">{completedCount}</p>
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{completedCount}</p>
               <p className="text-sm text-neutral-500">{t.dashboard.lessonsCompleted}</p>
             </div>
           </div>
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
-              <Trophy className="h-5 w-5 text-purple-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-500/10">
+              <Trophy className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-neutral-900">0</p>
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">0</p>
               <p className="text-sm text-neutral-500">{t.dashboard.certificatesLabel}</p>
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function DashboardPage() {
       {/* Enrolled Courses */}
       <div>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-neutral-900">{t.dashboard.continueLearning}</h2>
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">{t.dashboard.continueLearning}</h2>
           <Button variant="ghost" size="sm" className="gap-1" render={<Link href="/dashboard/courses" />}>
             {t.dashboard.viewAll}
             <ArrowRight className="h-3.5 w-3.5" />
@@ -152,14 +152,14 @@ export default function DashboardPage() {
           <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {enrolledCourses.map((course) => (
               <Card key={course.id} className="overflow-hidden">
-                <div className="aspect-video bg-gradient-to-br from-neutral-100 to-neutral-200">
+                <div className="aspect-video bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
                   <div className="flex h-full items-center justify-center">
                     <BookOpen className="h-8 w-8 text-neutral-300" />
                   </div>
                 </div>
                 <div className="p-4">
                   <Badge variant="secondary" className="mb-2 text-xs">{course.category_name}</Badge>
-                  <h3 className="font-semibold text-neutral-900 line-clamp-1">{course.title}</h3>
+                  <h3 className="font-semibold text-neutral-900 dark:text-white line-clamp-1">{course.title}</h3>
                   <p className="mt-1 text-xs text-neutral-500">
                     {course.total_lessons} {t.courseDetail.lessons} · {course.duration_hours}h
                   </p>

@@ -17,12 +17,12 @@ interface CourseCardProps {
 
 // Soft gradient backgrounds for thumbnails
 const gradients = [
-  "from-orange-100 via-rose-100 to-amber-100",
-  "from-blue-100 via-indigo-100 to-purple-100",
-  "from-emerald-100 via-teal-100 to-cyan-100",
-  "from-pink-100 via-fuchsia-100 to-purple-100",
-  "from-amber-100 via-yellow-100 to-orange-100",
-  "from-sky-100 via-blue-100 to-indigo-100",
+  "from-orange-100 via-rose-100 to-amber-100 dark:from-orange-900/30 dark:via-rose-900/30 dark:to-amber-900/30",
+  "from-blue-100 via-indigo-100 to-purple-100 dark:from-blue-900/30 dark:via-indigo-900/30 dark:to-purple-900/30",
+  "from-emerald-100 via-teal-100 to-cyan-100 dark:from-emerald-900/30 dark:via-teal-900/30 dark:to-cyan-900/30",
+  "from-pink-100 via-fuchsia-100 to-purple-100 dark:from-pink-900/30 dark:via-fuchsia-900/30 dark:to-purple-900/30",
+  "from-amber-100 via-yellow-100 to-orange-100 dark:from-amber-900/30 dark:via-yellow-900/30 dark:to-orange-900/30",
+  "from-sky-100 via-blue-100 to-indigo-100 dark:from-sky-900/30 dark:via-blue-900/30 dark:to-indigo-900/30",
 ];
 
 function hashCode(str: string): number {
@@ -63,7 +63,7 @@ export function CourseCard({
   if (variant === "compact") {
     const compactCard = (
       <div
-        className={`group relative rounded-xl border border-neutral-200/60 bg-white transition-all hover:shadow-md ${
+        className={`group relative rounded-xl border border-neutral-200/60 dark:border-neutral-800 bg-white dark:bg-neutral-900 transition-all hover:shadow-md ${
           locked ? "opacity-70" : ""
         }`}
       >
@@ -85,10 +85,10 @@ export function CourseCard({
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-neutral-900 truncate">
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
               {course.title}
             </h3>
-            <p className="mt-0.5 text-xs text-neutral-500">
+            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
               {totalLessons} {totalLessons === 1 ? "class" : "classes"}
             </p>
           </div>
@@ -109,16 +109,16 @@ export function CourseCard({
 
   const defaultCard = (
     <div
-      className={`group relative w-[320px] flex-shrink-0 rounded-xl border border-neutral-200/60 bg-white transition-all hover:shadow-md ${
+      className={`group relative w-[320px] flex-shrink-0 rounded-xl border border-neutral-200/60 dark:border-neutral-800 bg-white dark:bg-neutral-900 transition-all hover:shadow-md ${
         locked ? "opacity-70" : ""
       }`}
     >
       {/* Header with number + category tag */}
       <div className="flex items-center gap-2 px-4 pt-3 pb-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 text-xs font-semibold text-neutral-600">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 text-xs font-semibold text-neutral-600 dark:text-neutral-300">
           {index + 1}
         </span>
-        <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600">
+        <span className="rounded-full bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 text-xs font-medium text-neutral-600 dark:text-neutral-300">
           {categoryName}
         </span>
         {locked && <Lock className="ml-auto h-3.5 w-3.5 text-neutral-400" />}
@@ -154,10 +154,10 @@ export function CourseCard({
 
       {/* Content */}
       <div className="px-4 pt-3 pb-4">
-        <h3 className="text-sm font-semibold text-neutral-900 leading-snug">
+        <h3 className="text-sm font-semibold text-neutral-900 dark:text-white leading-snug">
           {course.title}
         </h3>
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
           {totalLessons} {totalLessons === 1 ? "class" : "classes"}
         </p>
 

@@ -19,7 +19,7 @@ export function Navbar() {
   const { t } = useLanguage();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-neutral-200 dark:border-neutral-800 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center">
@@ -30,19 +30,19 @@ export function Navbar() {
         <nav className="hidden items-center gap-8 md:flex">
           <Link
             href="/courses"
-            className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900"
+            className="text-sm font-medium text-neutral-600 dark:text-neutral-400 transition-colors hover:text-neutral-900 dark:hover:text-white"
           >
             {t.nav.courses}
           </Link>
           <Link
             href="/pricing"
-            className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900"
+            className="text-sm font-medium text-neutral-600 dark:text-neutral-400 transition-colors hover:text-neutral-900 dark:hover:text-white"
           >
             {t.nav.pricing}
           </Link>
           <Link
             href="/about"
-            className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900"
+            className="text-sm font-medium text-neutral-600 dark:text-neutral-400 transition-colors hover:text-neutral-900 dark:hover:text-white"
           >
             {t.nav.about}
           </Link>
@@ -99,19 +99,19 @@ export function Navbar() {
               <nav className="flex flex-col gap-4">
                 <Link
                   href="/courses"
-                  className="text-lg font-medium text-neutral-900"
+                  className="text-lg font-medium text-neutral-900 dark:text-white"
                 >
                   {t.nav.courses}
                 </Link>
                 <Link
                   href="/pricing"
-                  className="text-lg font-medium text-neutral-900"
+                  className="text-lg font-medium text-neutral-900 dark:text-white"
                 >
                   {t.nav.pricing}
                 </Link>
                 <Link
                   href="/about"
-                  className="text-lg font-medium text-neutral-900"
+                  className="text-lg font-medium text-neutral-900 dark:text-white"
                 >
                   {t.nav.about}
                 </Link>

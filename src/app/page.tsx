@@ -7,15 +7,17 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { CourseCarousel } from "@/components/shared/course-carousel";
 import { getCourses, getCategories, type CourseRow, type CategoryRow } from "@/lib/api";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 
 export default function HomePage() {
   const { isPro } = useAuth();
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [courses, setCourses] = useState<CourseRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const isEn = t.nav.signIn === "Sign In";
 
   // Fetch courses and categories from Supabase
   useEffect(() => {
@@ -37,9 +39,26 @@ export default function HomePage() {
   );
 
   const filteredCourses = useMemo(() => {
-    if (selectedCategory === "All") return courses;
-    return courses.filter((c) => c.category?.name === selectedCategory);
-  }, [selectedCategory, courses]);
+    let result = courses;
+
+    // Filter by category
+    if (selectedCategory !== "All") {
+      result = result.filter((c) => c.category?.name === selectedCategory);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (c) =>
+          c.title.toLowerCase().includes(q) ||
+          c.description?.toLowerCase().includes(q) ||
+          c.category?.name.toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [selectedCategory, searchQuery, courses]);
 
   const coursesByCategory = useMemo(() => {
     const grouped: Record<string, CourseRow[]> = {};
@@ -68,16 +87,34 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50/50">
+    <div className="min-h-screen bg-neutral-50/50 dark:bg-neutral-950">
       <DashboardSidebar />
       <div className="lg:pl-64">
         <DashboardTopbar />
         <main className="px-4 py-6 lg:px-8 lg:py-8">
-          {/* Page header */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-neutral-900">
+          {/* Page header + Search */}
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
               {t.nav.courses}
             </h1>
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={isEn ? "Search courses..." : "Rechercher des cours..."}
+                className="h-9 w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 pl-9 pr-8 text-sm text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Category filter pills */}
@@ -86,8 +123,8 @@ export default function HomePage() {
               onClick={() => setSelectedCategory("All")}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                 selectedCategory === "All"
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50"
+                  ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900"
+                  : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
               }`}
             >
               {t.catalog.all}
@@ -98,8 +135,8 @@ export default function HomePage() {
                 onClick={() => setSelectedCategory(cat)}
                 className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                   selectedCategory === cat
-                    ? "border-neutral-900 bg-neutral-900 text-white"
-                    : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50"
+                    ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900"
+                    : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 }`}
               >
                 {cat}
@@ -134,7 +171,21 @@ export default function HomePage() {
 
           {!loading && filteredCourses.length === 0 && (
             <div className="py-20 text-center">
-              <p className="text-neutral-500">{t.catalog.noCourses}</p>
+              <p className="text-neutral-500 dark:text-neutral-400">
+                {searchQuery
+                  ? (isEn
+                    ? `No courses found for "${searchQuery}"`
+                    : `Aucun cours trouvé pour "${searchQuery}"`)
+                  : t.catalog.noCourses}
+              </p>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="mt-3 text-sm text-neutral-500 underline hover:text-neutral-700 dark:hover:text-neutral-300"
+                >
+                  {isEn ? "Clear search" : "Effacer la recherche"}
+                </button>
+              )}
             </div>
           )}
         </main>

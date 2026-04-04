@@ -76,50 +76,50 @@ export default function AdminDashboardPage() {
       label: t.admin.totalStudents,
       value: stats?.totalStudents ?? 0,
       icon: Users,
-      color: "bg-blue-50 text-blue-600",
+      color: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
     },
     {
-      label: "Pro Subscribers",
+      label: t.admin.proSubscribers,
       value: stats?.proStudents ?? 0,
       icon: Crown,
-      color: "bg-amber-50 text-amber-600",
+      color: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
     },
     {
       label: t.admin.totalCourses,
       value: `${stats?.publishedCourses ?? 0} / ${stats?.totalCourses ?? 0}`,
       icon: BookOpen,
-      color: "bg-purple-50 text-purple-600",
-      subtitle: "published / total",
+      color: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
+      subtitle: t.admin.publishedSlashTotal,
     },
     {
-      label: "New Signups (30d)",
+      label: t.admin.newSignups30d,
       value: stats?.recentSignups ?? 0,
       icon: TrendingUp,
-      color: "bg-green-50 text-green-600",
+      color: "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400",
     },
   ];
 
   const quickActions = [
     {
       label: t.admin.addCourse,
-      description: "Create a new course",
+      description: t.admin.createNewCourse,
       href: "/admin/courses/new",
       icon: Plus,
-      color: "bg-blue-50 text-blue-600",
+      color: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
     },
     {
       label: t.admin.manageCourses,
-      description: "Edit or delete courses",
+      description: t.admin.editOrDeleteCourses,
       href: "/admin/courses",
       icon: BookOpen,
-      color: "bg-purple-50 text-purple-600",
+      color: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
     },
     {
       label: t.admin.viewAnalytics,
-      description: "Detailed analytics",
+      description: t.admin.detailedAnalytics,
       href: "/admin/analytics",
       icon: BarChart3,
-      color: "bg-green-50 text-green-600",
+      color: "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400",
     },
   ];
 
@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
           {t.admin.dashboard}
         </h1>
         <p className="mt-1 text-neutral-500">{t.admin.overview}</p>
@@ -145,7 +145,7 @@ export default function AdminDashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-neutral-500">{stat.label}</p>
-                <p className="text-2xl font-bold text-neutral-900">
+                <p className="text-2xl font-bold text-neutral-900 dark:text-white">
                   {typeof stat.value === "number"
                     ? stat.value.toLocaleString()
                     : stat.value}
@@ -158,7 +158,7 @@ export default function AdminDashboardPage() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900">
+        <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">
           {t.admin.quickActions}
         </h2>
         <div className="grid gap-4 sm:grid-cols-3">
@@ -174,7 +174,7 @@ export default function AdminDashboardPage() {
                   <action.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-medium text-neutral-900">{action.label}</p>
+                  <p className="font-medium text-neutral-900 dark:text-white">{action.label}</p>
                   <p className="mt-0.5 text-sm text-neutral-500">
                     {action.description}
                   </p>
