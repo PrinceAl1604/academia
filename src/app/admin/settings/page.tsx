@@ -112,7 +112,7 @@ export default function AdminSettingsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
+                "flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors",
                 activeTab === tab.id
                   ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
                   : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
@@ -125,7 +125,7 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 max-w-2xl">
+        <div className="flex-1 w-full max-w-2xl">
           {/* ─── Profile ─────────────────────────────────────────── */}
           {activeTab === "profile" && (
             <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">

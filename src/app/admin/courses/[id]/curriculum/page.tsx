@@ -373,13 +373,13 @@ function LessonEditor({
   return (
     <div className="space-y-2 px-4 py-3 hover:bg-neutral-50/50">
       {/* Row 1: Title + Type + Free + Delete */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <GripVertical className="h-3.5 w-3.5 text-neutral-200 shrink-0" />
         <span className="text-xs font-medium text-neutral-400 w-5 shrink-0">
           {index + 1}
         </span>
         <Input
-          className="flex-1 h-8 text-sm"
+          className="flex-1 min-w-[120px] h-8 text-sm"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => title !== lesson.title && onUpdate({ title })}

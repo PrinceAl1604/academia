@@ -461,7 +461,7 @@ export default function AdminStudentsPage() {
               </DialogHeader>
 
               {/* Info Grid */}
-              <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="rounded-lg border dark:border-neutral-800 p-3">
                   <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
                     <Shield className="h-3 w-3" />

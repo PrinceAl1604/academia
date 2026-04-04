@@ -54,7 +54,7 @@ export function Navbar() {
             <div className="flex items-center gap-2">
               <Input
                 placeholder={t.nav.searchCourses}
-                className="h-9 w-64"
+                className="h-9 w-48 lg:w-64"
                 autoFocus
               />
               <Button
@@ -93,7 +93,7 @@ export function Navbar() {
           >
             <Menu className="h-5 w-5" />
           </SheetTrigger>
-          <SheetContent side="right" className="w-80">
+          <SheetContent side="right" className="w-[85vw] max-w-80">
             <div className="flex flex-col gap-6 pt-8">
               <Input placeholder={t.nav.searchCourses} className="h-10" />
               <nav className="flex flex-col gap-4">

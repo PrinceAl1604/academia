@@ -58,7 +58,7 @@ export function FeaturesSection() {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
           {features.map((feature) => (
             <div key={feature.title} className="rounded-xl bg-white p-6 shadow-sm">
               <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-neutral-100">

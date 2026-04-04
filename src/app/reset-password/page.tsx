@@ -34,7 +34,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#faf9f7]">
-      <div className="flex items-center justify-between p-8">
+      <div className="flex items-center justify-between p-4 sm:p-8">
         <Link href="/sign-in" className="inline-block">
           <FullLogo className="h-7" />
         </Link>
@@ -43,7 +43,7 @@ export default function ResetPasswordPage() {
 
       <div className="flex flex-1 items-center justify-center px-4 pb-20">
         <div className="w-full max-w-sm space-y-6">
-          <h1 className="text-3xl font-bold text-neutral-900">{t.auth.resetTitle}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">{t.auth.resetTitle}</h1>
           <p className="text-neutral-600">{t.auth.resetDesc}</p>
 
           {sent ? (

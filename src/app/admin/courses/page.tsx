@@ -108,7 +108,7 @@ export default function AdminCoursesPage() {
         ) : (
           filteredCourses.map((course) => (
             <Card key={course.id}>
-              <CardContent className="flex items-center gap-4">
+              <CardContent className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-neutral-900 truncate">
@@ -140,7 +140,7 @@ export default function AdminCoursesPage() {
                       </Badge>
                     )}
                   </div>
-                  <div className="mt-1.5 flex items-center gap-4 text-sm text-neutral-500">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-neutral-500">
                     <span>{course.category?.name ?? "No category"}</span>
                     <span>{course.level}</span>
                     <span className="flex items-center gap-1">
@@ -156,7 +156,7 @@ export default function AdminCoursesPage() {
                     <span>{course.duration_hours}h · {course.total_lessons} lessons</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
                   <Button
                     variant="outline"
                     size="sm"

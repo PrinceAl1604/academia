@@ -94,7 +94,7 @@ export default function SignUpPage() {
 
       <div className="flex flex-1 items-center justify-center px-4 pb-20">
         <div className="w-full max-w-sm space-y-6">
-          <h1 className="text-3xl font-bold text-neutral-900">{t.auth.signUp}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">{t.auth.signUp}</h1>
 
           <form onSubmit={handleEmailSignUp} className="space-y-4">
             <div className="space-y-2">

@@ -103,7 +103,7 @@ export default function AdminCategoriesPage() {
 
       {/* Add new category */}
       <Card>
-        <CardContent className="flex items-center gap-3 py-3">
+        <CardContent className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 py-3">
           <FolderOpen className="h-4 w-4 text-neutral-400 shrink-0" />
           <Input
             placeholder="New category name..."

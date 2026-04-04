@@ -201,7 +201,7 @@ function SubscriptionContent() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6 px-4 sm:px-0">
       <div>
         <h1 className="text-2xl font-bold text-neutral-900">{t.subscription.title}</h1>
         <p className="mt-1 text-neutral-500">{t.subscription.subtitle}</p>

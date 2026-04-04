@@ -390,7 +390,7 @@ export default function CoursePlayerPage() {
 
         {/* ─── Right Sidebar ─────────────────────────────────── */}
         {sidebarOpen && (
-          <aside className="hidden w-80 shrink-0 flex-col border-l border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 md:flex">
+          <aside className="hidden w-80 shrink-0 flex-col border-l border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 lg:flex">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
               <div>

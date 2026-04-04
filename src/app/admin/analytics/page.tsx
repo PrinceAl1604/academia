@@ -164,7 +164,8 @@ export default function AnalyticsPage() {
       {/* Tab Content */}
       {activeTab === "students" ? (
         <Card>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
+            <div className="min-w-[600px]">
             {/* Header */}
             <div className="grid grid-cols-12 gap-4 border-b px-4 py-3 text-xs font-medium uppercase tracking-wider text-neutral-400">
               <div className="col-span-4">Student</div>
@@ -204,11 +205,13 @@ export default function AnalyticsPage() {
                 ))
               )}
             </div>
+            </div>
           </CardContent>
         </Card>
       ) : (
         <Card>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
+            <div className="min-w-[700px]">
             <div className="grid grid-cols-12 gap-4 border-b px-4 py-3 text-xs font-medium uppercase tracking-wider text-neutral-400">
               <div className="col-span-1">#</div>
               <div className="col-span-4">Course</div>
@@ -254,6 +257,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
               ))}
+            </div>
             </div>
           </CardContent>
         </Card>

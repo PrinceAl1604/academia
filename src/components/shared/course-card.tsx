@@ -109,7 +109,7 @@ export function CourseCard({
 
   const defaultCard = (
     <div
-      className={`group relative w-[320px] flex-shrink-0 rounded-xl border border-neutral-200/60 dark:border-neutral-800 bg-white dark:bg-neutral-900 transition-all hover:shadow-md ${
+      className={`group relative w-[280px] sm:w-[320px] flex-shrink-0 rounded-xl border border-neutral-200/60 dark:border-neutral-800 bg-white dark:bg-neutral-900 transition-all hover:shadow-md ${
         locked ? "opacity-70" : ""
       }`}
     >

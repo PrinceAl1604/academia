@@ -26,7 +26,7 @@ export function HeroSection() {
           </Badge>
 
           {/* Heading */}
-          <h1 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl">
+          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl">
             {t.hero.title}{" "}
             <span className="text-neutral-400">{t.hero.titleHighlight}</span>
           </h1>
@@ -54,7 +54,7 @@ export function HeroSection() {
           </div>
 
           {/* Social proof */}
-          <div className="mt-12 flex items-center justify-center gap-8 text-sm text-neutral-500">
+          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-neutral-500">
             <div className="flex -space-x-2">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div

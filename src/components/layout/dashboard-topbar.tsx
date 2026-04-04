@@ -134,7 +134,7 @@ export function DashboardTopbar() {
         >
           <Menu className="h-5 w-5" />
         </SheetTrigger>
-        <SheetContent side="left" className="w-72">
+        <SheetContent side="left" className="w-[85vw] max-w-72">
           <div className="flex items-center pb-6 pt-4">
             <Logo className="h-5" />
           </div>
@@ -164,7 +164,7 @@ export function DashboardTopbar() {
       {/* Search */}
       <div className="flex-1">
         {isSearchOpen ? (
-          <div className="max-w-md">
+          <div className="w-full max-w-md">
             <Input
               placeholder={t.nav.searchCourses}
               className="h-9"
@@ -203,7 +203,7 @@ export function DashboardTopbar() {
                   <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
                 )}
               </PopoverTrigger>
-              <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+              <PopoverContent className="w-[calc(100vw-1rem)] sm:w-80 p-0" align="end" sideOffset={8}>
                 <div className="border-b px-4 py-3">
                   <p className="text-sm font-semibold text-neutral-900">
                     {t.nav.signIn === "Sign In" ? "Notifications" : "Notifications"}

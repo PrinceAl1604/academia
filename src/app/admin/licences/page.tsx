@@ -244,7 +244,7 @@ export default function AdminLicencesPage() {
       </Dialog>
 
       {/* Search */}
-      <div className="relative max-w-md">
+      <div className="relative w-full sm:max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <Input
           placeholder="Search by key, name, or email..."
@@ -256,7 +256,8 @@ export default function AdminLicencesPage() {
 
       {/* Keys table */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
+          <div className="min-w-[600px]">
           {/* Header */}
           <div className="grid grid-cols-12 gap-4 border-b px-4 py-3 text-xs font-medium uppercase tracking-wider text-neutral-400">
             <div className="col-span-4">Licence Key</div>
@@ -318,6 +319,7 @@ export default function AdminLicencesPage() {
               ))}
             </div>
           )}
+          </div>
         </CardContent>
       </Card>
 

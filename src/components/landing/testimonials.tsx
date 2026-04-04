@@ -21,7 +21,7 @@ export function TestimonialsSection() {
           </p>
         </div>
 
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
+        <div className="mt-14 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
           {testimonials.map((testimonial) => (
             <Card key={testimonial.id} className="p-6">
               <div className="flex gap-1">
