@@ -8,7 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "./supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -33,7 +33,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const AUTH_ROUTES = ["/sign-in", "/sign-up", "/reset-password", "/auth/callback"];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -42,7 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [plan, setPlan] = useState<Plan>("free");
   const [proExpiresAt, setProExpiresAt] = useState<string | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -70,13 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (loading) return;
-    const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
-    if (user && isAuthRoute) {
-      router.push("/");
-    }
-  }, [user, loading, pathname, router]);
+  // Middleware handles redirecting authenticated users away from auth routes.
+  // No client-side redirect needed here.
 
   const loadUserProfile = async (userId: string) => {
     const { data, error } = await supabase
