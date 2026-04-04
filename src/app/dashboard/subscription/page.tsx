@@ -340,7 +340,7 @@ function SubscriptionContent() {
                               setShowCurrencyPicker(false);
                               setCurrencySearch("");
                             }}
-                            className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs transition-colors ${
+                            className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-xs transition-colors ${
                               selectedCurrency.code === c.code
                                 ? "bg-neutral-900 text-white"
                                 : "hover:bg-neutral-200 text-neutral-700"

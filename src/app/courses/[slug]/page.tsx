@@ -99,7 +99,7 @@ export default function CourseDetailPage({ params }: PageProps) {
             {/* Background gradient */}
             <div className="absolute inset-0 bg-gradient-to-b from-neutral-900 via-neutral-900/95 to-neutral-900" />
 
-            <div className="relative mx-auto max-w-5xl px-6 py-8 lg:py-12">
+            <div className="relative mx-auto max-w-5xl px-4 sm:px-6 py-8 lg:py-12">
               {/* Back */}
               <Link
                 href="/"
@@ -251,7 +251,7 @@ export default function CourseDetailPage({ params }: PageProps) {
           </div>
 
           {/* ─── Course Content ────────────────────────────────── */}
-          <div className="mx-auto max-w-5xl px-6 py-10">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
             {/* What's included — horizontal cards */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-10">
               <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">

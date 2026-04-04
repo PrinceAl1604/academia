@@ -117,7 +117,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col sm:flex-row gap-6">
         {/* Sidebar tabs */}
         <nav className="hidden sm:block w-48 shrink-0 space-y-1">
           {tabs.map((tab) => (
@@ -144,7 +144,7 @@ export default function SettingsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
+                "flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors",
                 activeTab === tab.id
                   ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
                   : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
@@ -240,7 +240,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => setLanguage("fr")}
                       className={cn(
-                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                        "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
                         language === "fr"
                           ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
                           : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
@@ -251,7 +251,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => setLanguage("en")}
                       className={cn(
-                        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                        "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
                         language === "en"
                           ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
                           : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
