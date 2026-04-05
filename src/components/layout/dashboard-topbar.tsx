@@ -126,7 +126,7 @@ export function DashboardTopbar() {
     <>
     <ExpiryBanner />
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/80 px-4 backdrop-blur-md lg:px-8">
-      {/* Mobile menu */}
+      {/* Mobile menu — visible below lg */}
       <Sheet>
         <SheetTrigger
           className="lg:hidden"
@@ -158,6 +158,26 @@ export function DashboardTopbar() {
               );
             })}
           </nav>
+
+          {/* Mobile-only: language, dark mode, auth */}
+          <div className="mt-6 border-t pt-6 space-y-4">
+            <div className="flex items-center justify-between px-3">
+              <LanguageToggle />
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleDarkMode}>
+                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+            </div>
+            {!isAuthenticated && (
+              <div className="flex flex-col gap-2 px-3">
+                <Button variant="outline" className="w-full h-10" render={<Link href="/sign-in" />}>
+                  {t.nav.signIn}
+                </Button>
+                <Button className="w-full h-10" render={<Link href="/sign-up" />}>
+                  {t.dashboard.signUp}
+                </Button>
+              </div>
+            )}
+          </div>
         </SheetContent>
       </Sheet>
 
@@ -184,15 +204,16 @@ export function DashboardTopbar() {
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2">
+      {/* Desktop-only actions: language + dark mode */}
+      <div className="hidden lg:flex items-center gap-2">
         <LanguageToggle />
-
-        {/* Dark mode toggle */}
         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleDarkMode}>
           {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
+      </div>
 
+      {/* Always-visible actions: notifications + profile (or auth buttons on desktop) */}
+      <div className="flex items-center gap-2">
         {isAuthenticated ? (
           <>
             {/* Notification Popover */}
@@ -248,11 +269,11 @@ export function DashboardTopbar() {
                       .join("")}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden text-sm font-medium sm:inline">
+                <span className="hidden text-sm font-medium lg:inline">
                   {(userName || "User").split(" ")[0]}
                 </span>
                 {isAdmin && (
-                  <Badge className="bg-red-100 text-red-700">Admin</Badge>
+                  <Badge className="hidden sm:inline-flex bg-red-100 text-red-700">Admin</Badge>
                 )}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -269,7 +290,8 @@ export function DashboardTopbar() {
             </DropdownMenu>
           </>
         ) : (
-          <div className="flex items-center gap-2">
+          /* Desktop-only sign-in/sign-up — mobile uses the hamburger sheet */
+          <div className="hidden lg:flex items-center gap-2">
             <Button variant="ghost" className="h-9 text-sm" render={<Link href="/sign-in" />}>
               {t.nav.signIn}
             </Button>
