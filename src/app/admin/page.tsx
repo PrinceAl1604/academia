@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
+import { syncAllCourseTotals } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +60,9 @@ export default function AdminDashboardPage() {
         recentSignups: recentSignups ?? 0,
       });
       setLoading(false);
+
+      // Sync all course totals in the background (fixes stale 0 values)
+      syncAllCourseTotals();
     }
     loadStats();
   }, []);

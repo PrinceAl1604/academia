@@ -387,6 +387,39 @@ export async function createInstructor(instructor: {
   return data;
 }
 
+// ─── Course Totals Sync ─────────────────────────────────────────────────
+
+/**
+ * Recompute total_lessons and duration_hours for a course from its actual
+ * modules/lessons data and update the courses row.
+ * Call this after any module or lesson add/update/delete.
+ */
+/**
+ * Sync totals for ALL courses at once. Useful for fixing stale data.
+ */
+export async function syncAllCourseTotals(): Promise<void> {
+  const { data: courses } = await supabase.from("courses").select("id");
+  if (!courses) return;
+  await Promise.all(courses.map((c) => syncCourseTotals(c.id)));
+}
+
+export async function syncCourseTotals(courseId: string): Promise<void> {
+  const { data: modules } = await supabase
+    .from("modules")
+    .select("id, lessons(id, duration_minutes)")
+    .eq("course_id", courseId);
+
+  const allLessons = (modules ?? []).flatMap((m: { lessons: { id: string; duration_minutes: number }[] }) => m.lessons ?? []);
+  const totalLessons = allLessons.length;
+  const totalMinutes = allLessons.reduce((sum: number, l: { duration_minutes: number }) => sum + (l.duration_minutes || 0), 0);
+  const durationHours = Math.round((totalMinutes / 60) * 10) / 10; // 1 decimal
+
+  await supabase
+    .from("courses")
+    .update({ total_lessons: totalLessons, duration_hours: durationHours })
+    .eq("id", courseId);
+}
+
 // ─── Progress Tracking ──────────────────────────────────────────────────
 
 /**

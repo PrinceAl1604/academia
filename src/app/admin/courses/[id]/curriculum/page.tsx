@@ -10,6 +10,7 @@ import {
   createLesson,
   updateLesson,
   deleteLesson,
+  syncCourseTotals,
   type ModuleRow,
   type LessonRow,
 } from "@/lib/api";
@@ -67,6 +68,8 @@ export default function CurriculumEditorPage({ params }: PageProps) {
     setLoading(false);
     // Expand all by default
     setExpandedModules(new Set(modulesData.map((m) => m.id)));
+    // Sync totals on load (fixes any stale 0 values)
+    syncCourseTotals(courseId);
   }, [courseId]);
 
   useEffect(() => {
@@ -96,6 +99,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
       setModules((prev) => [...prev, { ...mod, lessons: [] }]);
       setExpandedModules((prev) => new Set([...prev, mod.id]));
       setNewModuleTitle("");
+      syncCourseTotals(courseId);
     } catch (err) {
       alert("Failed to create chapter");
     }
@@ -118,6 +122,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
     try {
       await deleteModule(moduleId);
       setModules((prev) => prev.filter((m) => m.id !== moduleId));
+      syncCourseTotals(courseId);
     } catch (err) {
       alert("Failed to delete chapter");
     }
@@ -142,6 +147,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
             : m
         )
       );
+      syncCourseTotals(courseId);
     } catch (err) {
       alert("Failed to add lesson");
     }
@@ -166,6 +172,8 @@ export default function CurriculumEditorPage({ params }: PageProps) {
             : m
         )
       );
+      // Sync totals when duration changes
+      if ("duration_minutes" in updates) syncCourseTotals(courseId);
     } catch (err) {
       alert("Failed to update lesson");
     }
@@ -181,6 +189,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
             : m
         )
       );
+      syncCourseTotals(courseId);
     } catch (err) {
       alert("Failed to delete lesson");
     }
