@@ -130,7 +130,7 @@ export function DashboardTopbar() {
       <Sheet>
         <SheetTrigger
           className="lg:hidden"
-          render={<Button variant="ghost" size="icon" className="h-9 w-9" />}
+          render={<Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Open navigation menu" />}
         >
           <Menu className="h-5 w-5" />
         </SheetTrigger>
@@ -163,7 +163,7 @@ export function DashboardTopbar() {
           <div className="mt-6 border-t pt-6 space-y-4">
             <div className="flex items-center justify-between px-3">
               <LanguageToggle />
-              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleDarkMode}>
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleDarkMode} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}>
                 {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
             </div>
@@ -197,6 +197,7 @@ export function DashboardTopbar() {
             variant="ghost"
             className="gap-2 text-neutral-500"
             onClick={() => setIsSearchOpen(true)}
+            aria-label={t.nav.searchCourses}
           >
             <Search className="h-4 w-4" />
             <span className="hidden sm:inline">{t.nav.searchCourses}</span>
@@ -207,7 +208,7 @@ export function DashboardTopbar() {
       {/* Desktop-only actions: language + dark mode */}
       <div className="hidden lg:flex items-center gap-2">
         <LanguageToggle />
-        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleDarkMode}>
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleDarkMode} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}>
           {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
       </div>
@@ -218,7 +219,7 @@ export function DashboardTopbar() {
           <>
             {/* Notification Popover */}
             <Popover>
-              <PopoverTrigger render={<Button variant="ghost" size="icon" className="relative h-9 w-9" />}>
+              <PopoverTrigger render={<Button variant="ghost" size="icon" className="relative h-9 w-9" aria-label="Notifications" />}>
                 <Bell className="h-4 w-4" />
                 {notifications.length > 0 && (
                   <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
@@ -259,7 +260,7 @@ export function DashboardTopbar() {
             {/* Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger
-                render={<Button variant="ghost" className="h-9 gap-2 pl-2 pr-3" />}
+                render={<Button variant="ghost" className="h-9 gap-2 pl-2 pr-3" aria-label="Account menu" />}
               >
                 <Avatar className="h-7 w-7">
                   <AvatarFallback className="bg-neutral-200 text-xs font-medium">

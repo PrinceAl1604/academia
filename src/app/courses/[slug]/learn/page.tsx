@@ -391,7 +391,13 @@ export default function CoursePlayerPage() {
 
         {/* ─── Mobile Sidebar Overlay (below lg) ────────────── */}
         {sidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="fixed inset-0 z-50 lg:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label={isEn ? "Course Content" : "Contenu du cours"}
+            onKeyDown={(e) => { if (e.key === "Escape") setSidebarOpen(false); }}
+          >
             <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
             <aside className="absolute right-0 top-0 flex h-full w-[85vw] max-w-80 flex-col bg-neutral-50 dark:bg-neutral-900 shadow-xl">
               {/* Header */}
@@ -406,6 +412,7 @@ export default function CoursePlayerPage() {
                 </div>
                 <button
                   onClick={() => setSidebarOpen(false)}
+                  aria-label={isEn ? "Close course content" : "Fermer le contenu"}
                   className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
                 >
                   <X className="h-5 w-5" />
@@ -433,6 +440,7 @@ export default function CoursePlayerPage() {
                             : "hover:bg-neutral-100 dark:hover:bg-neutral-800/30"
                         }`}
                         onClick={() => toggleModule(module.id)}
+                        aria-expanded={expandedModules.includes(module.id)}
                       >
                         {expandedModules.includes(module.id) ? (
                           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
@@ -531,6 +539,7 @@ export default function CoursePlayerPage() {
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
+                aria-label={isEn ? "Close course content" : "Fermer le contenu"}
                 className="rounded-md p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
               >
                 <X className="h-4 w-4" />
@@ -558,6 +567,7 @@ export default function CoursePlayerPage() {
                           : "hover:bg-neutral-100 dark:hover:bg-neutral-800/30"
                       }`}
                       onClick={() => toggleModule(module.id)}
+                      aria-expanded={expandedModules.includes(module.id)}
                     >
                       {expandedModules.includes(module.id) ? (
                         <ChevronDown className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />

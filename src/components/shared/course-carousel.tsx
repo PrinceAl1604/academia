@@ -46,7 +46,7 @@ export function CourseCarousel({
   };
 
   return (
-    <section className="mb-10">
+    <section className="mb-10" role="region" aria-label={title}>
       {/* Header */}
       <div className="flex items-end justify-between mb-4">
         <div>
@@ -57,6 +57,7 @@ export function CourseCarousel({
           <button
             onClick={() => scroll("left")}
             disabled={!canScrollLeft}
+            aria-label="Scroll left"
             className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -64,6 +65,7 @@ export function CourseCarousel({
           <button
             onClick={() => scroll("right")}
             disabled={!canScrollRight}
+            aria-label="Scroll right"
             className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronRight className="h-5 w-5" />

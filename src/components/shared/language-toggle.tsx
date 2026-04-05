@@ -17,6 +17,7 @@ export function LanguageToggle() {
       size="sm"
       className="gap-1.5 text-neutral-600 hover:text-neutral-900"
       onClick={toggle}
+      aria-label={language === "en" ? "Switch to French" : "Switch to English"}
     >
       <Globe className="h-4 w-4" />
       <span className="text-xs font-semibold uppercase">

@@ -7,10 +7,8 @@
  *   MONEROO_SECRET_KEY             — Your Moneroo secret key (server-only)
  */
 
-// Subscription pricing
-export const SUBSCRIPTION_PRICE = 15000; // FCFA
-export const SUBSCRIPTION_CURRENCY = "XOF";
-export const SUBSCRIPTION_NAME = "Brightroots Pro - Monthly";
+// Re-export from canonical source
+export { SUBSCRIPTION_PRICE, SUBSCRIPTION_CURRENCY, SUBSCRIPTION_NAME } from "./licence";
 
 /**
  * Generate a unique transaction ID

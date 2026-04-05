@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { DashboardTopbar } from "@/components/layout/dashboard-topbar";
@@ -193,10 +194,13 @@ export default function CourseDetailPage({ params }: PageProps) {
 
                       return imgSrc ? (
                         <div className="aspect-video relative group cursor-pointer">
-                          <img
+                          <Image
                             src={imgSrc}
                             alt={course.title}
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="(max-width: 1024px) 100vw, 40vw"
+                            className="object-cover"
+                            priority
                           />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
                             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg group-hover:scale-110 transition-transform">
@@ -367,6 +371,7 @@ function ChapterCard({
       <button
         className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
       >
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800 text-sm font-bold text-neutral-600 dark:text-neutral-300 shrink-0">
           {index + 1}

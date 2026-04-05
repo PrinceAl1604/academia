@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -72,10 +73,12 @@ export function CourseCard({
             className={`relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-gradient-to-br ${gradient}`}
           >
             {(course.cover_url || course.thumbnail_url) && (
-              <img
+              <Image
                 src={(course.cover_url || course.thumbnail_url)!}
                 alt={course.title}
-                className="h-full w-full object-cover"
+                fill
+                sizes="96px"
+                className="object-cover"
               />
             )}
             {locked && (
@@ -130,10 +133,12 @@ export function CourseCard({
           className={`relative aspect-[16/10] w-full overflow-hidden rounded-lg bg-gradient-to-br ${gradient}`}
         >
           {(course.cover_url || course.thumbnail_url) ? (
-            <img
+            <Image
               src={(course.cover_url || course.thumbnail_url)!}
               alt={course.title}
-              className="h-full w-full object-cover"
+              fill
+              sizes="(max-width: 640px) 280px, 320px"
+              className="object-cover"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center p-4">

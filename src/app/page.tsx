@@ -99,7 +99,9 @@ export default function HomePage() {
             </h1>
             <div className="relative w-full sm:w-72">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              <label htmlFor="course-search" className="sr-only">{isEn ? "Search courses" : "Rechercher des cours"}</label>
               <input
+                id="course-search"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -109,6 +111,7 @@ export default function HomePage() {
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
+                  aria-label={isEn ? "Clear search" : "Effacer la recherche"}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -118,9 +121,10 @@ export default function HomePage() {
           </div>
 
           {/* Category filter pills */}
-          <div className="mb-8 flex flex-wrap gap-2">
+          <div className="mb-8 flex flex-wrap gap-2" role="group" aria-label={isEn ? "Filter by category" : "Filtrer par catégorie"}>
             <button
               onClick={() => setSelectedCategory("All")}
+              aria-pressed={selectedCategory === "All"}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                 selectedCategory === "All"
                   ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900"
@@ -133,6 +137,7 @@ export default function HomePage() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
+                aria-pressed={selectedCategory === cat}
                 className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                   selectedCategory === cat
                     ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900"

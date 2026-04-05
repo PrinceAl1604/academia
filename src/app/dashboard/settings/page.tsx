@@ -119,10 +119,14 @@ export default function SettingsPage() {
 
       <div className="flex flex-col sm:flex-row gap-6">
         {/* Sidebar tabs */}
-        <nav className="hidden sm:block w-48 shrink-0 space-y-1">
+        <nav className="hidden sm:block w-48 shrink-0 space-y-1" role="tablist" aria-label={isEn ? "Settings" : "Paramètres"}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`panel-${tab.id}`}
+              id={`tab-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
@@ -138,10 +142,13 @@ export default function SettingsPage() {
         </nav>
 
         {/* Mobile tabs */}
-        <div className="sm:hidden flex gap-1 overflow-x-auto pb-2 mb-4 w-full">
+        <div className="sm:hidden flex gap-1 overflow-x-auto pb-2 mb-4 w-full" role="tablist" aria-label={isEn ? "Settings" : "Paramètres"}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`panel-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors",
@@ -157,7 +164,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 max-w-2xl">
+        <div className="flex-1 max-w-2xl" role="tabpanel" id={`panel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
           {/* ─── Profile ──────────────────────────────────────── */}
           {activeTab === "profile" && (
             <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
