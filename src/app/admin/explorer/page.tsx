@@ -162,12 +162,12 @@ export default function AdminExplorerPage() {
       )}
     >
       {/* Reorder */}
-      <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
-        <button onClick={() => moveCourseUp(course.id, catName)} disabled={idx === 0} className="text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
-          <ChevronUp className="h-3 w-3" />
+      <div className="flex flex-col opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+        <button onClick={() => moveCourseUp(course.id, catName)} disabled={idx === 0} className="p-0.5 text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
+          <ChevronUp className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
         </button>
-        <button onClick={() => moveCourseDown(course.id, catName)} disabled={idx === total - 1} className="text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
-          <ChevronDown className="h-3 w-3" />
+        <button onClick={() => moveCourseDown(course.id, catName)} disabled={idx === total - 1} className="p-0.5 text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
+          <ChevronDown className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
         </button>
       </div>
 
@@ -270,12 +270,12 @@ export default function AdminExplorerPage() {
               {/* Category header */}
               <div className="group flex items-center gap-2 px-3 py-2.5 bg-neutral-50/80 dark:bg-neutral-800/50 hover:bg-neutral-100/80 dark:hover:bg-neutral-800 transition-colors">
                 {/* Reorder arrows */}
-                <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => moveCatUp(catIdx)} disabled={catIdx === 0} className="text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
-                    <ChevronUp className="h-3 w-3" />
+                <div className="flex flex-col opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => moveCatUp(catIdx)} disabled={catIdx === 0} className="p-0.5 text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
+                    <ChevronUp className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
                   </button>
-                  <button onClick={() => moveCatDown(catIdx)} disabled={catIdx === categories.length - 1} className="text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
-                    <ChevronDown className="h-3 w-3" />
+                  <button onClick={() => moveCatDown(catIdx)} disabled={catIdx === categories.length - 1} className="p-0.5 text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
+                    <ChevronDown className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
                   </button>
                 </div>
 

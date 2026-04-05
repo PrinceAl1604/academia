@@ -125,7 +125,7 @@ export function DashboardTopbar() {
   return (
     <>
     <ExpiryBanner />
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/80 px-4 backdrop-blur-md lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/80 dark:bg-neutral-950/80 px-4 backdrop-blur-md lg:px-8">
       {/* Mobile menu — visible below lg */}
       <Sheet>
         <SheetTrigger
@@ -225,20 +225,20 @@ export function DashboardTopbar() {
                 )}
               </PopoverTrigger>
               <PopoverContent className="w-[calc(100vw-1rem)] sm:w-80 p-0" align="end" sideOffset={8}>
-                <div className="border-b px-4 py-3">
-                  <p className="text-sm font-semibold text-neutral-900">
+                <div className="border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
+                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">
                     {t.nav.signIn === "Sign In" ? "Notifications" : "Notifications"}
                   </p>
                 </div>
-                <div className="max-h-64 overflow-y-auto divide-y">
+                <div className="max-h-64 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
                   {notifications.length === 0 ? (
-                    <p className="p-4 text-sm text-neutral-500 text-center">
+                    <p className="p-4 text-sm text-neutral-500 dark:text-neutral-400 text-center">
                       {t.nav.signIn === "Sign In" ? "No notifications" : "Aucune notification"}
                     </p>
                   ) : (
                     notifications.map((n) => (
-                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-neutral-50">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 shrink-0 mt-0.5">
+                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 shrink-0 mt-0.5">
                           {n.type === "new_student" ? (
                             <UserPlus className="h-4 w-4 text-blue-500" />
                           ) : (
@@ -246,8 +246,8 @@ export function DashboardTopbar() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-neutral-700">{n.message}</p>
-                          <p className="text-xs text-neutral-400 mt-0.5">{n.time}</p>
+                          <p className="text-sm text-neutral-700 dark:text-neutral-300">{n.message}</p>
+                          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">{n.time}</p>
                         </div>
                       </div>
                     ))

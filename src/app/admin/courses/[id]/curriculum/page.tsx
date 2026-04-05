@@ -222,10 +222,10 @@ export default function CurriculumEditorPage({ params }: PageProps) {
           <Card key={module.id}>
             <CardContent className="p-0">
               {/* Module Header */}
-              <div className="flex items-center gap-3 border-b px-4 py-3">
+              <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4">
                 <button
                   onClick={() => toggleModule(module.id)}
-                  className="text-neutral-400 hover:text-neutral-700"
+                  className="text-neutral-400 hover:text-neutral-700 shrink-0"
                 >
                   {expandedModules.has(module.id) ? (
                     <ChevronDown className="h-4 w-4" />
@@ -233,12 +233,12 @@ export default function CurriculumEditorPage({ params }: PageProps) {
                     <ChevronRight className="h-4 w-4" />
                   )}
                 </button>
-                <GripVertical className="h-4 w-4 text-neutral-300" />
-                <span className="flex h-6 w-6 items-center justify-center rounded bg-neutral-100 text-xs font-semibold text-neutral-600">
+                <GripVertical className="h-4 w-4 text-neutral-300 hidden sm:block shrink-0" />
+                <span className="flex h-6 w-6 items-center justify-center rounded bg-neutral-100 text-xs font-semibold text-neutral-600 shrink-0">
                   {moduleIdx + 1}
                 </span>
                 <Input
-                  className="flex-1 border-0 bg-transparent px-0 font-semibold shadow-none focus-visible:ring-0"
+                  className="flex-1 min-w-[100px] border-0 bg-transparent px-0 font-semibold shadow-none focus-visible:ring-0"
                   value={module.title}
                   onBlur={(e) =>
                     handleUpdateModuleTitle(module.id, e.target.value)
@@ -253,14 +253,13 @@ export default function CurriculumEditorPage({ params }: PageProps) {
                     )
                   }
                 />
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs shrink-0">
                   {module.lessons.length} lessons
                 </Badge>
-                {/* Chapter label shown below number */}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-red-400 hover:text-red-600"
+                  className="h-8 w-8 text-red-400 hover:text-red-600 shrink-0"
                   onClick={() => handleDeleteModule(module.id, module.title)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -305,7 +304,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
 
       {/* Add Module */}
       <Card>
-        <CardContent className="flex items-center gap-3 py-3">
+        <CardContent className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center">
           <Input
             placeholder="New chapter title..."
             value={newModuleTitle}
@@ -316,7 +315,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
           <Button
             onClick={handleAddModule}
             disabled={addingModule || !newModuleTitle.trim()}
-            className="gap-1.5"
+            className="gap-1.5 w-full sm:w-auto"
           >
             {addingModule ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -420,8 +419,8 @@ function LessonEditor({
 
       {/* Row 2: Video Embed + Duration */}
       {lesson.type === "video" && (
-        <div className="space-y-2 pl-9">
-          <div className="flex items-center gap-2">
+        <div className="space-y-2 pl-0 sm:pl-9">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Youtube className="absolute left-2.5 top-2 h-3.5 w-3.5 text-red-400" />
               <textarea

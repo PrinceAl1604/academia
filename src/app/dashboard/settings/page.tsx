@@ -229,7 +229,7 @@ export default function SettingsPage() {
 
                 <Separator className="dark:bg-neutral-800" />
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <Label className="dark:text-neutral-300">{isEn ? "Language" : "Langue"}</Label>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
@@ -240,7 +240,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => setLanguage("fr")}
                       className={cn(
-                        "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                        "rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:px-4",
                         language === "fr"
                           ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
                           : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
@@ -251,7 +251,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => setLanguage("en")}
                       className={cn(
-                        "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                        "rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:px-4",
                         language === "en"
                           ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
                           : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"

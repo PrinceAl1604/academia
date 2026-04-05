@@ -316,12 +316,12 @@ export default function AdminCourseEditPage({ params }: PageProps) {
             {/* Error + Actions */}
             <div>
               {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
-              <div className="flex items-center gap-3">
-                <Button type="submit" className="gap-2" disabled={saving}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Button type="submit" className="gap-2 w-full sm:w-auto" disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   {t.admin.saveCourse}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => router.push("/admin/courses")}>
+                <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => router.push("/admin/courses")}>
                   {isEn ? "Cancel" : "Annuler"}
                 </Button>
               </div>

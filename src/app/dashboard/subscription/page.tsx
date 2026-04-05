@@ -235,7 +235,7 @@ function SubscriptionContent() {
 
           {/* Expiry info */}
           {proExpiresAt && (
-            <div className="flex items-center justify-between rounded-lg bg-neutral-50 px-4 py-3">
+            <div className="flex flex-col gap-3 rounded-lg bg-neutral-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs text-neutral-500">
                   {isEn ? "Expires on" : "Expire le"}

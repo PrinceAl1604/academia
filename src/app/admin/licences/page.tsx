@@ -139,10 +139,10 @@ export default function AdminLicencesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Licence Keys</h1>
-          <p className="mt-1 text-neutral-500">
+          <p className="mt-1 text-sm text-neutral-500">
             {keys.length} keys · {keys.filter((k) => k.status === "created").length} available · {keys.filter((k) => k.status === "active").length} activated
           </p>
         </div>
@@ -150,12 +150,14 @@ export default function AdminLicencesPage() {
           {keys.filter((k) => k.status === "created").length > 0 && (
             <Button variant="outline" size="sm" className="gap-1.5" onClick={exportKeysCSV}>
               <Download className="h-3.5 w-3.5" />
-              Export CSV
+              <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden">CSV</span>
             </Button>
           )}
           <Button size="sm" className="gap-1.5" onClick={() => setShowGenerate(true)}>
             <Plus className="h-3.5 w-3.5" />
-            Generate Keys
+            <span className="hidden sm:inline">Generate Keys</span>
+            <span className="sm:hidden">Generate</span>
           </Button>
         </div>
       </div>
@@ -212,7 +214,7 @@ export default function AdminLicencesPage() {
             </p>
             <div className="space-y-2">
               <Label>Number of keys</Label>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 {[5, 10, 25, 50].map((n) => (
                   <button
                     key={n}

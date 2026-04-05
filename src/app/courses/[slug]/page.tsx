@@ -253,7 +253,7 @@ export default function CourseDetailPage({ params }: PageProps) {
           {/* ─── Course Content ────────────────────────────────── */}
           <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
             {/* What's included — horizontal cards */}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-10">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-10">
               <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
                 <Clock className="h-5 w-5 text-neutral-400 shrink-0" />
                 <div>

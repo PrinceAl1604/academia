@@ -58,12 +58,12 @@ export default function SignUpPage() {
   if (success) {
     return (
       <div className="flex min-h-screen flex-col bg-[#faf9f7]">
-        <div className="p-8">
+        <div className="p-4 sm:p-8">
           <Link href="/sign-in" className="inline-block">
             <FullLogo className="h-7" />
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-center px-4 pb-20">
+        <div className="flex flex-1 items-center justify-center px-4 pb-12 sm:pb-20">
           <div className="w-full max-w-sm space-y-4 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
               <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,14 +85,14 @@ export default function SignUpPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#faf9f7]">
-      <div className="flex items-center justify-between p-8">
+      <div className="flex items-center justify-between p-4 sm:p-8">
         <Link href="/sign-in" className="inline-block">
           <FullLogo className="h-7" />
         </Link>
         <LanguageToggle />
       </div>
 
-      <div className="flex flex-1 items-center justify-center px-4 pb-20">
+      <div className="flex flex-1 items-center justify-center px-4 pb-12 sm:pb-20">
         <div className="w-full max-w-sm space-y-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">{t.auth.signUp}</h1>
 

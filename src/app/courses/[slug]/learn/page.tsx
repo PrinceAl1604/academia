@@ -220,7 +220,7 @@ export default function CoursePlayerPage() {
 
   const selectLesson = (lesson: LessonRow) => {
     setActiveLesson(lesson);
-    if (window.innerWidth < 768) setSidebarOpen(false);
+    if (window.innerWidth < 1024) setSidebarOpen(false);
   };
 
   const activeChapter = course.modules.find((m) =>
@@ -316,7 +316,7 @@ export default function CoursePlayerPage() {
           </div>
 
           {/* ─── Lesson Action Bar ──────────────────────────── */}
-          <div className="flex shrink-0 items-center justify-between border-t border-neutral-200 dark:border-neutral-800 px-5 py-3 bg-white dark:bg-neutral-950">
+          <div className="flex shrink-0 flex-col gap-2 border-t border-neutral-200 dark:border-neutral-800 px-3 py-3 bg-white dark:bg-neutral-950 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div className="min-w-0 flex-1">
               <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-0.5">
                 {activeChapter
@@ -328,11 +328,11 @@ export default function CoursePlayerPage() {
               </h2>
             </div>
 
-            <div className="ml-4 flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+                className="h-8 text-xs sm:text-sm text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
                 disabled={allLessons.findIndex((l) => l.id === activeLesson?.id) === 0}
                 onClick={() => {
                   const idx = allLessons.findIndex((l) => l.id === activeLesson?.id);
@@ -345,7 +345,7 @@ export default function CoursePlayerPage() {
               {activeLesson && completedLessons.has(activeLesson.id) ? (
                 <Button
                   size="sm"
-                  className="h-8 gap-1.5 bg-green-600 hover:bg-green-700 text-white"
+                  className="h-8 gap-1.5 text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white"
                   onClick={() => {
                     const idx = allLessons.findIndex((l) => l.id === activeLesson?.id);
                     if (idx < allLessons.length - 1) selectLesson(allLessons[idx + 1]);
@@ -358,11 +358,12 @@ export default function CoursePlayerPage() {
               ) : (
                 <Button
                   size="sm"
-                  className="h-8 gap-1.5"
+                  className="h-8 gap-1.5 text-xs sm:text-sm"
                   onClick={handleMarkComplete}
                 >
                   <Check className="h-3.5 w-3.5" />
-                  {isEn ? "Complete & Next" : "Terminer & Suivant"}
+                  <span className="hidden sm:inline">{isEn ? "Complete & Next" : "Terminer & Suivant"}</span>
+                  <span className="sm:hidden">{isEn ? "Done" : "Fait"}</span>
                 </Button>
               )}
             </div>
@@ -388,7 +389,134 @@ export default function CoursePlayerPage() {
           </div>
         </div>
 
-        {/* ─── Right Sidebar ─────────────────────────────────── */}
+        {/* ─── Mobile Sidebar Overlay (below lg) ────────────── */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+            <aside className="absolute right-0 top-0 flex h-full w-[85vw] max-w-80 flex-col bg-neutral-50 dark:bg-neutral-900 shadow-xl">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                    {isEn ? "Course Content" : "Contenu du cours"}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-neutral-500">
+                    {completedCount}/{totalLessons} {isEn ? "completed" : "terminées"}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Progress */}
+              <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-800">
+                <Progress value={progress} className="h-1" />
+              </div>
+
+              {/* Chapters */}
+              <ScrollArea className="flex-1">
+                {course.modules.map((module, idx) => {
+                  const isActiveChapterMobile = module.lessons.some((l) => l.id === activeLesson?.id);
+                  const chapterCompletedMobile = module.lessons.every((l) => completedLessons.has(l.id));
+                  const chapterProgressMobile = module.lessons.filter((l) => completedLessons.has(l.id)).length;
+
+                  return (
+                    <div key={module.id}>
+                      <button
+                        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+                          isActiveChapterMobile
+                            ? "bg-neutral-100 dark:bg-neutral-800/50"
+                            : "hover:bg-neutral-100 dark:hover:bg-neutral-800/30"
+                        }`}
+                        onClick={() => toggleModule(module.id)}
+                      >
+                        {expandedModules.includes(module.id) ? (
+                          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                        ) : (
+                          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                            {isEn ? "Chapter" : "Chapitre"} {idx + 1}
+                          </p>
+                          <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
+                            {module.title}
+                          </p>
+                        </div>
+                        <span className="text-[10px] text-neutral-400 dark:text-neutral-600 shrink-0">
+                          {chapterCompletedMobile ? (
+                            <Check className="h-3.5 w-3.5 text-green-500" />
+                          ) : (
+                            `${chapterProgressMobile}/${module.lessons.length}`
+                          )}
+                        </span>
+                      </button>
+
+                      {expandedModules.includes(module.id) && (
+                        <div className="pb-1">
+                          {module.lessons.map((lesson) => {
+                            const isCompleted = completedLessons.has(lesson.id);
+                            const isActive = lesson.id === activeLesson?.id;
+
+                            return (
+                              <button
+                                key={lesson.id}
+                                className={`flex w-full items-center gap-3 px-4 py-2.5 pl-10 text-left transition-colors ${
+                                  isActive
+                                    ? "bg-neutral-200/70 dark:bg-neutral-800 border-l-2 border-neutral-900 dark:border-white"
+                                    : "hover:bg-neutral-100 dark:hover:bg-neutral-800/40 border-l-2 border-transparent"
+                                }`}
+                                onClick={() => selectLesson(lesson)}
+                              >
+                                <span className="shrink-0">
+                                  {isCompleted ? (
+                                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-500/20">
+                                      <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                    </div>
+                                  ) : isActive ? (
+                                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 dark:bg-white/10">
+                                      <Play className="h-3 w-3 text-white" fill="currentColor" />
+                                    </div>
+                                  ) : (
+                                    <div className="flex h-5 w-5 items-center justify-center rounded-full border border-neutral-300 dark:border-neutral-700">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600" />
+                                    </div>
+                                  )}
+                                </span>
+                                <span
+                                  className={`flex-1 text-sm truncate ${
+                                    isActive
+                                      ? "font-medium text-neutral-900 dark:text-white"
+                                      : isCompleted
+                                        ? "text-neutral-400 dark:text-neutral-500 line-through"
+                                        : "text-neutral-600 dark:text-neutral-400"
+                                  }`}
+                                >
+                                  {lesson.title}
+                                </span>
+                                {lesson.duration_minutes > 0 && (
+                                  <span className="shrink-0 text-[10px] text-neutral-400 dark:text-neutral-600">
+                                    {lesson.duration_minutes}m
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </ScrollArea>
+            </aside>
+          </div>
+        )}
+
+        {/* ─── Desktop Right Sidebar ────────────────────────────── */}
         {sidebarOpen && (
           <aside className="hidden w-80 shrink-0 flex-col border-l border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 lg:flex">
             {/* Header */}

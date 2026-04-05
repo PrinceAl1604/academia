@@ -136,28 +136,30 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-lg bg-neutral-100 p-1 w-fit">
+      <div className="flex gap-1 rounded-lg bg-neutral-100 p-1 w-full sm:w-fit">
         <button
           onClick={() => setActiveTab("students")}
-          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+          className={`flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-md px-3 py-2 text-xs sm:text-sm sm:px-4 font-medium transition-colors ${
             activeTab === "students"
               ? "bg-white text-neutral-900 shadow-sm"
               : "text-neutral-500 hover:text-neutral-700"
           }`}
         >
           <Users className="h-4 w-4" />
-          Students Registered
+          <span className="hidden sm:inline">Students Registered</span>
+          <span className="sm:hidden">Students</span>
         </button>
         <button
           onClick={() => setActiveTab("courses")}
-          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+          className={`flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-md px-3 py-2 text-xs sm:text-sm sm:px-4 font-medium transition-colors ${
             activeTab === "courses"
               ? "bg-white text-neutral-900 shadow-sm"
               : "text-neutral-500 hover:text-neutral-700"
           }`}
         >
           <BookOpen className="h-4 w-4" />
-          Course Performance
+          <span className="hidden sm:inline">Course Performance</span>
+          <span className="sm:hidden">Courses</span>
         </button>
       </div>
 
