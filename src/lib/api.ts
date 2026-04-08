@@ -423,6 +423,47 @@ export async function syncCourseTotals(courseId: string): Promise<void> {
 // ─── Progress Tracking ──────────────────────────────────────────────────
 
 /**
+ * Get real course progress for a user across all published courses.
+ * Returns a map of courseId → percentage (0–100).
+ * Uses two queries: one for all course lesson structures, one for user completions.
+ */
+export async function getUserCourseProgress(
+  userId: string
+): Promise<Record<string, number>> {
+  const [{ data: completedData }, { data: courses }] = await Promise.all([
+    supabase
+      .from("lesson_progress")
+      .select("lesson_id")
+      .eq("user_id", userId)
+      .eq("completed", true),
+    supabase
+      .from("courses")
+      .select("id, modules(id, lessons(id))")
+      .eq("is_published", true),
+  ]);
+
+  const completedSet = new Set(
+    (completedData ?? []).map((p: { lesson_id: string }) => p.lesson_id)
+  );
+
+  const progress: Record<string, number> = {};
+  for (const course of courses ?? []) {
+    const allLessons = (
+      (course as { modules: { lessons: { id: string }[] }[] }).modules ?? []
+    ).flatMap((m) => m.lessons ?? []);
+    const total = allLessons.length;
+    if (total === 0) {
+      progress[course.id] = 0;
+      continue;
+    }
+    const completed = allLessons.filter((l) => completedSet.has(l.id)).length;
+    progress[course.id] = Math.round((completed / total) * 100);
+  }
+
+  return progress;
+}
+
+/**
  * Get completed lesson IDs for a user.
  */
 export async function getCompletedLessons(userId: string): Promise<string[]> {

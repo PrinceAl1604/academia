@@ -7,6 +7,7 @@ const geist = Geist({
 });
 import { LanguageProvider } from "@/lib/i18n/language-context";
 import { AuthProvider } from "@/lib/auth-context";
+import { ProgressProvider } from "@/lib/progress-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,7 +28,9 @@ export default function RootLayout({
     <html lang="en" className={`${geist.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <LanguageProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <ProgressProvider>{children}</ProgressProvider>
+          </AuthProvider>
         </LanguageProvider>
       </body>
     </html>

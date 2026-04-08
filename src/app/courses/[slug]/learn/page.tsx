@@ -28,6 +28,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { useProgress } from "@/lib/progress-context";
 import { Logo } from "@/components/shared/logo";
 
 function getYouTubeId(url: string): string | null {
@@ -61,6 +62,7 @@ export default function CoursePlayerPage() {
   const lessonParam = searchParams.get("lesson");
   const { user, isPro, isAuthenticated } = useAuth();
   const { t } = useLanguage();
+  const { refresh: refreshProgress } = useProgress();
   const isEn = t.nav.signIn === "Sign In";
 
   const [course, setCourse] = useState<
@@ -203,7 +205,9 @@ export default function CoursePlayerPage() {
   const handleMarkComplete = () => {
     if (!activeLesson || !user) return;
     setCompletedLessons((prev) => new Set([...prev, activeLesson.id]));
-    markLessonComplete(user.id, activeLesson.id).catch(() => {});
+    markLessonComplete(user.id, activeLesson.id)
+      .then(() => refreshProgress())
+      .catch(() => {});
 
     const currentIdx = allLessons.findIndex((l) => l.id === activeLesson.id);
     if (currentIdx < allLessons.length - 1) {

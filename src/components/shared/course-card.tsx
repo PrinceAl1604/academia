@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { CourseRow } from "@/lib/api";
 import { MembershipPopover } from "./upgrade-popover";
 import { useAuth } from "@/lib/auth-context";
+import { useProgress } from "@/lib/progress-context";
 
 interface CourseCardProps {
   course: CourseRow;
@@ -42,13 +43,14 @@ export function CourseCard({
   variant = "default",
 }: CourseCardProps) {
   const { isAuthenticated } = useAuth();
+  const { progress } = useProgress();
   const router = useRouter();
   const gradient = gradients[hashCode(course.id) % gradients.length];
   const categoryName = course.category?.name ?? "General";
   const totalLessons = course.total_lessons ?? 0;
   const durationLabel = `${course.duration_hours ?? 0} hours`;
 
-  const progressValue = locked ? 0 : hashCode(course.id) % 100;
+  const progressValue = locked ? 0 : (progress[course.id] ?? 0);
 
   const handleClick = (e: React.MouseEvent) => {
     if (!isAuthenticated) {
