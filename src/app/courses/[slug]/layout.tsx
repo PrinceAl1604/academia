@@ -23,8 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = course.title;
   const description =
     course.description || `Learn ${course.title} on Brightroots`;
-  const category = (course.category as { name: string } | null)?.name;
-  const instructor = (course.instructor as { name: string } | null)?.name;
+  const category = (course.category as unknown as { name: string }[] | null)?.[0]?.name;
+  const instructor = (course.instructor as unknown as { name: string }[] | null)?.[0]?.name;
 
   // Use cover image or YouTube thumbnail as OG image
   const ogImage = course.cover_url || undefined;
