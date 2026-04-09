@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { SidebarLayout } from "@/components/layout/sidebar-layout";
+import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
+import { DashboardTopbar } from "@/components/layout/dashboard-topbar";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { CourseCarousel } from "@/components/shared/course-carousel";
@@ -94,7 +95,10 @@ export default function HomePage() {
   };
 
   return (
-    <SidebarLayout>
+    <div className="min-h-screen bg-neutral-50/50 dark:bg-neutral-950">
+      <DashboardSidebar />
+      <div className="lg:pl-64">
+        <DashboardTopbar />
         <main className="px-4 py-6 lg:px-8 lg:py-8">
           {/* Page header + Search */}
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -198,6 +202,7 @@ export default function HomePage() {
             </div>
           )}
         </main>
-    </SidebarLayout>
+      </div>
+    </div>
   );
 }
