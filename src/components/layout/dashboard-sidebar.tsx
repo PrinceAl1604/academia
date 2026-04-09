@@ -77,8 +77,8 @@ export function DashboardSidebar() {
         <Link href={isAdmin ? "/admin" : "/"} className="flex items-center overflow-hidden">
           {collapsed ? (
             <>
-              <img src="/favicon-dark.svg" alt="Brightroots" className="h-8 w-8 shrink-0 rounded-lg block dark:hidden" />
-              <img src="/favicon-light.svg" alt="Brightroots" className="h-8 w-8 shrink-0 rounded-lg hidden dark:block" />
+              <img src="/favicon-light.svg" alt="Brightroots" className="h-8 w-8 shrink-0 rounded-lg block dark:hidden" />
+              <img src="/favicon-dark.svg" alt="Brightroots" className="h-8 w-8 shrink-0 rounded-lg hidden dark:block" />
             </>
           ) : (
             <>
