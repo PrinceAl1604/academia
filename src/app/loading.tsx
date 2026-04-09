@@ -10,7 +10,7 @@ export default function GlobalLoading() {
       </div>
 
       {/* Content skeleton */}
-      <div className="lg:pl-64">
+      <div>
         <div className="p-4 lg:p-8 space-y-8">
           {/* Title */}
           <div className="space-y-2">

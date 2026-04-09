@@ -4,8 +4,7 @@ import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
-import { DashboardTopbar } from "@/components/layout/dashboard-topbar";
+import { SidebarLayout } from "@/components/layout/sidebar-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -58,15 +57,11 @@ export default function CourseDetailPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-50/50 dark:bg-neutral-950">
-        <DashboardSidebar />
-        <div className="lg:pl-64">
-          <DashboardTopbar />
+      <SidebarLayout>
           <div className="flex items-center justify-center py-32">
             <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
           </div>
-        </div>
-      </div>
+      </SidebarLayout>
     );
   }
 
@@ -89,11 +84,7 @@ export default function CourseDetailPage({ params }: PageProps) {
     : null;
 
   return (
-    <div className="min-h-screen bg-neutral-50/50 dark:bg-neutral-950">
-      <DashboardSidebar />
-      <div className="lg:pl-64">
-        <DashboardTopbar />
-
+    <SidebarLayout>
         <main className="pb-16">
           {/* ─── Hero Section ──────────────────────────────────── */}
           <div className="relative bg-neutral-900 dark:bg-neutral-900">
@@ -339,8 +330,7 @@ export default function CourseDetailPage({ params }: PageProps) {
             )}
           </div>
         </main>
-      </div>
-    </div>
+    </SidebarLayout>
   );
 }
 
