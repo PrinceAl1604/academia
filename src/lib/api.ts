@@ -64,6 +64,8 @@ export interface LessonRow {
 
 /**
  * Get all published courses with category and instructor info.
+ * Computes total_lessons and duration_hours from actual module/lesson data
+ * so values are always accurate regardless of stored column state.
  */
 export async function getCourses(): Promise<CourseRow[]> {
   const { data, error } = await supabase
@@ -72,7 +74,8 @@ export async function getCourses(): Promise<CourseRow[]> {
       `
       *,
       category:categories(*),
-      instructor:instructors(*)
+      instructor:instructors(*),
+      modules(id, lessons(id, duration_minutes))
     `
     )
     .eq("is_published", true)
@@ -82,7 +85,18 @@ export async function getCourses(): Promise<CourseRow[]> {
     console.error("Error fetching courses:", error);
     return [];
   }
-  return data ?? [];
+
+  // Compute totals from actual lesson data, overriding stale stored values
+  return (data ?? []).map((course) => {
+    const modules = (course as unknown as { modules: { lessons: { id: string; duration_minutes: number }[] }[] }).modules ?? [];
+    const allLessons = modules.flatMap((m) => m.lessons ?? []);
+    const totalLessons = allLessons.length;
+    const totalMinutes = allLessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+    const durationHours = Math.round((totalMinutes / 60) * 10) / 10;
+    // Strip modules from the response (CourseRow doesn't include them)
+    const { modules: _, ...rest } = course as Record<string, unknown>;
+    return { ...rest, total_lessons: totalLessons, duration_hours: durationHours } as CourseRow;
+  });
 }
 
 /**
@@ -95,7 +109,8 @@ export async function getAllCourses(): Promise<CourseRow[]> {
       `
       *,
       category:categories(*),
-      instructor:instructors(*)
+      instructor:instructors(*),
+      modules(id, lessons(id, duration_minutes))
     `
     )
     .order("created_at", { ascending: false });
@@ -104,7 +119,16 @@ export async function getAllCourses(): Promise<CourseRow[]> {
     console.error("Error fetching all courses:", error);
     return [];
   }
-  return data ?? [];
+
+  return (data ?? []).map((course) => {
+    const modules = (course as unknown as { modules: { lessons: { id: string; duration_minutes: number }[] }[] }).modules ?? [];
+    const allLessons = modules.flatMap((m) => m.lessons ?? []);
+    const totalLessons = allLessons.length;
+    const totalMinutes = allLessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+    const durationHours = Math.round((totalMinutes / 60) * 10) / 10;
+    const { modules: _, ...rest } = course as Record<string, unknown>;
+    return { ...rest, total_lessons: totalLessons, duration_hours: durationHours } as CourseRow;
+  });
 }
 
 /**

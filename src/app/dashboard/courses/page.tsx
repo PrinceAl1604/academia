@@ -39,14 +39,21 @@ export default function MyCoursesPage() {
         const courseIds = enrollments.map((e) => e.course_id);
         const { data } = await supabase
           .from("courses")
-          .select("id, title, slug, total_lessons, duration_hours, level, category:categories(name)")
+          .select("id, title, slug, total_lessons, duration_hours, level, category:categories(name), modules(id, lessons(id, duration_minutes))")
           .in("id", courseIds);
 
         setCourses(
-          (data ?? []).map((c: Record<string, unknown>) => ({
-            ...c,
-            category_name: (c.category as Record<string, string>)?.name ?? "",
-          })) as EnrolledCourse[]
+          (data ?? []).map((c: Record<string, unknown>) => {
+            const modules = (c.modules as { lessons: { id: string; duration_minutes: number }[] }[]) ?? [];
+            const allLessons = modules.flatMap((m) => m.lessons ?? []);
+            const totalMinutes = allLessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+            return {
+              ...c,
+              total_lessons: allLessons.length,
+              duration_hours: Math.round((totalMinutes / 60) * 10) / 10,
+              category_name: (c.category as Record<string, string>)?.name ?? "",
+            };
+          }) as EnrolledCourse[]
         );
       }
       setLoading(false);
