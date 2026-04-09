@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { DashboardTopbar } from "@/components/layout/dashboard-topbar";
 import { useAuth } from "@/lib/auth-context";
@@ -12,12 +13,19 @@ import { Loader2, Search, X } from "lucide-react";
 export default function HomePage() {
   const { isPro } = useAuth();
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [courses, setCourses] = useState<CourseRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const isEn = t.nav.signIn === "Sign In";
+
+  // Sync search query from URL params (e.g. from topbar search)
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) setSearchQuery(q);
+  }, [searchParams]);
 
   // Fetch courses and categories from Supabase
   useEffect(() => {

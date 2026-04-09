@@ -34,7 +34,7 @@ import {
   Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -52,11 +52,21 @@ interface Notification {
 
 export function DashboardTopbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const pathname = usePathname();
+  const router = useRouter();
   const { isAdmin, isAuthenticated, userName, logout } = useAuth();
   const { t } = useLanguage();
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && searchQuery.trim()) {
+      router.push(`/?q=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+      setSearchQuery("");
+    }
+  };
 
   const mobileNav = [
     { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
@@ -189,7 +199,10 @@ export function DashboardTopbar() {
               placeholder={t.nav.searchCourses}
               className="h-9"
               autoFocus
-              onBlur={() => setIsSearchOpen(false)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearch}
+              onBlur={() => { if (!searchQuery) setIsSearchOpen(false); }}
             />
           </div>
         ) : (

@@ -11,11 +11,35 @@ import { ProgressProvider } from "@/lib/progress-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Brightroots — Learn from the best",
+  title: {
+    default: "Brightroots — Learn from the best",
+    template: "%s | Brightroots",
+  },
   description:
     "Access premium courses taught by industry experts. One subscription, unlimited learning.",
   icons: {
     icon: "/logo.svg",
+  },
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://academia-vert-phi.vercel.app"
+  ),
+  openGraph: {
+    type: "website",
+    siteName: "Brightroots",
+    title: "Brightroots — Learn from the best",
+    description:
+      "Access premium courses taught by industry experts. One subscription, unlimited learning.",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Brightroots — Learn from the best",
+    description:
+      "Access premium courses taught by industry experts. One subscription, unlimited learning.",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
