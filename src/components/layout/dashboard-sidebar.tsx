@@ -74,13 +74,17 @@ export function DashboardSidebar() {
     >
       {/* ─── Logo ──────────────────────────────────────────── */}
       <div className={cn("flex h-14 items-center shrink-0", collapsed ? "justify-center px-0" : "px-5")}>
-        <Link href={isAdmin ? "/admin" : "/"} className="flex items-center gap-2.5 overflow-hidden">
-          <img src="/favicon-dark.svg" alt="Brightroots" className="h-8 w-8 shrink-0 rounded-lg block dark:hidden" />
-          <img src="/favicon-light.svg" alt="Brightroots" className="h-8 w-8 shrink-0 rounded-lg hidden dark:block" />
-          {!collapsed && (
-            <span className="text-[15px] font-bold text-neutral-900 dark:text-white tracking-tight">
-              Brightroots
-            </span>
+        <Link href={isAdmin ? "/admin" : "/"} className="flex items-center overflow-hidden">
+          {collapsed ? (
+            <>
+              <img src="/favicon-dark.svg" alt="Brightroots" className="h-8 w-8 shrink-0 rounded-lg block dark:hidden" />
+              <img src="/favicon-light.svg" alt="Brightroots" className="h-8 w-8 shrink-0 rounded-lg hidden dark:block" />
+            </>
+          ) : (
+            <>
+              <img src="/logo-login-dark.svg" alt="Brightroots" className="h-5 block dark:hidden" />
+              <img src="/logo-login-light.svg" alt="Brightroots" className="h-5 hidden dark:block" />
+            </>
           )}
         </Link>
       </div>
