@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -172,9 +173,9 @@ export default function AdminExplorerPage() {
       </div>
 
       {/* Thumbnail */}
-      <div className="h-9 w-14 rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 shrink-0">
+      <div className="relative h-9 w-14 rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 shrink-0">
         {course.cover_url ? (
-          <img src={course.cover_url} alt="" className="h-full w-full object-cover" />
+          <Image src={course.cover_url} alt="" fill className="object-cover" sizes="56px" />
         ) : (
           <div className="flex h-full items-center justify-center"><BookOpen className="h-3 w-3 text-neutral-300 dark:text-neutral-600" /></div>
         )}

@@ -54,6 +54,11 @@ export default function SettingsPage() {
   const [activating, setActivating] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
   const [keySuccess, setKeySuccess] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   useEffect(() => {
     setDarkMode(document.documentElement.classList.contains("dark"));
@@ -96,6 +101,30 @@ export default function SettingsPage() {
       setKeyError("Something went wrong");
     }
     setActivating(false);
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+    setPasswordSuccess(false);
+    if (newPassword.length < 6) {
+      setPasswordError(isEn ? "Password must be at least 6 characters" : "Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError(isEn ? "Passwords do not match" : "Les mots de passe ne correspondent pas");
+      return;
+    }
+    setPasswordSaving(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordSaving(false);
+    if (error) {
+      setPasswordError(error.message);
+    } else {
+      setPasswordSuccess(true);
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPasswordSuccess(false), 3000);
+    }
   };
 
   const tabLabels: Record<Tab, string> = {
@@ -455,13 +484,18 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label className="dark:text-neutral-300">{isEn ? "New Password" : "Nouveau mot de passe"}</Label>
-                    <Input type="password" placeholder="••••••••" className="dark:bg-neutral-800 dark:border-neutral-700" />
+                    <Input type="password" placeholder="••••••••" className="dark:bg-neutral-800 dark:border-neutral-700" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label className="dark:text-neutral-300">{isEn ? "Confirm Password" : "Confirmer"}</Label>
-                    <Input type="password" placeholder="••••••••" className="dark:bg-neutral-800 dark:border-neutral-700" />
+                    <Input type="password" placeholder="••••••••" className="dark:bg-neutral-800 dark:border-neutral-700" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                   </div>
-                  <Button>{isEn ? "Update Password" : "Mettre à jour"}</Button>
+                  {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
+                  {passwordSuccess && <p className="text-xs text-green-600">{isEn ? "Password updated!" : "Mot de passe mis à jour !"}</p>}
+                  <Button onClick={handleChangePassword} disabled={passwordSaving || !newPassword}>
+                    {passwordSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {isEn ? "Update Password" : "Mettre à jour"}
+                  </Button>
                 </div>
               </Card>
 

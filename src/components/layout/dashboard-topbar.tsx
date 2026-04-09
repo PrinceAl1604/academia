@@ -55,6 +55,7 @@ export function DashboardTopbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const pathname = usePathname();
   const router = useRouter();
   const { isAdmin, isAuthenticated, userName, logout } = useAuth();
@@ -76,27 +77,27 @@ export function DashboardTopbar() {
     { label: t.settings.title || "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
-  // Load notifications
+  // Load notifications and compute unread count
   useEffect(() => {
     async function loadNotifications() {
+      const lastSeen = localStorage.getItem("notif_last_seen") || "1970-01-01";
       if (isAdmin) {
-        // Admin: show recent signups
         const { data } = await supabase
           .from("users")
           .select("id, name, email, created_at")
           .order("created_at", { ascending: false })
           .limit(5);
 
-        setNotifications(
-          (data ?? []).map((u) => ({
-            id: u.id,
-            type: "new_student" as const,
-            message: `${u.name || u.email} joined`,
-            time: new Date(u.created_at).toLocaleDateString(),
-          }))
-        );
+        const items = (data ?? []).map((u) => ({
+          id: u.id,
+          type: "new_student" as const,
+          message: `${u.name || u.email} joined`,
+          time: new Date(u.created_at).toLocaleDateString(),
+          _raw: u.created_at,
+        }));
+        setNotifications(items);
+        setUnreadCount(items.filter((n) => n._raw > lastSeen).length);
       } else {
-        // Student: show recent courses
         const { data } = await supabase
           .from("courses")
           .select("id, title, created_at")
@@ -104,18 +105,24 @@ export function DashboardTopbar() {
           .order("created_at", { ascending: false })
           .limit(5);
 
-        setNotifications(
-          (data ?? []).map((c) => ({
-            id: c.id,
-            type: "new_course" as const,
-            message: `New course: ${c.title}`,
-            time: new Date(c.created_at).toLocaleDateString(),
-          }))
-        );
+        const items = (data ?? []).map((c) => ({
+          id: c.id,
+          type: "new_course" as const,
+          message: `New course: ${c.title}`,
+          time: new Date(c.created_at).toLocaleDateString(),
+          _raw: c.created_at,
+        }));
+        setNotifications(items);
+        setUnreadCount(items.filter((n) => n._raw > lastSeen).length);
       }
     }
     if (isAuthenticated) loadNotifications();
   }, [isAdmin, isAuthenticated]);
+
+  const markNotificationsRead = () => {
+    localStorage.setItem("notif_last_seen", new Date().toISOString());
+    setUnreadCount(0);
+  };
 
   // Load + toggle dark mode
   useEffect(() => {
@@ -231,10 +238,10 @@ export function DashboardTopbar() {
         {isAuthenticated ? (
           <>
             {/* Notification Popover */}
-            <Popover>
+            <Popover onOpenChange={(open) => { if (open) markNotificationsRead(); }}>
               <PopoverTrigger render={<Button variant="ghost" size="icon" className="relative h-9 w-9" aria-label="Notifications" />}>
                 <Bell className="h-4 w-4" />
-                {notifications.length > 0 && (
+                {unreadCount > 0 && (
                   <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
                 )}
               </PopoverTrigger>
