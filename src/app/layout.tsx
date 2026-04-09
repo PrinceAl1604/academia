@@ -18,7 +18,11 @@ export const metadata: Metadata = {
   description:
     "Access premium courses taught by industry experts. One subscription, unlimited learning.",
   icons: {
-    icon: "/logo.svg",
+    icon: [
+      { url: "/favicon-light.svg", type: "image/svg+xml", media: "(prefers-color-scheme: light)" },
+      { url: "/favicon-dark.svg", type: "image/svg+xml", media: "(prefers-color-scheme: dark)" },
+    ],
+    apple: "/favicon-light.svg",
   },
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "https://academia-vert-phi.vercel.app"
