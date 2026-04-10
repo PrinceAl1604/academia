@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabase";
 import { syncAllCourseTotals } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Users,
   BookOpen,
@@ -16,7 +18,21 @@ import {
   BarChart3,
   Loader2,
   TrendingUp,
+  Gift,
 } from "lucide-react";
+
+interface ReferralUser {
+  name: string | null;
+  email: string;
+}
+
+interface Referral {
+  id: string;
+  status: string;
+  created_at: string;
+  referrer: ReferralUser;
+  referred: ReferralUser;
+}
 
 interface Stats {
   totalStudents: number;
@@ -30,7 +46,9 @@ interface Stats {
 export default function AdminDashboardPage() {
   const { t } = useLanguage();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
   const [loading, setLoading] = useState(true);
+  const isEn = t.nav.signIn === "Sign In";
 
   useEffect(() => {
     async function loadStats() {
@@ -59,6 +77,16 @@ export default function AdminDashboardPage() {
         totalEnrollments: totalEnrollments ?? 0,
         recentSignups: recentSignups ?? 0,
       });
+
+      // Fetch recent referrals via admin API (bypasses RLS)
+      try {
+        const res = await fetch("/api/admin/referrals");
+        if (res.ok) {
+          const json = await res.json();
+          setReferrals(json.referrals ?? []);
+        }
+      } catch {}
+
       setLoading(false);
 
       // Sync all course totals in the background (fixes stale 0 values)
@@ -197,6 +225,70 @@ export default function AdminDashboardPage() {
           ))}
         </div>
       </div>
+      {/* Recent Referrals */}
+      {referrals.length > 0 && (
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              {isEn ? "Recent Referrals" : "Parrainages récents"}
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5"
+              render={<Link href="/admin/referrals" />}
+            >
+              {isEn ? "View All" : "Voir tout"}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="p-0">
+              <div className="divide-y dark:divide-neutral-800">
+                {referrals.slice(0, 5).map((ref) => {
+                  const referrerName = ref.referrer?.name || ref.referrer?.email?.split("@")[0] || "?";
+                  const referredName = ref.referred?.name || ref.referred?.email?.split("@")[0] || "?";
+                  const initials = referredName.slice(0, 2).toUpperCase();
+                  const date = new Date(ref.created_at).toLocaleDateString(
+                    isEn ? "en-US" : "fr-FR",
+                    { month: "short", day: "numeric" }
+                  );
+
+                  return (
+                    <div key={ref.id} className="flex items-center gap-3 px-4 py-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20">
+                        <Gift className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-neutral-900 dark:text-white">
+                          <span className="font-medium">{referredName}</span>
+                          <span className="text-neutral-500">
+                            {isEn ? " signed up via " : " inscrit via "}
+                          </span>
+                          <span className="font-medium">{referrerName}</span>
+                        </p>
+                        <p className="text-xs text-neutral-400">{ref.referred?.email}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge className={
+                          ref.status === "rewarded"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        }>
+                          {ref.status === "rewarded"
+                            ? (isEn ? "Rewarded" : "Récompensé")
+                            : (isEn ? "Pending" : "En attente")}
+                        </Badge>
+                        <span className="text-xs text-neutral-400">{date}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
