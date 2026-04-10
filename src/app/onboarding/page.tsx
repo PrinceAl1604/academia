@@ -141,7 +141,17 @@ export default function OnboardingPage() {
 
   /* ─── Render ───────────────────────────────────────────── */
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white dark:bg-neutral-950 px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center bg-white dark:bg-neutral-950 px-4 py-12">
+      {/* Skip button — top right */}
+      {step > 0 && step < totalSteps - 1 && (
+        <button
+          onClick={() => setStep(step + 1)}
+          className="absolute top-6 right-6 text-sm font-medium text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
+        >
+          {isEn ? "Skip" : "Passer"}
+        </button>
+      )}
+
       <div className="w-full max-w-xl">
 
         {/* Step content with fade transition */}
@@ -423,22 +433,14 @@ export default function OnboardingPage() {
 
         {/* ─── Navigation Bar ──────────────────────────────── */}
         <div className="mt-12 flex items-center justify-between">
-          {/* Back / Skip */}
-          <div className="flex gap-4">
+          {/* Back */}
+          <div>
             {step > 0 && (
               <button
                 onClick={() => setStep(step - 1)}
                 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
               >
                 {isEn ? "Back" : "Retour"}
-              </button>
-            )}
-            {step < totalSteps - 1 && step > 0 && (
-              <button
-                onClick={() => setStep(step + 1)}
-                className="text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
-              >
-                {isEn ? "Skip" : "Passer"}
               </button>
             )}
           </div>
