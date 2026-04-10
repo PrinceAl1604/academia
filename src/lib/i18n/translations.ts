@@ -459,6 +459,12 @@ export const translations = {
       saving: "Saving...",
       startExploring: "Start Exploring",
       skip: "Skip",
+      referralTitle: "Got a referral code?",
+      referralSubtitle: "If a friend invited you, enter their code to connect your accounts.",
+      referralPlaceholder: "ex: ALEX5761",
+      referralApplied: "Referral code applied!",
+      referralInvalid: "Invalid code. Please check and try again.",
+      referralAlready: "You already have a referral linked.",
     },
 
     // Sidebar
@@ -1014,6 +1020,12 @@ export const translations = {
       saving: "Enregistrement...",
       startExploring: "Commencer",
       skip: "Passer",
+      referralTitle: "Vous avez un code de parrainage ?",
+      referralSubtitle: "Si un ami vous a invité, entrez son code pour lier vos comptes.",
+      referralPlaceholder: "ex : ALEX5761",
+      referralApplied: "Code de parrainage appliqué !",
+      referralInvalid: "Code invalide. Veuillez vérifier et réessayer.",
+      referralAlready: "Vous avez déjà un parrainage lié.",
     },
 
     // Sidebar

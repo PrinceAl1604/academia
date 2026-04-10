@@ -20,6 +20,9 @@ import {
   ArrowRight,
   ArrowLeft,
   Sparkles,
+  Gift,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 
 /* ─── Types ────────────────────────────────────────────────── */
@@ -29,6 +32,7 @@ interface OnboardingData {
   theme: "light" | "dark";
   userType: string;
   interests: string[];
+  referralCode: string;
 }
 
 const USER_TYPES = [
@@ -64,9 +68,11 @@ export default function OnboardingPage() {
     theme: "light",
     userType: "",
     interests: [],
+    referralCode: "",
   });
+  const [referralStatus, setReferralStatus] = useState<"idle" | "applied" | "invalid" | "already">("idle");
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   // Sync name from auth
   useEffect(() => {
@@ -98,6 +104,26 @@ export default function OnboardingPage() {
         ? d.interests.filter((i) => i !== id)
         : [...d.interests, id],
     }));
+  };
+
+  const submitReferralCode = async () => {
+    if (!data.referralCode || referralStatus === "applied") return;
+    try {
+      const res = await fetch("/api/referral/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: data.referralCode }),
+      });
+      if (res.ok) {
+        setReferralStatus("applied");
+      } else if (res.status === 409) {
+        setReferralStatus("already");
+      } else {
+        setReferralStatus("invalid");
+      }
+    } catch {
+      setReferralStatus("invalid");
+    }
   };
 
   const handleFinish = async () => {
@@ -132,6 +158,7 @@ export default function OnboardingPage() {
     if (step === 0) return true; // name is optional
     if (step === 1) return !!data.userType;
     if (step === 2) return true; // interests are optional
+    if (step === 3) return true; // referral is optional
     return true;
   };
 
@@ -314,8 +341,85 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ─── Step 4: All Set ─────────────────────────── */}
+          {/* ─── Step 4: Referral Code ──────────────────── */}
           {step === 3 && (
+            <div className="space-y-8">
+              <div>
+                <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
+                  {t.onboarding.referralTitle}
+                </h1>
+                <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+                  {t.onboarding.referralSubtitle}
+                </p>
+              </div>
+
+              <div className="mx-auto max-w-sm space-y-4">
+                {/* Icon */}
+                <div className="flex justify-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20">
+                    <Gift className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                  </div>
+                </div>
+
+                {/* Code input */}
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={data.referralCode}
+                    onChange={(e) => {
+                      setData({ ...data, referralCode: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "") });
+                      setReferralStatus("idle");
+                    }}
+                    placeholder={t.onboarding.referralPlaceholder}
+                    maxLength={8}
+                    disabled={referralStatus === "applied"}
+                    className={cn(
+                      "w-full rounded-xl border px-4 py-3.5 text-center font-mono text-lg tracking-[0.2em] outline-none transition-colors placeholder:text-neutral-400 placeholder:tracking-normal placeholder:font-sans placeholder:text-sm",
+                      referralStatus === "applied"
+                        ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                        : referralStatus === "invalid"
+                          ? "border-red-300 dark:border-red-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white"
+                          : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white focus:border-neutral-400 dark:focus:border-neutral-600"
+                    )}
+                  />
+
+                  {/* Status messages */}
+                  {referralStatus === "applied" && (
+                    <p className="flex items-center justify-center gap-1.5 text-sm text-green-600 dark:text-green-400">
+                      <CheckCircle className="h-4 w-4" />
+                      {t.onboarding.referralApplied}
+                    </p>
+                  )}
+                  {referralStatus === "invalid" && (
+                    <p className="flex items-center justify-center gap-1.5 text-sm text-red-500">
+                      <AlertCircle className="h-4 w-4" />
+                      {t.onboarding.referralInvalid}
+                    </p>
+                  )}
+                  {referralStatus === "already" && (
+                    <p className="flex items-center justify-center gap-1.5 text-sm text-amber-600 dark:text-amber-400">
+                      <CheckCircle className="h-4 w-4" />
+                      {t.onboarding.referralAlready}
+                    </p>
+                  )}
+                </div>
+
+                {/* Apply button */}
+                {referralStatus !== "applied" && referralStatus !== "already" && (
+                  <button
+                    onClick={submitReferralCode}
+                    disabled={!data.referralCode || data.referralCode.length < 4}
+                    className="w-full rounded-xl bg-neutral-900 dark:bg-white px-5 py-3 text-sm font-medium text-white dark:text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {data.language === "fr" ? "Appliquer" : "Apply"}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ─── Step 5: All Set ─────────────────────────── */}
+          {step === 4 && (
             <div className="space-y-8 text-center">
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
                 <Sparkles className="h-10 w-10 text-neutral-700 dark:text-neutral-300" />
