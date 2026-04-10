@@ -8,6 +8,11 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { getCategories, type CategoryRow } from "@/lib/api";
 import {
+  SUBSCRIPTION_PRICE,
+  SUBSCRIPTION_CURRENCY_DISPLAY,
+  CHARIOW_PRODUCT_URL,
+} from "@/lib/licence";
+import {
   GraduationCap,
   Briefcase,
   Rocket,
@@ -18,6 +23,8 @@ import {
   Moon,
   Check,
   ArrowRight,
+  Crown,
+  Lock,
   ArrowLeft,
   Sparkles,
 } from "lucide-react";
@@ -67,7 +74,7 @@ export default function OnboardingPage() {
   });
 
   const isEn = data.language === "en";
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   // Sync name from auth
   useEffect(() => {
@@ -301,8 +308,68 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* ─── Step 4: All Set ─────────────────────────── */}
+          {/* ─── Step 4: Pro Membership ──────────────────── */}
           {step === 3 && (
+            <div className="space-y-8">
+              <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
+                {isEn ? "Unlock the full experience" : "Debloquez l'experience complete"}
+              </h1>
+
+              <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 p-6 space-y-6">
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/30">
+                    <Crown className="h-6 w-6 text-amber-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-neutral-900 dark:text-white">
+                      Pro membership
+                    </h2>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      {isEn ? "Unlock all courses & content" : "Debloquez tous les cours et contenus"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Price */}
+                <div>
+                  <span className="text-3xl font-bold text-neutral-900 dark:text-white">
+                    {SUBSCRIPTION_PRICE.toLocaleString("fr-FR")}
+                  </span>
+                  <span className="ml-2 text-sm text-neutral-500 dark:text-neutral-400">
+                    {SUBSCRIPTION_CURRENCY_DISPLAY} / {isEn ? "month" : "mois"}
+                  </span>
+                </div>
+
+                {/* Features */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
+                    <Lock className="h-4 w-4 text-neutral-400 shrink-0" />
+                    {isEn ? "Access all premium courses" : "Acces a tous les cours premium"}
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
+                    <Lock className="h-4 w-4 text-neutral-400 shrink-0" />
+                    {isEn ? "Download resources & certificates" : "Telechargez ressources et certificats"}
+                  </div>
+                </div>
+
+                {/* CTA */}
+                <a
+                  href={CHARIOW_PRODUCT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 dark:bg-white py-3 text-sm font-medium text-white dark:text-neutral-900 transition-opacity hover:opacity-90"
+                >
+                  <Crown className="h-4 w-4" />
+                  {isEn ? "Get a Licence Key" : "Obtenir une cle de licence"}
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Step 5: All Set ─────────────────────────── */}
+          {step === 4 && (
             <div className="space-y-8 text-center">
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
                 <Sparkles className="h-10 w-10 text-neutral-700 dark:text-neutral-300" />
