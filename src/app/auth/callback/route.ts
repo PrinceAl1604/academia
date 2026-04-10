@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { linkReferral, ensureReferralCode } from "@/lib/referral";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -30,32 +31,55 @@ export async function GET(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.exchangeCodeForSession(code);
 
-    // Check if user needs onboarding + handle referral linking
     let finalRedirect = redirectTo;
     if (user) {
-      const { data: profile } = await supabase
-        .from("users")
-        .select("has_onboarded, referral_code")
-        .eq("id", user.id)
-        .single();
-
-      if (profile && profile.has_onboarded === false) {
-        finalRedirect = "/onboarding";
-      }
-
-      // Generate referral code if user doesn't have one yet
+      const admin = getSupabaseAdmin();
       const userName =
         user.user_metadata?.full_name ||
         user.email?.split("@")[0] ||
         "USER";
-      if (!profile?.referral_code) {
-        ensureReferralCode(user.id, userName).catch(() => {});
+
+      // ── Ensure user row exists BEFORE any referral work ──────────
+      // The users record is normally created client-side by loadUserProfile,
+      // but referral linking needs the FK row to exist NOW.
+      const { data: profile } = await admin
+        .from("users")
+        .select("id, has_onboarded, referral_code, referred_by")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile) {
+        // First-time user — create their record so FK constraints pass
+        await admin.from("users").insert({
+          id: user.id,
+          email: user.email || "",
+          name: userName,
+          role: "student",
+          subscription_tier: "free",
+          has_onboarded: false,
+        });
+        finalRedirect = "/onboarding";
+      } else if (profile.has_onboarded === false) {
+        finalRedirect = "/onboarding";
       }
 
-      // If signed up via referral link, link the referral (non-blocking)
+      // Generate referral code if user doesn't have one yet
+      if (!profile?.referral_code) {
+        try {
+          await ensureReferralCode(user.id, userName);
+        } catch (err) {
+          console.error("[Auth Callback] ensureReferralCode failed:", err);
+        }
+      }
+
+      // If signed up via referral link, link the referral
       const refCode = user.user_metadata?.referral_code;
-      if (refCode) {
-        linkReferral(user.id, refCode).catch(() => {});
+      if (refCode && !profile?.referred_by) {
+        try {
+          await linkReferral(user.id, refCode);
+        } catch (err) {
+          console.error("[Auth Callback] linkReferral failed:", err);
+        }
       }
     }
 
