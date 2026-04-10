@@ -15,11 +15,28 @@ export function ReferralModal({ open, onClose }: ReferralModalProps) {
   const { referralCode } = useAuth();
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const referralLink =
     typeof window !== "undefined"
       ? `${window.location.origin}/sign-up?ref=${referralCode}`
       : "";
+
+  const copyCode = useCallback(async () => {
+    if (!referralCode) return;
+    try {
+      await navigator.clipboard.writeText(referralCode);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = referralCode;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  }, [referralCode]);
 
   const copyLink = useCallback(async () => {
     if (!referralLink) return;
@@ -129,20 +146,47 @@ export function ReferralModal({ open, onClose }: ReferralModalProps) {
             </div>
           </div>
 
+          {/* Your referral code */}
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2 block">
+              {t.referral.referralCode}
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-4 py-3 text-center">
+                <p className="font-mono text-lg font-bold tracking-[0.25em] text-neutral-900 dark:text-white">
+                  {referralCode}
+                </p>
+              </div>
+              <Button
+                onClick={copyCode}
+                className="shrink-0 gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+                size="lg"
+              >
+                {copiedCode ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+                {copiedCode ? t.referral.copied : t.referral.copy}
+              </Button>
+            </div>
+          </div>
+
           {/* Your invite link */}
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2 block">
               {t.referral.yourLink}
             </label>
             <div className="flex items-center gap-2">
-              <div className="flex-1 min-w-0 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-3 py-2">
-                <p className="truncate font-mono text-xs text-neutral-600 dark:text-neutral-400">
+              <div className="flex-1 min-w-0 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 px-3 py-2">
+                <p className="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400">
                   {referralLink}
                 </p>
               </div>
               <Button
                 onClick={copyLink}
-                className="shrink-0 gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+                variant="outline"
+                className="shrink-0 gap-1.5"
                 size="lg"
               >
                 {copied ? (

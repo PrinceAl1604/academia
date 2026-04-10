@@ -390,7 +390,7 @@ export const translations = {
       subtitle: "Invite friends and earn 1 free month of Pro when they subscribe",
       earnBadge: "Earn free Pro",
       howItWorks: "How it works",
-      step1: "Share your unique referral link with friends",
+      step1: "Share your link or code with friends",
       step2: "Your friend subscribes to a Pro plan",
       step3: "You receive a free 1-month licence key by email",
       yourLink: "Your invite link",
@@ -402,6 +402,8 @@ export const translations = {
       invited: "Invited",
       daysEarned: "Days earned",
       inviteFriends: "Invite Friends",
+      referralCode: "Referral Code",
+      optional: "optional",
     },
 
     // Pro upsell
@@ -943,7 +945,7 @@ export const translations = {
       subtitle: "Invitez vos amis et gagnez 1 mois de Pro gratuit quand ils s'abonnent",
       earnBadge: "Gagnez du Pro gratuit",
       howItWorks: "Comment ça marche",
-      step1: "Partagez votre lien de parrainage unique avec vos amis",
+      step1: "Partagez votre lien ou code avec vos amis",
       step2: "Votre ami s'abonne au plan Pro",
       step3: "Vous recevez une clé de licence d'1 mois gratuit par email",
       yourLink: "Votre lien d'invitation",
@@ -955,6 +957,8 @@ export const translations = {
       invited: "Invités",
       daysEarned: "Jours gagnés",
       inviteFriends: "Inviter des amis",
+      referralCode: "Code de parrainage",
+      optional: "optionnel",
     },
 
     // Pro upsell
