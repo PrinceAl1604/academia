@@ -52,7 +52,7 @@ const USER_TYPE_LABELS: Record<string, Record<string, string>> = {
 /* ─── Main Component ───────────────────────────────────────── */
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, userName } = useAuth();
+  const { user, userName, markOnboarded } = useAuth();
   const { language, setLanguage } = useLanguage();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -120,6 +120,8 @@ export default function OnboardingPage() {
       })
       .eq("id", user.id);
 
+    // Update context immediately so SidebarLayout doesn't redirect back
+    markOnboarded();
     router.push("/");
   };
 

@@ -7,7 +7,8 @@ export async function GET(request: NextRequest) {
   const redirectTo = searchParams.get("redirect") || "/";
 
   if (code) {
-    const response = NextResponse.redirect(`${origin}${redirectTo}`);
+    // Create a temporary response — we'll replace it after checking onboarding
+    const tempResponse = NextResponse.next({ request });
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,14 +20,35 @@ export async function GET(request: NextRequest) {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options);
+              tempResponse.cookies.set(name, value, options);
             });
           },
         },
       }
     );
 
-    await supabase.auth.exchangeCodeForSession(code);
+    const { data: { user } } = await supabase.auth.exchangeCodeForSession(code);
+
+    // Check if user needs onboarding
+    let finalRedirect = redirectTo;
+    if (user) {
+      const { data: profile } = await supabase
+        .from("users")
+        .select("has_onboarded")
+        .eq("id", user.id)
+        .single();
+
+      if (profile && profile.has_onboarded === false) {
+        finalRedirect = "/onboarding";
+      }
+    }
+
+    // Build final response with correct redirect and carry over cookies
+    const response = NextResponse.redirect(`${origin}${finalRedirect}`);
+    tempResponse.cookies.getAll().forEach((cookie) => {
+      response.cookies.set(cookie.name, cookie.value);
+    });
+
     return response;
   }
 

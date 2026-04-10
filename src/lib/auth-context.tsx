@@ -29,6 +29,7 @@ interface AuthContextType {
   isExpiringSoon: boolean; // true if < 5 days left
   isExpired: boolean;
   hasOnboarded: boolean;
+  markOnboarded: () => void;
   logout: () => Promise<void>;
 }
 
@@ -125,6 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const markOnboarded = useCallback(() => {
+    setHasOnboarded(true);
+  }, []);
+
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -164,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isExpiringSoon,
         isExpired,
         hasOnboarded,
+        markOnboarded,
         logout,
       }}
     >
