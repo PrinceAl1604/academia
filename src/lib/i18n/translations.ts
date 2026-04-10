@@ -31,7 +31,7 @@ export const translations = {
       activeStudents: "Active Students",
       expertCourses: "Expert Courses",
       averageRating: "Average Rating",
-      certificatesIssued: "Certificates Issued",
+      coursesPublished: "Courses Published",
     },
 
     // Featured courses
@@ -53,9 +53,9 @@ export const translations = {
       learnPace: "Learn at Your Pace",
       learnPaceDesc:
         "Access courses anytime, anywhere. Watch on your schedule with lifetime access.",
-      certificates: "Earn Certificates",
-      certificatesDesc:
-        "Get recognized certificates upon completion to showcase your new skills.",
+      practicalProjects: "Practical Projects",
+      practicalProjectsDesc:
+        "Apply what you learn with hands-on projects and real-world exercises.",
       community: "Community Support",
       communityDesc:
         "Join a community of learners. Get help, share projects, and network.",
@@ -90,7 +90,6 @@ export const translations = {
       allCourses: "All Courses",
       pricing: "Pricing",
       forTeams: "For Teams",
-      certificatesLink: "Certificates",
       resources: "Resources",
       blog: "Blog",
       communityLink: "Community",
@@ -176,7 +175,6 @@ export const translations = {
       previewCourse: "Preview Course",
       ofContent: "of content",
       lessons: "lessons",
-      certificateCompletion: "Certificate of completion",
       lifetimeAccess: "Lifetime access",
       curriculum: "Course Curriculum",
       modules: "chapters",
@@ -205,7 +203,6 @@ export const translations = {
       enrolledCourses: "Enrolled Courses",
       lessonsCompleted: "Lessons Completed",
       dayStreak: "Day Streak",
-      certificatesLabel: "Certificates",
       continueLearning: "Continue Learning",
       viewAll: "View all",
       complete: "complete",
@@ -282,18 +279,6 @@ export const translations = {
       needNewLicence: "Need a new licence?",
       needNewLicenceDesc: "Contact us for licence renewal or team licences.",
       contactSupport: "Contact Support",
-    },
-
-    // Certificates
-    certificatesPage: {
-      title: "Certificates",
-      subtitle: "Your earned certificates and achievements",
-      earned: "Earned",
-      completedOn: "Completed on",
-      download: "Download",
-      share: "Share",
-      inProgressTitle: "In Progress",
-      completeToEarn: "Complete the course to earn this certificate",
     },
 
     // Help
@@ -417,7 +402,7 @@ export const translations = {
       activeStudents: "Étudiants actifs",
       expertCourses: "Cours d'experts",
       averageRating: "Note moyenne",
-      certificatesIssued: "Certificats délivrés",
+      coursesPublished: "Cours publiés",
     },
 
     // Featured courses
@@ -439,9 +424,9 @@ export const translations = {
       learnPace: "Apprenez à votre rythme",
       learnPaceDesc:
         "Accédez aux cours partout, à tout moment. Regardez selon votre emploi du temps avec un accès à vie.",
-      certificates: "Obtenez des certificats",
-      certificatesDesc:
-        "Recevez des certificats reconnus à la fin de chaque cours pour valoriser vos compétences.",
+      practicalProjects: "Projets pratiques",
+      practicalProjectsDesc:
+        "Appliquez ce que vous apprenez avec des projets pratiques et des exercices concrets.",
       community: "Soutien communautaire",
       communityDesc:
         "Rejoignez une communauté d'apprenants. Obtenez de l'aide, partagez des projets et réseautez.",
@@ -477,7 +462,6 @@ export const translations = {
       allCourses: "Tous les cours",
       pricing: "Tarifs",
       forTeams: "Pour les équipes",
-      certificatesLink: "Certificats",
       resources: "Ressources",
       blog: "Blog",
       communityLink: "Communauté",
@@ -563,7 +547,6 @@ export const translations = {
       previewCourse: "Aperçu du cours",
       ofContent: "de contenu",
       lessons: "leçons",
-      certificateCompletion: "Certificat de fin de cours",
       lifetimeAccess: "Accès à vie",
       curriculum: "Programme du cours",
       modules: "chapitres",
@@ -593,7 +576,6 @@ export const translations = {
       enrolledCourses: "Cours inscrits",
       lessonsCompleted: "Leçons terminées",
       dayStreak: "Jours consécutifs",
-      certificatesLabel: "Certificats",
       continueLearning: "Continuer à apprendre",
       viewAll: "Voir tout",
       complete: "terminé",
@@ -676,17 +658,6 @@ export const translations = {
       contactSupport: "Contacter le support",
     },
 
-    // Certificates
-    certificatesPage: {
-      title: "Certificats",
-      subtitle: "Vos certificats obtenus et réalisations",
-      earned: "Obtenu",
-      completedOn: "Terminé le",
-      download: "Télécharger",
-      share: "Partager",
-      inProgressTitle: "En cours",
-      completeToEarn: "Terminez le cours pour obtenir ce certificat",
-    },
 
     // Help
     help: {

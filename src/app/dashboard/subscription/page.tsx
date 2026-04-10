@@ -23,7 +23,7 @@ import { SUBSCRIPTION_PRICE, SUBSCRIPTION_CURRENCY } from "@/lib/licence";
 
 const FEATURES_EN = [
   "Access to all courses",
-  "Certificate of completion",
+  "Exclusive learning materials",
   "Downloadable resources",
   "Community access",
   "Priority support",
@@ -32,7 +32,7 @@ const FEATURES_EN = [
 
 const FEATURES_FR = [
   "Accès à tous les cours",
-  "Certificat de complétion",
+  "Supports d'apprentissage exclusifs",
   "Ressources téléchargeables",
   "Accès à la communauté",
   "Support prioritaire",

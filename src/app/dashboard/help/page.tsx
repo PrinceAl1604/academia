@@ -22,10 +22,6 @@ const faqItems = [
     answer: "Yes, Pro plan subscribers can download course content for offline access.",
   },
   {
-    question: "How do I earn a certificate?",
-    answer: "Complete all lessons in a course and pass the final assessment to earn your certificate.",
-  },
-  {
     question: "What if my licence key expires?",
     answer: "Contact our support team to renew your licence. You won't lose your progress.",
   },

@@ -38,7 +38,7 @@ export async function sendWelcomeEmail({
   </p>
   <p style="font-size: 16px; line-height: 1.6; color: #525252;">
     Want to unlock all courses? Upgrade to Pro for 15,000 FCFA/month and get
-    unlimited access to every course, certificates, and downloadable resources.
+    unlimited access to every course and downloadable resources.
   </p>
   <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app"}"
      style="display: inline-block; background: #171717; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; margin-top: 8px;">
@@ -90,9 +90,9 @@ export async function sendCourseCompletionEmail({
     Your dedication to learning is inspiring.
   </p>
   <div style="text-align: center; margin-top: 24px;">
-    <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app"}/dashboard/certificates"
+    <a href="${process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app"}/dashboard/courses"
        style="display: inline-block; background: #171717; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
-      View Certificate
+      View My Courses
     </a>
   </div>
   <p style="font-size: 16px; line-height: 1.6; color: #525252; text-align: center; margin-top: 24px;">
@@ -141,7 +141,7 @@ export async function sendSubscriptionEmail({
   <ul style="font-size: 16px; line-height: 1.8; color: #525252;">
     <li>All premium courses</li>
     <li>Downloadable resources</li>
-    <li>Certificates of completion</li>
+    <li>Exclusive learning materials</li>
     <li>Priority support</li>
   </ul>
   <div style="text-align: center; margin-top: 24px;">

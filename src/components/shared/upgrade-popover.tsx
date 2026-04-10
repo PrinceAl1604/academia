@@ -65,7 +65,7 @@ export function MembershipPopover({ children }: MembershipPopoverProps) {
             </li>
             <li className="flex items-center gap-2">
               <Lock className="h-3 w-3 text-neutral-400" />
-              Download resources & certificates
+              Download resources & materials
             </li>
           </ul>
 

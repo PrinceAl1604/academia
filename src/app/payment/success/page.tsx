@@ -50,7 +50,7 @@ export default function PaymentSuccessPage() {
               <p className="text-sm font-semibold text-neutral-900">Pro Plan Active</p>
             </div>
             <ul className="space-y-2 text-sm text-neutral-600">
-              {["Access to all courses", "Certificate of completion", "Downloadable resources", "Priority support"].map((item) => (
+              {["Access to all courses", "Exclusive learning materials", "Downloadable resources", "Priority support"].map((item) => (
                 <li key={item} className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
                   {item}

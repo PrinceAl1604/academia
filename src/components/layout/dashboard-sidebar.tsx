@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   BookOpen,
-  Trophy,
   Settings,
   CreditCard,
   Shield,
@@ -34,7 +33,6 @@ export function DashboardSidebar() {
   const studentNav = [
     { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
     { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
-    { label: t.certificatesPage.title || "Certificates", href: "/dashboard/certificates", icon: Trophy },
   ];
 
   const studentAccountNav = [

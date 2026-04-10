@@ -10,7 +10,6 @@ import {
   ArrowRight,
   BookOpen,
   Play,
-  Trophy,
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -109,17 +108,6 @@ export default function DashboardPage() {
             <div>
               <p className="text-2xl font-bold text-neutral-900 dark:text-white">{completedCount}</p>
               <p className="text-sm text-neutral-500">{t.dashboard.lessonsCompleted}</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-500/10">
-              <Trophy className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">0</p>
-              <p className="text-sm text-neutral-500">{t.dashboard.certificatesLabel}</p>
             </div>
           </div>
         </Card>

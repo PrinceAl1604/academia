@@ -85,7 +85,7 @@ export function ProUpsellOverlay() {
           </div>
           <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
             <Lock className="h-4 w-4 text-neutral-400 shrink-0" />
-            {isEn ? "Download resources & certificates" : "Telechargez ressources et certificats"}
+            {isEn ? "Download resources & materials" : "Telechargez ressources et supports"}
           </div>
         </div>
 

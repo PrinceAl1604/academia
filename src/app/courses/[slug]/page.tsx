@@ -20,7 +20,6 @@ import {
   Lock,
   Loader2,
   GraduationCap,
-  Award,
   Infinity,
 } from "lucide-react";
 import { getCourseBySlug, type CourseRow, type ModuleRow } from "@/lib/api";
@@ -261,13 +260,6 @@ export default function CourseDetailPage({ params }: PageProps) {
                 <div>
                   <p className="text-sm font-semibold text-neutral-900 dark:text-white">{totalLessons}</p>
                   <p className="text-xs text-neutral-500">{t.courseDetail.lessons}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <Award className="h-5 w-5 text-neutral-400 shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">{isEn ? "Certificate" : "Certificat"}</p>
-                  <p className="text-xs text-neutral-500">{isEn ? "on completion" : "à la fin"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
