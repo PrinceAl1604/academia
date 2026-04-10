@@ -8,7 +8,6 @@ const FROM_EMAIL = process.env.FROM_EMAIL || "Brightroots <noreply@resend.dev>";
 const APP_NAME = "Brightroots";
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app";
-const LOGO_URL = `${APP_URL}/logo-login-light.svg`;
 const HELP_EMAIL = "support@brightroots.com";
 
 /* ─── Shared email wrapper ────────────────────────────────────
@@ -40,9 +39,9 @@ function emailWrapper({
         <tr><td style="background:#ffffff; border-radius:12px; overflow:hidden;">
           <table width="100%" cellpadding="0" cellspacing="0">
 
-            <!-- Logo -->
+            <!-- Logo (text-based — SVG not supported in email clients) -->
             <tr><td style="padding:32px 36px 0;">
-              <img src="${LOGO_URL}" alt="${APP_NAME}" height="28" style="height:28px; display:block;" />
+              <p style="margin:0; font-size:22px; font-weight:700; color:#171717; letter-spacing:-0.3px;">${APP_NAME}</p>
             </td></tr>
 
             <!-- Heading -->
@@ -67,7 +66,7 @@ function emailWrapper({
               buttonLabel && buttonUrl
                 ? `<tr><td style="padding:28px 36px 0;">
               <a href="${buttonUrl}"
-                 style="display:inline-block; background:#16a34a; color:#ffffff; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:600; font-size:15px; letter-spacing:0.3px;">
+                 style="display:inline-block; background:#171717; color:#ffffff; padding:14px 32px; border-radius:8px; text-decoration:none; font-weight:600; font-size:15px; letter-spacing:0.3px;">
                 ${buttonLabel}
               </a>
             </td></tr>`
