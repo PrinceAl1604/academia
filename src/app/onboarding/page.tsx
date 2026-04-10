@@ -41,7 +41,7 @@ const USER_TYPES = [
 ];
 
 const USER_TYPE_LABELS: Record<string, Record<string, string>> = {
-  student:       { en: "Student",       fr: "Etudiant" },
+  student:       { en: "Student",       fr: "Étudiant" },
   professional:  { en: "Professional",  fr: "Professionnel" },
   entrepreneur:  { en: "Entrepreneur",  fr: "Entrepreneur" },
   teacher:       { en: "Teacher",       fr: "Enseignant" },
@@ -53,7 +53,7 @@ const USER_TYPE_LABELS: Record<string, Record<string, string>> = {
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, userName, markOnboarded } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
@@ -66,7 +66,6 @@ export default function OnboardingPage() {
     interests: [],
   });
 
-  const isEn = data.language === "en";
   const totalSteps = 4;
 
   // Sync name from auth
@@ -145,7 +144,7 @@ export default function OnboardingPage() {
           onClick={() => setStep(step + 1)}
           className="absolute top-6 right-6 text-sm font-medium text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
         >
-          {isEn ? "Skip" : "Passer"}
+          {t.onboarding.skip}
         </button>
       )}
 
@@ -159,21 +158,21 @@ export default function OnboardingPage() {
             <div className="space-y-8">
               <div>
                 <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
-                  {isEn ? "Help us personalize your experience" : "Personnalisons votre experience"}
+                  {t.onboarding.personalizeTitle}
                 </h1>
               </div>
 
               {/* Name */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  {isEn ? "What's your name?" : "Quel est votre nom ?"}{" "}
-                  <span className="text-neutral-400 font-normal">({isEn ? "optional" : "optionnel"})</span>
+                  {t.onboarding.whatsYourName}{" "}
+                  <span className="text-neutral-400 font-normal">({t.onboarding.optional})</span>
                 </label>
                 <input
                   type="text"
                   value={data.name}
                   onChange={(e) => setData({ ...data, name: e.target.value })}
-                  placeholder={isEn ? "Your name" : "Votre nom"}
+                  placeholder={t.onboarding.yourName}
                   className="w-full rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3 text-sm text-neutral-900 dark:text-white placeholder:text-neutral-400 outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors"
                 />
               </div>
@@ -181,11 +180,11 @@ export default function OnboardingPage() {
               {/* Language */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  {isEn ? "What's your preferred language?" : "Quelle est votre langue preferee ?"}
+                  {t.onboarding.preferredLanguage}
                 </label>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setData({ ...data, language: "en" })}
+                    onClick={() => { setData({ ...data, language: "en" }); setLanguage("en"); }}
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
                       data.language === "en"
@@ -196,7 +195,7 @@ export default function OnboardingPage() {
                     English
                   </button>
                   <button
-                    onClick={() => setData({ ...data, language: "fr" })}
+                    onClick={() => { setData({ ...data, language: "fr" }); setLanguage("fr"); }}
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
                       data.language === "fr"
@@ -204,7 +203,7 @@ export default function OnboardingPage() {
                         : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700"
                     )}
                   >
-                    Francais
+                    Français
                   </button>
                 </div>
               </div>
@@ -212,7 +211,7 @@ export default function OnboardingPage() {
               {/* Theme */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                  {isEn ? "Choose your theme" : "Choisissez votre theme"}
+                  {t.onboarding.chooseTheme}
                 </label>
                 <div className="flex gap-3">
                   <button
@@ -225,7 +224,7 @@ export default function OnboardingPage() {
                     )}
                   >
                     <Sun className="h-4 w-4" />
-                    Light
+                    {t.onboarding.light}
                   </button>
                   <button
                     onClick={() => setTheme("dark")}
@@ -237,7 +236,7 @@ export default function OnboardingPage() {
                     )}
                   >
                     <Moon className="h-4 w-4" />
-                    Dark
+                    {t.onboarding.dark}
                   </button>
                 </div>
               </div>
@@ -248,7 +247,7 @@ export default function OnboardingPage() {
           {step === 1 && (
             <div className="space-y-8">
               <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
-                {isEn ? "Which one describes you the best?" : "Lequel vous decrit le mieux ?"}
+                {t.onboarding.whichDescribes}
               </h1>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -278,10 +277,10 @@ export default function OnboardingPage() {
             <div className="space-y-8">
               <div>
                 <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
-                  {isEn ? "What topics interest you?" : "Quels sujets vous interessent ?"}
+                  {t.onboarding.topicsInterest}
                 </h1>
                 <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-                  {isEn ? "Select all that apply" : "Selectionnez tout ce qui s'applique"}
+                  {t.onboarding.selectAll}
                 </p>
               </div>
 
@@ -324,12 +323,10 @@ export default function OnboardingPage() {
 
               <div>
                 <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
-                  {isEn ? "You're all set!" : "Vous etes pret !"}
+                  {t.onboarding.allSet}
                 </h1>
                 <p className="mt-2 text-neutral-500 dark:text-neutral-400">
-                  {isEn
-                    ? `Welcome${data.name ? `, ${data.name}` : ""}! Start exploring courses tailored for you.`
-                    : `Bienvenue${data.name ? `, ${data.name}` : ""} ! Decouvrez les cours faits pour vous.`}
+                  {t.onboarding.welcomeStart}{data.name ? `, ${data.name}` : ""}{t.onboarding.welcomeEnd}
                 </p>
               </div>
 
@@ -337,7 +334,7 @@ export default function OnboardingPage() {
               <div className="mx-auto max-w-sm rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 text-left space-y-3">
                 {data.userType && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-500 dark:text-neutral-400">{isEn ? "Profile" : "Profil"}</span>
+                    <span className="text-neutral-500 dark:text-neutral-400">{t.onboarding.profileLabel}</span>
                     <span className="font-medium text-neutral-800 dark:text-neutral-200">
                       {USER_TYPE_LABELS[data.userType]?.[data.language] || data.userType}
                     </span>
@@ -345,22 +342,22 @@ export default function OnboardingPage() {
                 )}
                 {data.interests.length > 0 && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-neutral-500 dark:text-neutral-400">{isEn ? "Interests" : "Centres d'interet"}</span>
+                    <span className="text-neutral-500 dark:text-neutral-400">{t.onboarding.interests}</span>
                     <span className="font-medium text-neutral-800 dark:text-neutral-200">
-                      {data.interests.length} {isEn ? "topics" : "sujets"}
+                      {data.interests.length} {t.onboarding.topics}
                     </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-500 dark:text-neutral-400">{isEn ? "Language" : "Langue"}</span>
+                  <span className="text-neutral-500 dark:text-neutral-400">{t.onboarding.languageLabel}</span>
                   <span className="font-medium text-neutral-800 dark:text-neutral-200">
-                    {data.language === "en" ? "English" : "Francais"}
+                    {data.language === "en" ? "English" : "Français"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-500 dark:text-neutral-400">{isEn ? "Theme" : "Theme"}</span>
+                  <span className="text-neutral-500 dark:text-neutral-400">{t.onboarding.themeLabel}</span>
                   <span className="font-medium text-neutral-800 dark:text-neutral-200">
-                    {data.theme === "light" ? "Light" : "Dark"}
+                    {data.theme === "light" ? t.onboarding.light : t.onboarding.dark}
                   </span>
                 </div>
               </div>
@@ -377,7 +374,7 @@ export default function OnboardingPage() {
                 onClick={() => setStep(step - 1)}
                 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
               >
-                {isEn ? "Back" : "Retour"}
+                {t.onboarding.back}
               </button>
             )}
           </div>
@@ -402,7 +399,7 @@ export default function OnboardingPage() {
               disabled={!canProceed()}
               className="flex items-center gap-2 rounded-xl bg-neutral-900 dark:bg-white px-5 py-2.5 text-sm font-medium text-white dark:text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {isEn ? "Next" : "Suivant"}
+              {t.onboarding.next}
               <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
@@ -412,8 +409,8 @@ export default function OnboardingPage() {
               className="flex items-center gap-2 rounded-xl bg-neutral-900 dark:bg-white px-5 py-2.5 text-sm font-medium text-white dark:text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {saving
-                ? (isEn ? "Saving..." : "Enregistrement...")
-                : (isEn ? "Start Exploring" : "Commencer")}
+                ? t.onboarding.saving
+                : t.onboarding.startExploring}
               {!saving && <ArrowRight className="h-4 w-4" />}
             </button>
           )}

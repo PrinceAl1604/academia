@@ -26,7 +26,6 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const { isAdmin, userName, logout } = useAuth();
   const { t } = useLanguage();
-  const isEn = t.nav.signIn === "Sign In";
   const { collapsed, toggle } = useSidebar();
 
   // ─── Navigation ─────────────────────────────────────────────
@@ -42,11 +41,11 @@ export function DashboardSidebar() {
 
   const adminNav = [
     { label: t.admin.dashboard, href: "/admin", icon: Shield },
-    { label: isEn ? "Explorer" : "Explorateur", href: "/admin/explorer", icon: LayoutDashboard },
+    { label: t.sidebar.explorer, href: "/admin/explorer", icon: LayoutDashboard },
     { label: t.admin.manageCourses, href: "/admin/courses", icon: BookOpen },
-    { label: isEn ? "Categories" : "Catégories", href: "/admin/categories", icon: FolderOpen },
+    { label: t.sidebar.categories, href: "/admin/categories", icon: FolderOpen },
     { label: t.admin.licences, href: "/admin/licences", icon: KeyRound },
-    { label: isEn ? "Students" : "Étudiants", href: "/admin/students", icon: Users },
+    { label: t.sidebar.students, href: "/admin/students", icon: Users },
     { label: t.admin.analytics, href: "/admin/analytics", icon: BarChart3 },
   ];
 
@@ -111,7 +110,7 @@ export function DashboardSidebar() {
         <div className="mt-6">
           {!collapsed && (
             <p className="mb-1.5 px-2.5 text-[11px] font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-              {isAdmin ? "Admin" : (isEn ? "Account" : "Compte")}
+              {isAdmin ? "Admin" : t.sidebar.account}
             </p>
           )}
           {collapsed && <div className="mb-1.5 mx-2.5 h-px bg-neutral-200/70 dark:bg-neutral-800" />}
@@ -142,7 +141,7 @@ export function DashboardSidebar() {
             "flex w-full items-center gap-2.5 rounded-lg p-2 text-left transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800/60",
             collapsed ? "justify-center" : ""
           )}
-          title={collapsed ? `${userName || "User"} · ${isEn ? "Sign out" : "Déconnexion"}` : undefined}
+          title={collapsed ? `${userName || "User"} · ${t.dashboard.signOut}` : undefined}
         >
           <Avatar className="h-7 w-7 shrink-0">
             <AvatarFallback className="bg-neutral-100 dark:bg-neutral-800 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300">
@@ -156,7 +155,7 @@ export function DashboardSidebar() {
                   {userName || "User"}
                 </p>
                 <p className="text-[11px] text-neutral-400 dark:text-neutral-500 leading-tight">
-                  {isAdmin ? "Admin" : (isEn ? "Student" : "Étudiant")}
+                  {isAdmin ? "Admin" : t.sidebar.student}
                 </p>
               </div>
               <LogOut className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
@@ -174,7 +173,7 @@ export function DashboardSidebar() {
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          {!collapsed && <span className="text-sm">{isEn ? "Collapse" : "Réduire"}</span>}
+          {!collapsed && <span className="text-sm">{t.sidebar.collapse}</span>}
         </button>
       </div>
     </aside>

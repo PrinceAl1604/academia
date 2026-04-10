@@ -43,8 +43,6 @@ type Tab = (typeof tabs)[number]["id"];
 export default function SettingsPage() {
   const { user, userName, isPro, proExpiresAt, daysUntilExpiry, isExpiringSoon } = useAuth();
   const { t, language, setLanguage } = useLanguage();
-  const isEn = t.nav.signIn === "Sign In";
-
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [name, setName] = useState(userName || "");
   const [saving, setSaving] = useState(false);
@@ -107,11 +105,11 @@ export default function SettingsPage() {
     setPasswordError(null);
     setPasswordSuccess(false);
     if (newPassword.length < 6) {
-      setPasswordError(isEn ? "Password must be at least 6 characters" : "Le mot de passe doit contenir au moins 6 caractères");
+      setPasswordError(t.settings.passwordMinError);
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError(isEn ? "Passwords do not match" : "Les mots de passe ne correspondent pas");
+      setPasswordError(t.settings.passwordMismatch);
       return;
     }
     setPasswordSaving(true);
@@ -128,11 +126,11 @@ export default function SettingsPage() {
   };
 
   const tabLabels: Record<Tab, string> = {
-    profile: isEn ? "Profile" : "Profil",
-    appearance: isEn ? "Appearance" : "Apparence",
-    notifications: "Notifications",
-    subscription: isEn ? "Subscription" : "Abonnement",
-    security: isEn ? "Security" : "Sécurité",
+    profile: t.settings.profileTab,
+    appearance: t.settings.appearanceTab,
+    notifications: t.settings.notifications,
+    subscription: t.settings.subscriptionTab,
+    security: t.settings.securityTab,
   };
 
   return (
@@ -142,13 +140,13 @@ export default function SettingsPage() {
           {t.settings.title}
         </h1>
         <p className="mt-1 text-neutral-500 dark:text-neutral-400">
-          {isEn ? "Manage your account settings" : "Gérez les paramètres de votre compte"}
+          {t.settings.manageAccount}
         </p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-6">
         {/* Sidebar tabs */}
-        <nav className="hidden sm:block w-48 shrink-0 space-y-1" role="tablist" aria-label={isEn ? "Settings" : "Paramètres"}>
+        <nav className="hidden sm:block w-48 shrink-0 space-y-1" role="tablist" aria-label={t.settings.title}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -171,7 +169,7 @@ export default function SettingsPage() {
         </nav>
 
         {/* Mobile tabs */}
-        <div className="sm:hidden flex gap-1 overflow-x-auto pb-2 mb-4 w-full" role="tablist" aria-label={isEn ? "Settings" : "Paramètres"}>
+        <div className="sm:hidden flex gap-1 overflow-x-auto pb-2 mb-4 w-full" role="tablist" aria-label={t.settings.title}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -198,7 +196,7 @@ export default function SettingsPage() {
           {activeTab === "profile" && (
             <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
               <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                {isEn ? "Personal Information" : "Informations personnelles"}
+                {t.settings.personalInfo}
               </h3>
               <Separator className="my-4 dark:bg-neutral-800" />
 
@@ -219,22 +217,22 @@ export default function SettingsPage() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="dark:text-neutral-300">{isEn ? "Full Name" : "Nom complet"}</Label>
+                  <Label className="dark:text-neutral-300">{t.settings.fullName}</Label>
                   <Input value={name} onChange={(e) => setName(e.target.value)} className="dark:bg-neutral-800 dark:border-neutral-700" />
                 </div>
                 <div className="space-y-2">
                   <Label className="dark:text-neutral-300">Email</Label>
                   <Input value={user?.email || ""} disabled className="opacity-60 dark:bg-neutral-800 dark:border-neutral-700" />
-                  <p className="text-xs text-neutral-400">{isEn ? "Email cannot be changed" : "L'email ne peut pas être modifié"}</p>
+                  <p className="text-xs text-neutral-400">{t.settings.emailCantChange}</p>
                 </div>
                 <div className="flex items-center gap-3 justify-end pt-2">
                   {saved && (
                     <span className="flex items-center gap-1 text-sm text-green-600">
-                      <Check className="h-4 w-4" /> {isEn ? "Saved" : "Enregistré"}
+                      <Check className="h-4 w-4" /> {t.settings.saved}
                     </span>
                   )}
                   <Button onClick={handleSaveProfile} disabled={saving}>
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (isEn ? "Save Changes" : "Enregistrer")}
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t.settings.saveChanges}
                   </Button>
                 </div>
               </div>
@@ -245,7 +243,7 @@ export default function SettingsPage() {
           {activeTab === "appearance" && (
             <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
               <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                {isEn ? "Appearance" : "Apparence"}
+                {t.settings.appearance}
               </h3>
               <Separator className="my-4 dark:bg-neutral-800" />
 
@@ -254,9 +252,9 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-3">
                     {darkMode ? <Moon className="h-5 w-5 text-neutral-400" /> : <Sun className="h-5 w-5 text-amber-500" />}
                     <div>
-                      <Label className="dark:text-neutral-300">{isEn ? "Dark Mode" : "Mode sombre"}</Label>
+                      <Label className="dark:text-neutral-300">{t.settings.darkMode}</Label>
                       <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                        {isEn ? "Switch between light and dark theme" : "Basculer entre le thème clair et sombre"}
+                        {t.settings.darkModeDesc}
                       </p>
                     </div>
                   </div>
@@ -267,9 +265,9 @@ export default function SettingsPage() {
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <Label className="dark:text-neutral-300">{isEn ? "Language" : "Langue"}</Label>
+                    <Label className="dark:text-neutral-300">{t.settings.language}</Label>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {isEn ? "Choose your preferred language" : "Choisissez votre langue"}
+                      {t.settings.languageChoose}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -304,42 +302,42 @@ export default function SettingsPage() {
           {/* ─── Notifications ─────────────────────────────────── */}
           {activeTab === "notifications" && (
             <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">Notifications</h3>
+              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">{t.settings.notifications}</h3>
               <Separator className="my-4 dark:bg-neutral-800" />
 
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="dark:text-neutral-300">{isEn ? "Course Updates" : "Mises à jour des cours"}</Label>
+                    <Label className="dark:text-neutral-300">{t.settings.courseUpdates}</Label>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {isEn ? "New lessons, content changes" : "Nouvelles leçons, modifications de contenu"}
+                      {t.settings.courseUpdatesDesc}
                     </p>
                   </div>
                   <Switch defaultChecked />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="dark:text-neutral-300">{isEn ? "New Courses" : "Nouveaux cours"}</Label>
+                    <Label className="dark:text-neutral-300">{t.settings.newCourses}</Label>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {isEn ? "Get notified when new courses are published" : "Soyez notifié des nouveaux cours"}
+                      {t.settings.newCoursesDesc}
                     </p>
                   </div>
                   <Switch defaultChecked />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="dark:text-neutral-300">{isEn ? "Weekly Digest" : "Résumé hebdomadaire"}</Label>
+                    <Label className="dark:text-neutral-300">{t.settings.weeklyDigest}</Label>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {isEn ? "Weekly summary of your learning progress" : "Résumé hebdomadaire de votre progression"}
+                      {t.settings.weeklyDigestDesc}
                     </p>
                   </div>
                   <Switch />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="dark:text-neutral-300">{isEn ? "Promotional" : "Promotionnel"}</Label>
+                    <Label className="dark:text-neutral-300">{t.settings.promotional}</Label>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {isEn ? "Special offers and discounts" : "Offres spéciales et réductions"}
+                      {t.settings.promotionalDesc}
                     </p>
                   </div>
                   <Switch />
@@ -363,17 +361,15 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                        {isPro ? "Pro Plan" : "Free Plan"}
+                        {isPro ? t.settings.proPlan : t.settings.freePlan}
                       </h3>
                       <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                        {isPro
-                          ? (isEn ? "Full access to all courses" : "Accès complet à tous les cours")
-                          : (isEn ? "Access to free courses only" : "Accès aux cours gratuits uniquement")}
+                        {isPro ? t.settings.proFullAccess : t.settings.freeCoursesOnly}
                       </p>
                     </div>
                   </div>
                   <Badge className={isPro ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : ""}>
-                    {isPro ? (isEn ? "Active" : "Actif") : "Free"}
+                    {isPro ? t.settings.activeStatus : "Free"}
                   </Badge>
                 </div>
 
@@ -382,14 +378,14 @@ export default function SettingsPage() {
                     <Separator className="my-4 dark:bg-neutral-800" />
                     <div className="flex items-center justify-between rounded-lg bg-neutral-50 dark:bg-neutral-800 px-4 py-3">
                       <div>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{isEn ? "Expires on" : "Expire le"}</p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.settings.expiresOn}</p>
                         <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                          {new Date(proExpiresAt).toLocaleDateString(isEn ? "en-US" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                          {new Date(proExpiresAt).toLocaleDateString(language === "en" ? "en-US" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                         </p>
                       </div>
                       {isExpiringSoon && (
                         <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                          {daysUntilExpiry}{isEn ? "d left" : "j restants"}
+                          {daysUntilExpiry}{t.settings.daysLeft}
                         </Badge>
                       )}
                     </div>
@@ -401,7 +397,7 @@ export default function SettingsPage() {
               {!isPro || isExpiringSoon ? (
                 <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
                   <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                    {isPro ? (isEn ? "Renew Subscription" : "Renouveler") : (isEn ? "Upgrade to Pro" : "Passer à Pro")}
+                    {isPro ? t.settings.renewSub : t.settings.upgradePro}
                   </h3>
                   <Separator className="my-4 dark:bg-neutral-800" />
 
@@ -410,10 +406,10 @@ export default function SettingsPage() {
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 dark:bg-white text-xs font-bold text-white dark:text-neutral-900 shrink-0">1</div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                        {isEn ? "Purchase a licence key" : "Achetez une clé de licence"}
+                        {t.settings.purchaseKey}
                       </p>
                       <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                        15,000 FCFA / {isEn ? "month" : "mois"} (~$27 USD)
+                        15,000 FCFA / {t.settings.month} (~$27 USD)
                       </p>
                       <Button
                         className="mt-3 gap-2"
@@ -424,7 +420,7 @@ export default function SettingsPage() {
                         }}
                       >
                         <Crown className="h-3.5 w-3.5" />
-                        {isEn ? "Buy Now" : "Acheter"}
+                        {t.settings.buyNow}
                       </Button>
                     </div>
                   </div>
@@ -436,13 +432,13 @@ export default function SettingsPage() {
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 dark:bg-white text-xs font-bold text-white dark:text-neutral-900 shrink-0">2</div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-neutral-900 dark:text-white">
-                        {isEn ? "Activate your key" : "Activez votre clé"}
+                        {t.settings.activateKey}
                       </p>
 
                       {keySuccess ? (
                         <div className="mt-3 flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
                           <CheckCircle className="h-4 w-4 text-green-600" />
-                          <p className="text-sm text-green-700 dark:text-green-400">{isEn ? "Pro activated!" : "Pro activé !"}</p>
+                          <p className="text-sm text-green-700 dark:text-green-400">{t.settings.proActivated}</p>
                         </div>
                       ) : (
                         <div className="mt-3 flex gap-2">
@@ -458,7 +454,7 @@ export default function SettingsPage() {
                           </div>
                           <Button size="sm" className="gap-1.5" onClick={handleActivateKey} disabled={activating || !licenceKey.trim()}>
                             {activating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRight className="h-3.5 w-3.5" />}
-                            {isEn ? "Activate" : "Activer"}
+                            {t.settings.activateBtn}
                           </Button>
                         </div>
                       )}
@@ -477,40 +473,40 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <Lock className="h-4 w-4 text-neutral-500" />
                   <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                    {isEn ? "Change Password" : "Changer le mot de passe"}
+                    {t.settings.changePassword}
                   </h3>
                 </div>
                 <Separator className="my-4 dark:bg-neutral-800" />
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="dark:text-neutral-300">{isEn ? "New Password" : "Nouveau mot de passe"}</Label>
+                    <Label className="dark:text-neutral-300">{t.settings.newPassword}</Label>
                     <Input type="password" placeholder="••••••••" className="dark:bg-neutral-800 dark:border-neutral-700" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="dark:text-neutral-300">{isEn ? "Confirm Password" : "Confirmer"}</Label>
+                    <Label className="dark:text-neutral-300">{t.settings.confirmPassword}</Label>
                     <Input type="password" placeholder="••••••••" className="dark:bg-neutral-800 dark:border-neutral-700" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                   </div>
                   {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
-                  {passwordSuccess && <p className="text-xs text-green-600">{isEn ? "Password updated!" : "Mot de passe mis à jour !"}</p>}
+                  {passwordSuccess && <p className="text-xs text-green-600">{t.settings.passwordUpdated}</p>}
                   <Button onClick={handleChangePassword} disabled={passwordSaving || !newPassword}>
                     {passwordSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    {isEn ? "Update Password" : "Mettre à jour"}
+                    {t.settings.updatePassword}
                   </Button>
                 </div>
               </Card>
 
               <Card className="border-red-200 dark:border-red-900/50 p-6 dark:bg-neutral-900">
-                <h3 className="text-lg font-semibold text-red-600">{isEn ? "Danger Zone" : "Zone de danger"}</h3>
+                <h3 className="text-lg font-semibold text-red-600">{t.settings.dangerZone}</h3>
                 <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                  {isEn ? "Irreversible actions" : "Actions irréversibles"}
+                  {t.settings.irreversible}
                 </p>
                 <Separator className="my-4 dark:bg-neutral-800" />
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-white">{isEn ? "Delete Account" : "Supprimer le compte"}</p>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">{isEn ? "Permanently remove your account and data" : "Supprimez définitivement votre compte"}</p>
+                    <p className="text-sm font-medium text-neutral-900 dark:text-white">{t.settings.deleteAccount}</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.settings.deleteDesc}</p>
                   </div>
-                  <Button variant="destructive" size="sm">{isEn ? "Delete" : "Supprimer"}</Button>
+                  <Button variant="destructive" size="sm">{t.settings.deleteBtn}</Button>
                 </div>
               </Card>
             </div>

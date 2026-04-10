@@ -127,9 +127,7 @@ export default function DashboardPage() {
           <Card className="mt-4 p-8 text-center">
             <BookOpen className="mx-auto h-10 w-10 text-neutral-300" />
             <p className="mt-3 text-sm text-neutral-500">
-              {t.nav.signIn === "Sign In"
-                ? "No courses started yet. Browse courses to get started!"
-                : "Aucun cours commencé. Parcourez les cours pour débuter !"}
+              {t.dashboard.noCourses}
             </p>
             <Button variant="outline" className="mt-4 gap-2" render={<Link href="/" />}>
               <BookOpen className="h-4 w-4" />

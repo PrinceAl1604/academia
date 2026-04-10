@@ -5,9 +5,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, BookOpen, Loader2, Crown } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function PaymentSuccessPage() {
   const { isPro } = useAuth();
+  const { t } = useLanguage();
   const [checking, setChecking] = useState(true);
 
   // Give the webhook a few seconds to process
@@ -20,7 +22,7 @@ export default function PaymentSuccessPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#faf9f7] px-4">
         <Loader2 className="h-10 w-10 animate-spin text-neutral-400" />
-        <p className="mt-4 text-neutral-500">Activating your account...</p>
+        <p className="mt-4 text-neutral-500">{t.payment.activating}</p>
       </div>
     );
   }
@@ -34,12 +36,10 @@ export default function PaymentSuccessPage() {
 
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-neutral-900">
-            {isPro ? "You're Pro!" : "Payment Successful!"}
+            {isPro ? t.payment.yourePro : t.payment.successTitle}
           </h1>
           <p className="text-lg text-neutral-500">
-            {isPro
-              ? "Your account has been upgraded. All courses are now unlocked."
-              : "Your payment is being processed. Your account will be upgraded shortly."}
+            {isPro ? t.payment.proDesc : t.payment.processingDesc}
           </p>
         </div>
 
@@ -47,10 +47,10 @@ export default function PaymentSuccessPage() {
           <div className="rounded-xl border border-neutral-200 bg-white p-6 text-left space-y-3">
             <div className="flex items-center gap-3">
               <Crown className="h-5 w-5 text-amber-500" />
-              <p className="text-sm font-semibold text-neutral-900">Pro Plan Active</p>
+              <p className="text-sm font-semibold text-neutral-900">{t.payment.proPlanActive}</p>
             </div>
             <ul className="space-y-2 text-sm text-neutral-600">
-              {["Access to all courses", "Exclusive learning materials", "Downloadable resources", "Priority support"].map((item) => (
+              {[t.payment.accessAllCourses, t.payment.exclusiveMaterials, t.payment.downloadableResources, t.payment.prioritySupport].map((item) => (
                 <li key={item} className="flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
                   {item}
@@ -66,12 +66,12 @@ export default function PaymentSuccessPage() {
             render={<Link href="/" />}
           >
             <BookOpen className="h-5 w-5" />
-            {isPro ? "Start Learning" : "Browse Courses"}
+            {isPro ? t.payment.startLearning : t.payment.browseCourses}
           </Button>
 
           {!isPro && (
             <p className="text-xs text-neutral-400">
-              If your account isn't upgraded in a few minutes, check your email for a licence key and activate it manually on the Subscription page.
+              {t.payment.manualActivation}
             </p>
           )}
         </div>

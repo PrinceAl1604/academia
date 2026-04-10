@@ -12,23 +12,14 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
 
-const faqItems = [
-  {
-    question: "How do I activate my licence key?",
-    answer: "Go to the Sign In page and enter your licence key to access the platform.",
-  },
-  {
-    question: "Can I download courses for offline viewing?",
-    answer: "Yes, Pro plan subscribers can download course content for offline access.",
-  },
-  {
-    question: "What if my licence key expires?",
-    answer: "Contact our support team to renew your licence. You won't lose your progress.",
-  },
-];
-
 export default function HelpPage() {
   const { t } = useLanguage();
+
+  const faqItems = [
+    { question: t.help.faqQ1, answer: t.help.faqA1 },
+    { question: t.help.faqQ2, answer: t.help.faqA2 },
+    { question: t.help.faqQ3, answer: t.help.faqA3 },
+  ];
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -63,7 +54,7 @@ export default function HelpPage() {
           <Mail className="h-6 w-6 text-neutral-700" />
           <h3 className="mt-3 font-semibold text-neutral-900">{t.help.emailUs}</h3>
           <p className="mt-1 text-sm text-neutral-500">
-            support@academia.com
+            support@brightroots.com
           </p>
         </Card>
       </div>
@@ -72,7 +63,7 @@ export default function HelpPage() {
       <Card className="p-6">
         <h3 className="flex items-center gap-2 text-lg font-semibold text-neutral-900">
           <HelpCircle className="h-5 w-5" />
-          Frequently Asked Questions
+          {t.help.faq}
         </h3>
         <div className="mt-4 space-y-4">
           {faqItems.map((item) => (

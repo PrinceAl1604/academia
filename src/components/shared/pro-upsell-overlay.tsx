@@ -14,7 +14,6 @@ export function ProUpsellOverlay() {
   const [visible, setVisible] = useState(false);
   const { isPro, isAuthenticated } = useAuth();
   const { t } = useLanguage();
-  const isEn = t.nav.signIn === "Sign In";
 
   useEffect(() => {
     // Show once after onboarding, only for free users
@@ -59,10 +58,10 @@ export function ProUpsellOverlay() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-neutral-900 dark:text-white">
-              Pro membership
+              {t.pro.membership}
             </h2>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {isEn ? "Unlock all courses & content" : "Debloquez tous les cours et contenus"}
+              {t.pro.unlockAll}
             </p>
           </div>
         </div>
@@ -73,7 +72,7 @@ export function ProUpsellOverlay() {
             {SUBSCRIPTION_PRICE.toLocaleString("fr-FR")}
           </span>
           <span className="ml-2 text-sm text-neutral-500 dark:text-neutral-400">
-            {SUBSCRIPTION_CURRENCY_DISPLAY} / {isEn ? "month" : "mois"}
+            {SUBSCRIPTION_CURRENCY_DISPLAY} {t.subscription.perMonth}
           </span>
         </div>
 
@@ -81,11 +80,11 @@ export function ProUpsellOverlay() {
         <div className="space-y-3">
           <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
             <Lock className="h-4 w-4 text-neutral-400 shrink-0" />
-            {isEn ? "Access all premium courses" : "Acces a tous les cours premium"}
+            {t.pro.accessCourses}
           </div>
           <div className="flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
             <Lock className="h-4 w-4 text-neutral-400 shrink-0" />
-            {isEn ? "Download resources & materials" : "Telechargez ressources et supports"}
+            {t.pro.downloadResources}
           </div>
         </div>
 
@@ -98,7 +97,7 @@ export function ProUpsellOverlay() {
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 dark:bg-white py-3 text-sm font-medium text-white dark:text-neutral-900 transition-opacity hover:opacity-90"
         >
           <Crown className="h-4 w-4" />
-          {isEn ? "Get a Licence Key" : "Obtenir une cle de licence"}
+          {t.pro.getKey}
           <ArrowRight className="h-4 w-4" />
         </a>
 
@@ -107,7 +106,7 @@ export function ProUpsellOverlay() {
           onClick={dismiss}
           className="w-full text-center text-sm text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
         >
-          {isEn ? "Maybe later" : "Plus tard"}
+          {t.pro.maybeLater}
         </button>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { CourseRow } from "@/lib/api";
 import { MembershipPopover } from "./upgrade-popover";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { useProgress } from "@/lib/progress-context";
 
 interface CourseCardProps {
@@ -43,12 +44,13 @@ export function CourseCard({
   variant = "default",
 }: CourseCardProps) {
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const { progress } = useProgress();
   const router = useRouter();
   const gradient = gradients[hashCode(course.id) % gradients.length];
   const categoryName = course.category?.name ?? "General";
   const totalLessons = course.total_lessons ?? 0;
-  const durationLabel = `${course.duration_hours ?? 0} hours`;
+  const durationLabel = `${course.duration_hours ?? 0} ${t.courseCard.hours}`;
 
   const progressValue = locked ? 0 : (progress[course.id] ?? 0);
 
@@ -94,7 +96,7 @@ export function CourseCard({
               {course.title}
             </h3>
             <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-              {totalLessons} {totalLessons === 1 ? "class" : "classes"}
+              {totalLessons} {totalLessons === 1 ? t.courseCard.class : t.courseCard.classes}
             </p>
           </div>
         </div>
@@ -165,7 +167,7 @@ export function CourseCard({
           {course.title}
         </h3>
         <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-          {totalLessons} {totalLessons === 1 ? "class" : "classes"}
+          {totalLessons} {totalLessons === 1 ? t.courseCard.class : t.courseCard.classes}
         </p>
 
         {/* Progress bar */}

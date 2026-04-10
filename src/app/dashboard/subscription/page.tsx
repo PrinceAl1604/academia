@@ -21,23 +21,6 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { SUBSCRIPTION_PRICE, SUBSCRIPTION_CURRENCY } from "@/lib/licence";
 
-const FEATURES_EN = [
-  "Access to all courses",
-  "Exclusive learning materials",
-  "Downloadable resources",
-  "Community access",
-  "Priority support",
-  "New courses as they launch",
-];
-
-const FEATURES_FR = [
-  "Accès à tous les cours",
-  "Supports d'apprentissage exclusifs",
-  "Ressources téléchargeables",
-  "Accès à la communauté",
-  "Support prioritaire",
-  "Nouveaux cours dès leur sortie",
-];
 
 export default function SubscriptionPage() {
   return (
@@ -108,7 +91,6 @@ const CURRENCIES = [
 function SubscriptionContent() {
   const { user, isPro, proExpiresAt, daysUntilExpiry, isExpiringSoon, isExpired } = useAuth();
   const { t } = useLanguage();
-  const isEn = t.nav.signIn === "Sign In";
   const [licenceKey, setLicenceKey] = useState("");
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -222,7 +204,7 @@ function SubscriptionContent() {
                   </h3>
                   <Badge className={isExpiringSoon ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}>
                     {isExpiringSoon
-                      ? (isEn ? `${daysUntilExpiry}d left` : `${daysUntilExpiry}j restants`)
+                      ? `${daysUntilExpiry}${t.settings.daysLeft}`
                       : t.subscription.active}
                   </Badge>
                 </div>
@@ -238,10 +220,10 @@ function SubscriptionContent() {
             <div className="flex flex-col gap-3 rounded-lg bg-neutral-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs text-neutral-500">
-                  {isEn ? "Expires on" : "Expire le"}
+                  {t.subscription.expires}
                 </p>
                 <p className="text-sm font-medium text-neutral-900">
-                  {new Date(proExpiresAt).toLocaleDateString(isEn ? "en-US" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                  {new Date(proExpiresAt).toLocaleDateString(t.nav.signIn === "Sign In" ? "en-US" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                 </p>
               </div>
               {isExpiringSoon && (
@@ -251,7 +233,7 @@ function SubscriptionContent() {
                   onClick={openCheckoutPopup}
                 >
                   <Crown className="h-3.5 w-3.5" />
-                  {isEn ? "Renew" : "Renouveler"}
+                  {t.subscription.renew}
                 </Button>
               )}
             </div>
@@ -265,13 +247,13 @@ function SubscriptionContent() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900">
-                  Free Plan
+                  {t.subscription.freePlan}
                 </h3>
                 <p className="text-sm text-neutral-500">
-                  Access to free courses only
+                  {t.subscription.freeDesc}
                 </p>
               </div>
-              <Badge variant="secondary">Current Plan</Badge>
+              <Badge variant="secondary">{t.subscription.currentPlan}</Badge>
             </div>
           </Card>
 
@@ -283,11 +265,10 @@ function SubscriptionContent() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-neutral-900">
-                  Get your licence key
+                  {t.subscription.getKey}
                 </h3>
                 <p className="mt-1 text-sm text-neutral-500">
-                  Purchase a Pro subscription. You'll receive a
-                  licence key instantly via email.
+                  {t.subscription.purchaseDesc}
                 </p>
 
                 {/* Price display */}
@@ -297,13 +278,13 @@ function SubscriptionContent() {
                       {selectedCurrency.symbol}{selectedCurrency.amount.toLocaleString()}
                     </span>
                     <span className="text-lg text-neutral-500">{selectedCurrency.code}</span>
-                    <span className="text-sm text-neutral-400">/ month</span>
+                    <span className="text-sm text-neutral-400">{t.subscription.perMonth}</span>
                   </div>
 
                   {/* Show USD equivalent if not USD */}
                   {selectedCurrency.code !== "USD" && (
                     <p className="mt-1 text-sm text-neutral-400">
-                      ≈ $27 USD
+                      {t.subscription.approxUSD}
                     </p>
                   )}
 
@@ -313,8 +294,8 @@ function SubscriptionContent() {
                     className="mt-2 text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-700 transition-colors"
                   >
                     {showCurrencyPicker
-                      ? (t.nav.signIn === "Sign In" ? "Hide currencies" : "Masquer")
-                      : (t.nav.signIn === "Sign In" ? "See in other currency ▾" : "Voir dans une autre devise ▾")}
+                      ? t.subscription.hideCurrencies
+                      : t.subscription.seeCurrency}
                   </button>
 
                   {/* Expandable currency picker */}
@@ -323,7 +304,7 @@ function SubscriptionContent() {
                       {/* Search */}
                       <input
                         type="text"
-                        placeholder={t.nav.signIn === "Sign In" ? "Search country or currency..." : "Rechercher un pays ou une devise..."}
+                        placeholder={t.subscription.searchCurrency}
                         value={currencySearch}
                         onChange={(e) => setCurrencySearch(e.target.value)}
                         className="mb-2 h-8 w-full rounded-md border border-neutral-200 bg-white px-3 text-xs placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-300"
@@ -354,7 +335,7 @@ function SubscriptionContent() {
                         ))}
                       </div>
                       <p className="mt-2 text-[10px] text-neutral-400">
-                        {t.nav.signIn === "Sign In" ? "Approximate conversion · Final amount at checkout" : "Conversion approximative · Montant final au paiement"}
+                        {t.subscription.approxConversion}
                       </p>
                     </div>
                   )}
@@ -368,18 +349,18 @@ function SubscriptionContent() {
                   {paymentPending ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      {isEn ? "Waiting for payment..." : "En attente du paiement..."}
+                      {t.subscription.waitingPayment}
                     </>
                   ) : (
                     <>
                       <Crown className="h-5 w-5" />
-                      {isEn ? "Pay Now" : "Payer maintenant"}
+                      {t.subscription.payNow}
                     </>
                   )}
                 </Button>
 
                 <p className="mt-3 text-xs text-neutral-400">
-                  Mobile Money · Wave · Orange Money · Visa/Mastercard
+                  {t.subscription.paymentMethods}
                 </p>
               </div>
             </div>
@@ -393,11 +374,10 @@ function SubscriptionContent() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-neutral-900">
-                  Activate your licence key
+                  {t.subscription.activateTitle}
                 </h3>
                 <p className="mt-1 text-sm text-neutral-500">
-                  Enter the key you received after purchase to unlock all
-                  courses.
+                  {t.subscription.activateDesc}
                 </p>
 
                 {success ? (
@@ -405,17 +385,17 @@ function SubscriptionContent() {
                     <CheckCircle className="h-5 w-5 text-green-600" />
                     <div>
                       <p className="font-medium text-green-900">
-                        Pro activated!
+                        {t.subscription.proActivated}
                       </p>
                       <p className="text-sm text-green-700">
-                        Refreshing your account...
+                        {t.subscription.refreshing}
                       </p>
                     </div>
                   </div>
                 ) : (
                   <div className="mt-4 space-y-3">
                     <div className="space-y-2">
-                      <Label htmlFor="licence-key">Licence Key</Label>
+                      <Label htmlFor="licence-key">{t.subscription.licenceKeyLabel}</Label>
                       <div className="flex gap-2">
                         <div className="relative flex-1">
                           <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
@@ -446,7 +426,7 @@ function SubscriptionContent() {
                           ) : (
                             <ArrowRight className="h-4 w-4" />
                           )}
-                          Activate
+                          {t.subscription.activate}
                         </Button>
                       </div>
                       {error && (
@@ -456,7 +436,7 @@ function SubscriptionContent() {
 
                     <div className="flex items-center gap-2 text-xs text-neutral-400">
                       <Shield className="h-3.5 w-3.5" />
-                      Your key is single-use and tied to your account
+                      {t.subscription.keySingleUse}
                     </div>
                   </div>
                 )}
@@ -473,7 +453,14 @@ function SubscriptionContent() {
         </h3>
         <Separator className="my-4" />
         <ul className="space-y-3">
-          {(isEn ? FEATURES_EN : FEATURES_FR).map((feature) => (
+          {[
+            t.subscription.accessAllCourses,
+            t.subscription.exclusiveMaterials,
+            t.subscription.downloadableResources,
+            t.subscription.communityAccess,
+            t.subscription.prioritySupport,
+            t.subscription.newCoursesLaunch,
+          ].map((feature) => (
             <li
               key={feature}
               className="flex items-center gap-2 text-sm text-neutral-700"

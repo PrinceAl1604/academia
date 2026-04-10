@@ -68,7 +68,6 @@ export default function CourseDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const isEn = t.nav.signIn === "Sign In";
   const isLocked = !isPro && !course.is_free;
   const totalLessons = course.total_lessons ?? 0;
   const durationHours = course.duration_hours ?? 0;
@@ -148,7 +147,7 @@ export default function CourseDetailPage({ params }: PageProps) {
                     </span>
                     <span className="flex items-center gap-1.5 text-neutral-400">
                       <BookOpen className="h-4 w-4" />
-                      {totalChapters} {isEn ? "chapters" : "chapitres"} · {totalLessons} {t.courseDetail.lessons}
+                      {totalChapters} {t.courseDetail.chapters} · {totalLessons} {t.courseDetail.lessons}
                     </span>
                   </div>
 
@@ -213,7 +212,7 @@ export default function CourseDetailPage({ params }: PageProps) {
                         <MembershipPopover>
                           <Button className="h-11 w-full gap-2 text-sm !bg-white !text-neutral-900 hover:!bg-neutral-200">
                             <Lock className="h-4 w-4" />
-                            {isEn ? "Get Membership" : "S'abonner"}
+                            {t.courseDetail.getMembership}
                           </Button>
                         </MembershipPopover>
                       ) : !isAuthenticated ? (
@@ -234,7 +233,7 @@ export default function CourseDetailPage({ params }: PageProps) {
 
                       <p className="text-center text-xs text-neutral-500">
                         {isLocked
-                          ? (isEn ? "Pro membership required" : "Abonnement Pro requis")
+                          ? t.courseDetail.proRequired
                           : t.courseDetail.includedInSub}
                       </p>
                     </div>
@@ -252,7 +251,7 @@ export default function CourseDetailPage({ params }: PageProps) {
                 <Clock className="h-5 w-5 text-neutral-400 shrink-0" />
                 <div>
                   <p className="text-sm font-semibold text-neutral-900 dark:text-white">{durationHours}h</p>
-                  <p className="text-xs text-neutral-500">{isEn ? "of content" : "de contenu"}</p>
+                  <p className="text-xs text-neutral-500">{t.courseDetail.ofContent}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
@@ -265,8 +264,8 @@ export default function CourseDetailPage({ params }: PageProps) {
               <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
                 <Infinity className="h-5 w-5 text-neutral-400 shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">{isEn ? "Lifetime" : "À vie"}</p>
-                  <p className="text-xs text-neutral-500">{isEn ? "access" : "accès"}</p>
+                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">{t.courseDetail.lifetime}</p>
+                  <p className="text-xs text-neutral-500">{t.courseDetail.accessLabel}</p>
                 </div>
               </div>
             </div>
@@ -277,7 +276,7 @@ export default function CourseDetailPage({ params }: PageProps) {
                 {t.courseDetail.curriculum}
               </h2>
               <p className="mt-1 text-sm text-neutral-500">
-                {totalChapters} {isEn ? "chapters" : "chapitres"} · {totalLessons} {t.courseDetail.lessons} · {durationHours}h
+                {totalChapters} {t.courseDetail.chapters} · {totalLessons} {t.courseDetail.lessons} · {durationHours}h
               </p>
 
               {course.modules.length > 0 ? (
@@ -290,14 +289,13 @@ export default function CourseDetailPage({ params }: PageProps) {
                       courseSlug={course.slug}
                       isLocked={isLocked}
                       isAuthenticated={isAuthenticated}
-                      isEn={isEn}
                       t={t}
                     />
                   ))}
                 </div>
               ) : (
                 <p className="mt-6 text-sm text-neutral-400 italic">
-                  {isEn ? "Curriculum coming soon..." : "Programme à venir..."}
+                  {t.courseDetail.curriculumSoon}
                 </p>
               )}
             </div>
@@ -334,7 +332,6 @@ function ChapterCard({
   courseSlug,
   isLocked,
   isAuthenticated,
-  isEn,
   t,
 }: {
   module: ModuleRow;
@@ -342,7 +339,6 @@ function ChapterCard({
   courseSlug: string;
   isLocked: boolean;
   isAuthenticated: boolean;
-  isEn: boolean;
   t: ReturnType<typeof import("@/lib/i18n/language-context").useLanguage>["t"];
 }) {
   const [expanded, setExpanded] = useState(index === 0);
