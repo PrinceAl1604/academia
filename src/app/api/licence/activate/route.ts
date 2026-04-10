@@ -138,6 +138,12 @@ export async function POST(request: Request) {
       });
     }
 
+    // Process referral reward if this user was referred (non-blocking)
+    try {
+      const { processReferralReward } = await import("@/lib/referral");
+      processReferralReward(user_id).catch(() => {});
+    } catch {}
+
     // Send confirmation email (non-blocking)
     try {
       const { data: userData } = await supabase

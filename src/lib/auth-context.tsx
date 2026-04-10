@@ -29,6 +29,7 @@ interface AuthContextType {
   isExpiringSoon: boolean; // true if < 5 days left
   isExpired: boolean;
   hasOnboarded: boolean;
+  referralCode: string | null;
   markOnboarded: () => void;
   logout: () => Promise<void>;
 }
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [plan, setPlan] = useState<Plan>("free");
   const [proExpiresAt, setProExpiresAt] = useState<string | null>(null);
   const [hasOnboarded, setHasOnboarded] = useState(true); // default true to avoid flash redirect
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -77,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUserProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("users")
-      .select("role, subscription_tier, pro_expires_at, has_onboarded")
+      .select("role, subscription_tier, pro_expires_at, has_onboarded, referral_code")
       .eq("id", userId)
       .single();
 
@@ -95,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole("user");
       setPlan("free");
       setHasOnboarded(false);
+      setReferralCode(null);
       return;
     }
 
@@ -103,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(userRole);
       setProExpiresAt(data.pro_expires_at || null);
       setHasOnboarded(data.has_onboarded ?? true);
+      setReferralCode(data.referral_code || null);
 
       // Check if Pro has expired
       if (data.subscription_tier === "pro" && data.pro_expires_at) {
@@ -137,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPlan("free");
     setProExpiresAt(null);
     setHasOnboarded(true);
+    setReferralCode(null);
     router.push("/");
   }, [router]);
 
@@ -169,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isExpiringSoon,
         isExpired,
         hasOnboarded,
+        referralCode,
         markOnboarded,
         logout,
       }}

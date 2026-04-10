@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { linkReferral, ensureReferralCode } from "@/lib/referral";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -29,17 +30,32 @@ export async function GET(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.exchangeCodeForSession(code);
 
-    // Check if user needs onboarding
+    // Check if user needs onboarding + handle referral linking
     let finalRedirect = redirectTo;
     if (user) {
       const { data: profile } = await supabase
         .from("users")
-        .select("has_onboarded")
+        .select("has_onboarded, referral_code")
         .eq("id", user.id)
         .single();
 
       if (profile && profile.has_onboarded === false) {
         finalRedirect = "/onboarding";
+      }
+
+      // Generate referral code if user doesn't have one yet
+      const userName =
+        user.user_metadata?.full_name ||
+        user.email?.split("@")[0] ||
+        "USER";
+      if (!profile?.referral_code) {
+        ensureReferralCode(user.id, userName).catch(() => {});
+      }
+
+      // If signed up via referral link, link the referral (non-blocking)
+      const refCode = user.user_metadata?.referral_code;
+      if (refCode) {
+        linkReferral(user.id, refCode).catch(() => {});
       }
     }
 

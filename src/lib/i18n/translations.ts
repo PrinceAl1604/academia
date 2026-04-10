@@ -384,6 +384,18 @@ export const translations = {
       advanced: "Advanced",
     },
 
+    // Referral
+    referral: {
+      title: "Invite Friends",
+      subtitle: "Get 7 days of free Pro for each friend who subscribes",
+      copy: "Copy",
+      copied: "Copied!",
+      share: "Share your link",
+      shareText: "Join me on Brightroots and learn from the best! Use my link to sign up:",
+      invited: "Invited",
+      daysEarned: "Days earned",
+    },
+
     // Pro upsell
     pro: {
       membership: "Pro membership",
@@ -914,6 +926,18 @@ export const translations = {
       beginner: "Débutant",
       intermediate: "Intermédiaire",
       advanced: "Avancé",
+    },
+
+    // Referral
+    referral: {
+      title: "Invitez vos amis",
+      subtitle: "Obtenez 7 jours de Pro gratuit pour chaque ami qui s'abonne",
+      copy: "Copier",
+      copied: "Copié !",
+      share: "Partagez votre lien",
+      shareText: "Rejoignez-moi sur Brightroots et apprenez des meilleurs ! Utilisez mon lien pour vous inscrire :",
+      invited: "Invités",
+      daysEarned: "Jours gagnés",
     },
 
     // Pro upsell
