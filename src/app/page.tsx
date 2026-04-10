@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { CourseCarousel } from "@/components/shared/course-carousel";
 import { getCourses, getCategories, type CourseRow, type CategoryRow } from "@/lib/api";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
   const { isPro } = useAuth();
@@ -96,32 +96,11 @@ export default function HomePage() {
   return (
     <SidebarLayout>
         <main className="px-4 py-6 lg:px-8 lg:py-8">
-          {/* Page header + Search */}
-          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Page header */}
+          <div className="mb-6">
             <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
               {t.nav.courses}
             </h1>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-              <label htmlFor="course-search" className="sr-only">{isEn ? "Search courses" : "Rechercher des cours"}</label>
-              <input
-                id="course-search"
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={isEn ? "Search courses..." : "Rechercher des cours..."}
-                className="h-9 w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 pl-9 pr-8 text-sm text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  aria-label={isEn ? "Clear search" : "Effacer la recherche"}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
           </div>
 
           {/* Category filter pills */}
