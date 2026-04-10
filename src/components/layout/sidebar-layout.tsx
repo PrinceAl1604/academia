@@ -6,6 +6,7 @@ import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
 import { DashboardTopbar } from "@/components/layout/dashboard-topbar";
 import { SidebarProvider, useSidebar } from "@/lib/sidebar-context";
 import { useAuth } from "@/lib/auth-context";
+import { ProUpsellOverlay } from "@/components/shared/pro-upsell-overlay";
 import { cn } from "@/lib/utils";
 
 function SidebarLayoutInner({ children }: { children: React.ReactNode }) {
@@ -27,6 +28,7 @@ function SidebarLayoutInner({ children }: { children: React.ReactNode }) {
         <DashboardTopbar />
         {children}
       </div>
+      <ProUpsellOverlay />
     </div>
   );
 }
