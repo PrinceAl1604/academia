@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
 
   // ─── Protected routes: require authentication ─────────────────
   const isProtectedRoute =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
+    pathname.startsWith("/dashboard") || pathname.startsWith("/admin") || pathname === "/onboarding";
 
   if (isProtectedRoute && !user) {
     const signInUrl = new URL("/sign-in", request.url);
@@ -85,5 +85,6 @@ export const config = {
     "/sign-up",
     "/reset-password",
     "/courses/:slug/learn",
+    "/onboarding",
   ],
 };

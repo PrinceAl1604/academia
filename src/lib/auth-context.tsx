@@ -28,6 +28,7 @@ interface AuthContextType {
   daysUntilExpiry: number | null;
   isExpiringSoon: boolean; // true if < 5 days left
   isExpired: boolean;
+  hasOnboarded: boolean;
   logout: () => Promise<void>;
 }
 
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>(null);
   const [plan, setPlan] = useState<Plan>("free");
   const [proExpiresAt, setProExpiresAt] = useState<string | null>(null);
+  const [hasOnboarded, setHasOnboarded] = useState(true); // default true to avoid flash redirect
   const router = useRouter();
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUserProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("users")
-      .select("role, subscription_tier, pro_expires_at")
+      .select("role, subscription_tier, pro_expires_at, has_onboarded")
       .eq("id", userId)
       .single();
 
@@ -91,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setRole("user");
       setPlan("free");
+      setHasOnboarded(false);
       return;
     }
 
@@ -98,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userRole = (data.role as Role) || "user";
       setRole(userRole);
       setProExpiresAt(data.pro_expires_at || null);
+      setHasOnboarded(data.has_onboarded ?? true);
 
       // Check if Pro has expired
       if (data.subscription_tier === "pro" && data.pro_expires_at) {
@@ -127,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRole(null);
     setPlan("free");
     setProExpiresAt(null);
+    setHasOnboarded(true);
     router.push("/");
   }, [router]);
 
@@ -158,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         daysUntilExpiry,
         isExpiringSoon,
         isExpired,
+        hasOnboarded,
         logout,
       }}
     >
