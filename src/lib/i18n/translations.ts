@@ -386,14 +386,22 @@ export const translations = {
 
     // Referral
     referral: {
-      title: "Invite Friends",
-      subtitle: "Get 7 days of free Pro for each friend who subscribes",
+      title: "Refer & Earn",
+      subtitle: "Invite friends and earn 1 free month of Pro when they subscribe",
+      earnBadge: "Earn free Pro",
+      howItWorks: "How it works",
+      step1: "Share your unique referral link with friends",
+      step2: "Your friend subscribes to a Pro plan",
+      step3: "You receive a free 1-month licence key by email",
+      yourLink: "Your invite link",
       copy: "Copy",
+      copyLink: "Copy link",
       copied: "Copied!",
       share: "Share your link",
       shareText: "Join me on Brightroots and learn from the best! Use my link to sign up:",
       invited: "Invited",
       daysEarned: "Days earned",
+      inviteFriends: "Invite Friends",
     },
 
     // Pro upsell
@@ -473,6 +481,7 @@ export const translations = {
       dashboard: "Admin Dashboard",
       manageCourses: "Manage Courses",
       licences: "Licences",
+      referrals: "Referrals",
       analytics: "Analytics",
       adminBadge: "Admin",
       overview: "Overview",
@@ -930,14 +939,22 @@ export const translations = {
 
     // Referral
     referral: {
-      title: "Invitez vos amis",
-      subtitle: "Obtenez 7 jours de Pro gratuit pour chaque ami qui s'abonne",
+      title: "Parrainez & Gagnez",
+      subtitle: "Invitez vos amis et gagnez 1 mois de Pro gratuit quand ils s'abonnent",
+      earnBadge: "Gagnez du Pro gratuit",
+      howItWorks: "Comment ça marche",
+      step1: "Partagez votre lien de parrainage unique avec vos amis",
+      step2: "Votre ami s'abonne au plan Pro",
+      step3: "Vous recevez une clé de licence d'1 mois gratuit par email",
+      yourLink: "Votre lien d'invitation",
       copy: "Copier",
+      copyLink: "Copier le lien",
       copied: "Copié !",
       share: "Partagez votre lien",
       shareText: "Rejoignez-moi sur Brightroots et apprenez des meilleurs ! Utilisez mon lien pour vous inscrire :",
       invited: "Invités",
       daysEarned: "Jours gagnés",
+      inviteFriends: "Inviter des amis",
     },
 
     // Pro upsell
@@ -1017,6 +1034,7 @@ export const translations = {
       dashboard: "Tableau de bord admin",
       manageCourses: "Gérer les cours",
       licences: "Licences",
+      referrals: "Parrainages",
       analytics: "Analytique",
       adminBadge: "Admin",
       overview: "Vue d'ensemble",

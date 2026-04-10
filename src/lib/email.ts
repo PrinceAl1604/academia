@@ -214,6 +214,49 @@ export async function sendSubscriptionEmail({
   });
 }
 
+/* ─── Referral reward email ───────────────────────────────── */
+export async function sendReferralRewardEmail({
+  to,
+  name,
+  licenceKey,
+}: {
+  to: string;
+  name: string;
+  licenceKey: string;
+}) {
+  const firstName = name.split(" ")[0] || name;
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `Your free month of Pro is here!`,
+    html: emailWrapper({
+      heading: `You earned 1 free month!`,
+      body: `
+        <p style="margin:0 0 16px; font-size:16px; line-height:1.6; color:#525252;">
+          Hi ${firstName},
+        </p>
+        <p style="margin:0 0 16px; font-size:16px; line-height:1.6; color:#525252;">
+          A friend you referred just subscribed to <strong>Brightroots Pro</strong>.
+          As a thank-you, here is your <strong>free 1-month licence key</strong>:
+        </p>
+        <div style="margin:0 0 20px; padding:16px; background:#f5f5f5; border-radius:8px; text-align:center;">
+          <p style="margin:0; font-size:22px; font-weight:700; font-family:monospace; color:#171717; letter-spacing:2px;">
+            ${licenceKey}
+          </p>
+        </div>
+        <p style="margin:0 0 16px; font-size:16px; line-height:1.6; color:#525252;">
+          Go to your dashboard and activate this key to unlock 30 days of unlimited Pro access.
+        </p>
+        <p style="margin:0; font-size:14px; line-height:1.6; color:#a3a3a3;">
+          Keep sharing your referral link to earn more free months!
+        </p>`,
+      buttonLabel: "Activate My Key",
+      buttonUrl: `${APP_URL}/dashboard/subscription`,
+    }),
+  });
+}
+
 /* ─── Renewal reminder email ──────────────────────────────── */
 export async function sendRenewalReminderEmail({
   to,

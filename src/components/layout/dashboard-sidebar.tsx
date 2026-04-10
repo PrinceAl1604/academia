@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,7 @@ import {
   KeyRound,
   FolderOpen,
   Users,
+  Gift,
   LogOut,
   PanelLeftClose,
   PanelLeft,
@@ -21,12 +23,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSidebar } from "@/lib/sidebar-context";
+import { ReferralModal } from "@/components/shared/referral-modal";
 
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { isAdmin, userName, logout } = useAuth();
   const { t } = useLanguage();
   const { collapsed, toggle } = useSidebar();
+  const [referralOpen, setReferralOpen] = useState(false);
 
   // ─── Navigation ─────────────────────────────────────────────
   const studentNav = [
@@ -45,6 +49,7 @@ export function DashboardSidebar() {
     { label: t.admin.manageCourses, href: "/admin/courses", icon: BookOpen },
     { label: t.sidebar.categories, href: "/admin/categories", icon: FolderOpen },
     { label: t.admin.licences, href: "/admin/licences", icon: KeyRound },
+    { label: t.admin.referrals, href: "/admin/referrals", icon: Gift },
     { label: t.sidebar.students, href: "/admin/students", icon: Users },
     { label: t.admin.analytics, href: "/admin/analytics", icon: BarChart3 },
   ];
@@ -105,6 +110,29 @@ export function DashboardSidebar() {
             );
           })}
         </div>
+
+        {/* ─── Invite Friends (students only) ─────────────── */}
+        {!isAdmin && (
+          <div className="mt-4">
+            {collapsed && <div className="mb-1.5 mx-2.5 h-px bg-neutral-200/70 dark:bg-neutral-800" />}
+            <button
+              onClick={() => setReferralOpen(true)}
+              title={collapsed ? t.referral.inviteFriends : undefined}
+              className={cn(
+                "group relative flex w-full items-center rounded-lg transition-colors text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20",
+                collapsed ? "justify-center p-2.5" : "gap-2.5 px-2.5 py-2"
+              )}
+            >
+              <Gift className={cn("shrink-0", collapsed ? "h-[18px] w-[18px]" : "h-4 w-4")} />
+              {!collapsed && <span className="text-sm font-medium truncate">{t.referral.inviteFriends}</span>}
+              {collapsed && (
+                <span className="pointer-events-none absolute left-full ml-3 z-50 hidden rounded-lg bg-neutral-800 dark:bg-neutral-700 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg group-hover:block whitespace-nowrap">
+                  {t.referral.inviteFriends}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
 
         {/* ─── Account Section ─────────────────────────────── */}
         <div className="mt-6">
@@ -176,6 +204,8 @@ export function DashboardSidebar() {
           {!collapsed && <span className="text-sm">{t.sidebar.collapse}</span>}
         </button>
       </div>
+      {/* Referral Modal */}
+      {!isAdmin && <ReferralModal open={referralOpen} onClose={() => setReferralOpen(false)} />}
     </aside>
   );
 }

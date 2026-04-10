@@ -16,7 +16,6 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
 import { getCompletedLessons } from "@/lib/api";
-import { ReferralCard } from "@/components/dashboard/referral-card";
 
 interface EnrolledCourse {
   id: string;
@@ -113,9 +112,6 @@ export default function DashboardPage() {
           </div>
         </Card>
       </div>
-
-      {/* Referral Program */}
-      <ReferralCard />
 
       {/* Enrolled Courses */}
       <div>

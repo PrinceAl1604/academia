@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "./supabase-server";
+import { generateLicenceKey } from "./licence";
 
 /* ─── Code Generation ───────────────────────────────────────── */
 
@@ -55,25 +56,8 @@ export async function getReferralStats(
 /* ─── Reward Logic ──────────────────────────────────────────── */
 
 /**
- * Calculate how many bonus Pro days each party gets.
- *
- * Called when a referred user activates a Pro licence.
- * The referrer gets bonus days added to their Pro expiry.
- * The referred user (new Pro) also gets bonus days on top of their 30-day licence.
- */
-export function calculateReward(): {
-  referrerDays: number;
-  refereeDays: number;
-} {
-  // TODO ← You define these values (see prompt below)
-  return { referrerDays: 7, refereeDays: 7 };
-}
-
-/* ─── Process Reward on Pro Activation ──────────────────────── */
-
-/**
- * When a referred user goes Pro, reward the referrer
- * and (optionally) extend the referee's Pro period.
+ * When a referred user goes Pro, generate a 1-month licence key
+ * for the referrer and send it to them by email.
  */
 export async function processReferralReward(referredUserId: string) {
   const supabase = getSupabaseAdmin();
@@ -96,64 +80,50 @@ export async function processReferralReward(referredUserId: string) {
 
   if (existing?.status === "rewarded") return null; // already processed
 
-  // 3. Calculate reward
-  const reward = calculateReward();
-
-  // 4. Reward the REFERRER — extend their Pro (or grant Pro if free)
+  // 3. Get referrer info (need email + name for the reward email)
   const { data: referrer } = await supabase
     .from("users")
-    .select("pro_expires_at, subscription_tier")
+    .select("email, name")
     .eq("id", referredUser.referred_by)
     .single();
 
-  if (referrer) {
-    const now = new Date();
-    const currentExpiry = referrer.pro_expires_at
-      ? new Date(referrer.pro_expires_at)
-      : now;
+  if (!referrer?.email) return null;
 
-    // If referrer is already Pro, extend from their current expiry
-    // If not Pro (or expired), start from now
-    const baseDate = currentExpiry > now ? currentExpiry : now;
-    const newExpiry = new Date(
-      baseDate.getTime() + reward.referrerDays * 24 * 60 * 60 * 1000
-    );
+  // 4. Generate a fresh licence key for the referrer
+  const licenceKey = generateLicenceKey();
 
-    await supabase
-      .from("users")
-      .update({
-        subscription_tier: "pro",
-        pro_expires_at: newExpiry.toISOString(),
-      })
-      .eq("id", referredUser.referred_by);
+  await supabase.from("licence_keys").insert({
+    key: licenceKey,
+    status: "created",
+    created_by: "referral-system",
+  });
+
+  // 5. Send the reward email with the licence key
+  try {
+    const { sendReferralRewardEmail } = await import("./email");
+    await sendReferralRewardEmail({
+      to: referrer.email,
+      name: referrer.name || referrer.email.split("@")[0],
+      licenceKey,
+    });
+  } catch (err) {
+    console.error("[Referral] Failed to send reward email:", err);
   }
 
-  // 5. Reward the REFEREE — extend their Pro period by bonus days
-  if (reward.refereeDays > 0 && referredUser.pro_expires_at) {
-    const currentExpiry = new Date(referredUser.pro_expires_at);
-    const newExpiry = new Date(
-      currentExpiry.getTime() + reward.refereeDays * 24 * 60 * 60 * 1000
-    );
-
-    await supabase
-      .from("users")
-      .update({ pro_expires_at: newExpiry.toISOString() })
-      .eq("id", referredUserId);
-  }
-
-  // 6. Mark referral as rewarded
+  // 6. Mark referral as rewarded + store the sent key
   if (existing) {
     await supabase
       .from("referrals")
       .update({
         status: "rewarded",
-        reward_days: reward.referrerDays,
+        reward_days: 30,
         rewarded_at: new Date().toISOString(),
+        licence_key_sent: licenceKey,
       })
       .eq("id", existing.id);
   }
 
-  return reward;
+  return { licenceKey };
 }
 
 /* ─── Link Referred User on Signup ──────────────────────────── */
