@@ -16,7 +16,7 @@ export default function SignUpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLanguage();
-  const [referralCode, setReferralCode] = useState(searchParams.get("ref")?.toUpperCase() || "");
+  const refCode = searchParams.get("ref") || "";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +43,7 @@ export default function SignUpPage() {
       options: {
         data: {
           full_name: name,
-          ...(referralCode ? { referral_code: referralCode.toUpperCase() } : {}),
+          ...(refCode ? { referral_code: refCode.toUpperCase() } : {}),
         },
       },
     });
@@ -134,18 +134,6 @@ export default function SignUpPage() {
                 </button>
               </div>
               <p className="text-xs text-neutral-400">{t.auth.minChars}</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="referral" className="text-sm text-neutral-700">
-                {t.referral.referralCode} <span className="text-neutral-400 font-normal">({t.referral.optional})</span>
-              </Label>
-              <Input
-                id="referral" type="text" placeholder="ex: ALEX5761"
-                className="h-12 rounded-lg border-neutral-300 bg-white text-base placeholder:text-neutral-400 uppercase tracking-wider"
-                value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-                maxLength={8}
-              />
             </div>
 
             {error && <p className="text-sm text-red-500">{error}</p>}
