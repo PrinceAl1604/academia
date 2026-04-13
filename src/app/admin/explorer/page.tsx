@@ -9,24 +9,39 @@ import {
   Eye,
   EyeOff,
   Pencil,
-  Clock,
   BookOpen,
   Loader2,
   ExternalLink,
   GripVertical,
-  ChevronUp,
-  ChevronDown,
   Star,
   Save,
   Check,
   RotateCcw,
   ChevronRight,
-  Plus,
   FolderOpen,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+/* ─── Types ────────────────────────────────────────────────── */
 
 interface Course {
   id: string;
@@ -50,6 +65,283 @@ interface Category {
   sort_order: number;
 }
 
+/* ─── Sortable Category Header ─────────────────────────────── */
+
+function SortableCategoryHeader({
+  cat,
+  count,
+  isCollapsed,
+  onToggle,
+}: {
+  cat: Category;
+  count: number;
+  isCollapsed: boolean;
+  onToggle: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: cat.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "group flex items-center gap-2 px-3 py-2.5 bg-neutral-50/80 dark:bg-neutral-800/50 transition-colors",
+        isDragging && "z-50 shadow-lg bg-white dark:bg-neutral-800 ring-2 ring-neutral-900/10 dark:ring-white/10 rounded-lg"
+      )}
+    >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing p-0.5 text-neutral-300 hover:text-neutral-500 dark:text-neutral-600 dark:hover:text-neutral-400 touch-none"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+
+      <button
+        onClick={onToggle}
+        className="flex items-center gap-2 flex-1 min-w-0 text-left"
+      >
+        <ChevronRight
+          className={cn(
+            "h-3.5 w-3.5 text-neutral-400 transition-transform",
+            !isCollapsed && "rotate-90"
+          )}
+        />
+        <FolderOpen className="h-3.5 w-3.5 text-neutral-400" />
+        <span className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
+          {cat.name}
+        </span>
+        <span className="text-[11px] text-neutral-400 shrink-0">{count}</span>
+      </button>
+    </div>
+  );
+}
+
+/* ─── Sortable Course Row ──────────────────────────────────── */
+
+function SortableCourseRow({
+  course,
+  isEn,
+  onToggleFeatured,
+  onTogglePublished,
+}: {
+  course: Course;
+  isEn: boolean;
+  onToggleFeatured: (id: string) => void;
+  onTogglePublished: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: course.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "group flex items-center gap-3 px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors",
+        !course.is_published && "opacity-50",
+        course.is_featured && "bg-amber-50/50 dark:bg-amber-900/10",
+        isDragging && "z-50 shadow-lg bg-white dark:bg-neutral-800 ring-2 ring-neutral-900/10 dark:ring-white/10 rounded-lg opacity-100"
+      )}
+    >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing p-0.5 text-neutral-300 hover:text-neutral-500 dark:text-neutral-600 dark:hover:text-neutral-400 touch-none"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+
+      {/* Thumbnail */}
+      <div className="relative h-9 w-14 rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 shrink-0">
+        {course.cover_url ? (
+          <Image src={course.cover_url} alt="" fill className="object-cover" sizes="56px" />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <BookOpen className="h-3 w-3 text-neutral-300 dark:text-neutral-600" />
+          </div>
+        )}
+      </div>
+
+      {/* Title + meta */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-medium text-neutral-900 dark:text-white truncate">
+            {course.title}
+          </span>
+          {course.is_featured && (
+            <Star className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
+          )}
+        </div>
+        <div className="flex items-center gap-2 text-[11px] text-neutral-400">
+          <span>{course.level}</span>
+          <span>·</span>
+          <span>{course.duration_hours}h</span>
+          <span>·</span>
+          <span>
+            {course.total_lessons} {isEn ? "lessons" : "leçons"}
+          </span>
+        </div>
+      </div>
+
+      {/* Badges */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {course.is_free && (
+          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] h-5 px-1.5">
+            Free
+          </Badge>
+        )}
+        {!course.is_published && (
+          <Badge
+            variant="outline"
+            className="text-[10px] h-5 px-1.5 text-neutral-400 dark:border-neutral-700"
+          >
+            {isEn ? "Draft" : "Brouillon"}
+          </Badge>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-0.5 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => onToggleFeatured(course.id)}
+          className={cn(
+            "p-1.5 rounded-md transition-colors",
+            course.is_featured
+              ? "text-amber-500"
+              : "text-neutral-300 hover:text-amber-500 dark:text-neutral-600"
+          )}
+          title={isEn ? "Feature" : "Mettre en avant"}
+        >
+          <Star className={cn("h-3.5 w-3.5", course.is_featured && "fill-current")} />
+        </button>
+        <button
+          onClick={() => onTogglePublished(course.id)}
+          className={cn(
+            "p-1.5 rounded-md transition-colors",
+            course.is_published
+              ? "text-green-500"
+              : "text-neutral-300 hover:text-green-500 dark:text-neutral-600"
+          )}
+          title={course.is_published ? "Unpublish" : "Publish"}
+        >
+          {course.is_published ? (
+            <Eye className="h-3.5 w-3.5" />
+          ) : (
+            <EyeOff className="h-3.5 w-3.5" />
+          )}
+        </button>
+        <Link
+          href={`/admin/courses/${course.id}/edit`}
+          className="p-1.5 rounded-md text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </Link>
+        <Link
+          href={`/courses/${course.slug}`}
+          className="p-1.5 rounded-md text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Sortable Course List (per category) ──────────────────── */
+
+function SortableCourseList({
+  courses,
+  isEn,
+  onReorder,
+  onToggleFeatured,
+  onTogglePublished,
+}: {
+  courses: Course[];
+  isEn: boolean;
+  onReorder: (courseIds: string[]) => void;
+  onToggleFeatured: (id: string) => void;
+  onTogglePublished: (id: string) => void;
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  const courseIds = courses.map((c) => c.id);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = courseIds.indexOf(active.id as string);
+    const newIndex = courseIds.indexOf(over.id as string);
+    const newOrder = arrayMove(courseIds, oldIndex, newIndex);
+    onReorder(newOrder);
+  };
+
+  if (courses.length === 0) {
+    return (
+      <div className="px-3 py-4 text-center">
+        <p className="text-xs text-neutral-400">
+          {isEn ? "No courses" : "Aucun cours"}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={courseIds} strategy={verticalListSortingStrategy}>
+        <div className="divide-y divide-neutral-100 dark:divide-neutral-800/50">
+          {courses.map((course) => (
+            <SortableCourseRow
+              key={course.id}
+              course={course}
+              isEn={isEn}
+              onToggleFeatured={onToggleFeatured}
+              onTogglePublished={onTogglePublished}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+/* ─── Main Component ───────────────────────────────────────── */
+
 export default function AdminExplorerPage() {
   const { t } = useLanguage();
   const isEn = t.nav.signIn === "Sign In";
@@ -61,11 +353,25 @@ export default function AdminExplorerPage() {
   const [hasChanges, setHasChanges] = useState(false);
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
 
-  useEffect(() => { loadData(); }, []);
+  // Sensors for category drag
+  const catSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const loadData = async () => {
     const [{ data: c }, { data: cat }] = await Promise.all([
-      supabase.from("courses").select("id, title, slug, cover_url, level, duration_hours, total_lessons, is_free, is_published, is_featured, sort_order, category_id, category:categories(name)").order("sort_order"),
+      supabase
+        .from("courses")
+        .select(
+          "id, title, slug, cover_url, level, duration_hours, total_lessons, is_free, is_published, is_featured, sort_order, category_id, category:categories(name)"
+        )
+        .order("sort_order"),
       supabase.from("categories").select("id, name, sort_order").order("sort_order"),
     ]);
     setCourses((c as unknown as Course[]) || []);
@@ -81,68 +387,68 @@ export default function AdminExplorerPage() {
     });
   };
 
-  // ─── Reorder helpers ───────────────────────────────────────────────
-  const moveCatUp = (i: number) => {
-    if (i === 0) return;
-    const u = [...categories];
-    [u[i - 1], u[i]] = [u[i], u[i - 1]];
-    u.forEach((c, idx) => (c.sort_order = idx));
-    setCategories(u);
+  /* ─── Category drag end ──────────────────────────────────── */
+  const handleCategoryDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = categories.findIndex((c) => c.id === active.id);
+    const newIndex = categories.findIndex((c) => c.id === over.id);
+    const reordered = arrayMove(categories, oldIndex, newIndex);
+    reordered.forEach((c, idx) => (c.sort_order = idx));
+    setCategories(reordered);
     setHasChanges(true);
   };
 
-  const moveCatDown = (i: number) => {
-    if (i === categories.length - 1) return;
-    const u = [...categories];
-    [u[i], u[i + 1]] = [u[i + 1], u[i]];
-    u.forEach((c, idx) => (c.sort_order = idx));
-    setCategories(u);
-    setHasChanges(true);
-  };
-
+  /* ─── Course reorder within category ─────────────────────── */
   const getCatCourses = (catName: string | null) =>
     courses
-      .filter((c) => (catName === null ? !c.category?.name : c.category?.name === catName))
+      .filter((c) =>
+        catName === null ? !c.category?.name : c.category?.name === catName
+      )
       .sort((a, b) => a.sort_order - b.sort_order);
 
-  const moveCourseUp = (id: string, catName: string | null) => {
-    const cc = getCatCourses(catName);
-    const idx = cc.findIndex((c) => c.id === id);
-    if (idx <= 0) return;
-    const u = [...courses];
-    const a = u.find((c) => c.id === cc[idx].id)!;
-    const b = u.find((c) => c.id === cc[idx - 1].id)!;
-    [a.sort_order, b.sort_order] = [b.sort_order, a.sort_order];
-    setCourses(u);
+  const handleCourseReorder = (catName: string | null, newOrder: string[]) => {
+    const updated = [...courses];
+    newOrder.forEach((id, idx) => {
+      const course = updated.find((c) => c.id === id);
+      if (course) course.sort_order = idx;
+    });
+    setCourses(updated);
     setHasChanges(true);
   };
 
-  const moveCourseDown = (id: string, catName: string | null) => {
-    const cc = getCatCourses(catName);
-    const idx = cc.findIndex((c) => c.id === id);
-    if (idx >= cc.length - 1) return;
-    const u = [...courses];
-    const a = u.find((c) => c.id === cc[idx].id)!;
-    const b = u.find((c) => c.id === cc[idx + 1].id)!;
-    [a.sort_order, b.sort_order] = [b.sort_order, a.sort_order];
-    setCourses(u);
-    setHasChanges(true);
-  };
-
+  /* ─── Toggles ────────────────────────────────────────────── */
   const toggleFeatured = (id: string) => {
-    setCourses((p) => p.map((c) => (c.id === id ? { ...c, is_featured: !c.is_featured } : c)));
+    setCourses((p) =>
+      p.map((c) => (c.id === id ? { ...c, is_featured: !c.is_featured } : c))
+    );
     setHasChanges(true);
   };
 
   const togglePublished = (id: string) => {
-    setCourses((p) => p.map((c) => (c.id === id ? { ...c, is_published: !c.is_published } : c)));
+    setCourses((p) =>
+      p.map((c) => (c.id === id ? { ...c, is_published: !c.is_published } : c))
+    );
     setHasChanges(true);
   };
 
+  /* ─── Save ───────────────────────────────────────────────── */
   const saveLayout = async () => {
     setSaving(true);
-    const catUpdates = categories.map((c) => supabase.from("categories").update({ sort_order: c.sort_order }).eq("id", c.id));
-    const courseUpdates = courses.map((c) => supabase.from("courses").update({ sort_order: c.sort_order, is_featured: c.is_featured, is_published: c.is_published }).eq("id", c.id));
+    const catUpdates = categories.map((c) =>
+      supabase.from("categories").update({ sort_order: c.sort_order }).eq("id", c.id)
+    );
+    const courseUpdates = courses.map((c) =>
+      supabase
+        .from("courses")
+        .update({
+          sort_order: c.sort_order,
+          is_featured: c.is_featured,
+          is_published: c.is_published,
+        })
+        .eq("id", c.id)
+    );
     await Promise.all([...catUpdates, ...courseUpdates]);
     setSaving(false);
     setSaved(true);
@@ -150,81 +456,16 @@ export default function AdminExplorerPage() {
     setTimeout(() => setSaved(false), 3000);
   };
 
+  /* ─── Render ─────────────────────────────────────────────── */
   if (loading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-neutral-400" /></div>;
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      </div>
+    );
   }
 
-  const CourseRow = ({ course, idx, total, catName }: { course: Course; idx: number; total: number; catName: string | null }) => (
-    <div
-      className={cn(
-        "group flex items-center gap-3 px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors",
-        !course.is_published && "opacity-50",
-        course.is_featured && "bg-amber-50/50 dark:bg-amber-900/10"
-      )}
-    >
-      {/* Reorder */}
-      <div className="flex flex-col opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-        <button onClick={() => moveCourseUp(course.id, catName)} disabled={idx === 0} className="p-0.5 text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
-          <ChevronUp className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
-        </button>
-        <button onClick={() => moveCourseDown(course.id, catName)} disabled={idx === total - 1} className="p-0.5 text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
-          <ChevronDown className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
-        </button>
-      </div>
-
-      {/* Thumbnail */}
-      <div className="relative h-9 w-14 rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 shrink-0">
-        {course.cover_url ? (
-          <Image src={course.cover_url} alt="" fill className="object-cover" sizes="56px" />
-        ) : (
-          <div className="flex h-full items-center justify-center"><BookOpen className="h-3 w-3 text-neutral-300 dark:text-neutral-600" /></div>
-        )}
-      </div>
-
-      {/* Title + meta */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium text-neutral-900 dark:text-white truncate">{course.title}</span>
-          {course.is_featured && <Star className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />}
-        </div>
-        <div className="flex items-center gap-2 text-[11px] text-neutral-400">
-          <span>{course.level}</span>
-          <span>·</span>
-          <span>{course.duration_hours}h</span>
-          <span>·</span>
-          <span>{course.total_lessons} {isEn ? "lessons" : "leçons"}</span>
-        </div>
-      </div>
-
-      {/* Badges */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        {course.is_free && (
-          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] h-5 px-1.5">Free</Badge>
-        )}
-        {!course.is_published && (
-          <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-neutral-400 dark:border-neutral-700">
-            {isEn ? "Draft" : "Brouillon"}
-          </Badge>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-0.5 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-        <button onClick={() => toggleFeatured(course.id)} className={cn("p-1.5 rounded-md transition-colors", course.is_featured ? "text-amber-500" : "text-neutral-300 hover:text-amber-500 dark:text-neutral-600")} title={isEn ? "Feature" : "Mettre en avant"}>
-          <Star className={cn("h-3.5 w-3.5", course.is_featured && "fill-current")} />
-        </button>
-        <button onClick={() => togglePublished(course.id)} className={cn("p-1.5 rounded-md transition-colors", course.is_published ? "text-green-500" : "text-neutral-300 hover:text-green-500 dark:text-neutral-600")} title={course.is_published ? "Unpublish" : "Publish"}>
-          {course.is_published ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-        </button>
-        <Link href={`/admin/courses/${course.id}/edit`} className="p-1.5 rounded-md text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300">
-          <Pencil className="h-3.5 w-3.5" />
-        </Link>
-        <Link href={`/courses/${course.slug}`} className="p-1.5 rounded-md text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300">
-          <ExternalLink className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-    </div>
-  );
+  const categoryIds = categories.map((c) => c.id);
 
   return (
     <div className="space-y-4">
@@ -235,19 +476,47 @@ export default function AdminExplorerPage() {
             {isEn ? "Explorer" : "Explorateur"}
           </h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {isEn ? "Arrange your courses — changes apply to the student site" : "Arrangez vos cours — les modifications s'appliquent au site étudiant"}
+            {isEn
+              ? "Drag to reorder — changes apply to the student site"
+              : "Glissez pour réorganiser — les modifications s'appliquent au site étudiant"}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {hasChanges && (
-            <Button variant="ghost" size="sm" className="gap-1.5 text-xs text-neutral-500" onClick={() => { setLoading(true); setHasChanges(false); loadData(); }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs text-neutral-500"
+              onClick={() => {
+                setLoading(true);
+                setHasChanges(false);
+                loadData();
+              }}
+            >
               <RotateCcw className="h-3 w-3" />
               {isEn ? "Reset" : "Annuler"}
             </Button>
           )}
-          <Button size="sm" className="gap-1.5" onClick={saveLayout} disabled={saving || !hasChanges}>
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : saved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
-            {saved ? (isEn ? "Saved!" : "Enregistré !") : (isEn ? "Save" : "Enregistrer")}
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={saveLayout}
+            disabled={saving || !hasChanges}
+          >
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : saved ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+            {saved
+              ? isEn
+                ? "Saved!"
+                : "Enregistré !"
+              : isEn
+                ? "Save"
+                : "Enregistrer"}
           </Button>
         </div>
       </div>
@@ -260,51 +529,51 @@ export default function AdminExplorerPage() {
         </div>
       )}
 
-      {/* Category sections */}
+      {/* Category sections with drag & drop */}
       <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white dark:bg-neutral-900">
-        {categories.map((cat, catIdx) => {
-          const catCourses = getCatCourses(cat.name);
-          const isCollapsed = collapsedCats.has(cat.id);
+        <DndContext
+          sensors={catSensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleCategoryDragEnd}
+        >
+          <SortableContext
+            items={categoryIds}
+            strategy={verticalListSortingStrategy}
+          >
+            {categories.map((cat, catIdx) => {
+              const catCourses = getCatCourses(cat.name);
+              const isCollapsed = collapsedCats.has(cat.id);
 
-          return (
-            <div key={cat.id} className={catIdx > 0 ? "border-t border-neutral-100 dark:border-neutral-800" : ""}>
-              {/* Category header */}
-              <div className="group flex items-center gap-2 px-3 py-2.5 bg-neutral-50/80 dark:bg-neutral-800/50 hover:bg-neutral-100/80 dark:hover:bg-neutral-800 transition-colors">
-                {/* Reorder arrows */}
-                <div className="flex flex-col opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => moveCatUp(catIdx)} disabled={catIdx === 0} className="p-0.5 text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
-                    <ChevronUp className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
-                  </button>
-                  <button onClick={() => moveCatDown(catIdx)} disabled={catIdx === categories.length - 1} className="p-0.5 text-neutral-300 hover:text-neutral-600 disabled:invisible dark:text-neutral-600 dark:hover:text-neutral-300">
-                    <ChevronDown className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
-                  </button>
-                </div>
+              return (
+                <div
+                  key={cat.id}
+                  className={
+                    catIdx > 0
+                      ? "border-t border-neutral-100 dark:border-neutral-800"
+                      : ""
+                  }
+                >
+                  <SortableCategoryHeader
+                    cat={cat}
+                    count={catCourses.length}
+                    isCollapsed={isCollapsed}
+                    onToggle={() => toggleCollapse(cat.id)}
+                  />
 
-                <button onClick={() => toggleCollapse(cat.id)} className="flex items-center gap-2 flex-1 min-w-0 text-left">
-                  <ChevronRight className={cn("h-3.5 w-3.5 text-neutral-400 transition-transform", !isCollapsed && "rotate-90")} />
-                  <FolderOpen className="h-3.5 w-3.5 text-neutral-400" />
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-white truncate">{cat.name}</span>
-                  <span className="text-[11px] text-neutral-400 shrink-0">{catCourses.length}</span>
-                </button>
-              </div>
-
-              {/* Courses */}
-              {!isCollapsed && (
-                <div className="divide-y divide-neutral-100 dark:divide-neutral-800/50">
-                  {catCourses.length === 0 ? (
-                    <div className="px-3 py-4 text-center">
-                      <p className="text-xs text-neutral-400">{isEn ? "No courses" : "Aucun cours"}</p>
-                    </div>
-                  ) : (
-                    catCourses.map((course, idx) => (
-                      <CourseRow key={course.id} course={course} idx={idx} total={catCourses.length} catName={cat.name} />
-                    ))
+                  {!isCollapsed && (
+                    <SortableCourseList
+                      courses={catCourses}
+                      isEn={isEn}
+                      onReorder={(ids) => handleCourseReorder(cat.name, ids)}
+                      onToggleFeatured={toggleFeatured}
+                      onTogglePublished={togglePublished}
+                    />
                   )}
                 </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            })}
+          </SortableContext>
+        </DndContext>
 
         {/* Uncategorized */}
         {(() => {
@@ -313,15 +582,22 @@ export default function AdminExplorerPage() {
           return (
             <div className="border-t border-neutral-100 dark:border-neutral-800">
               <div className="flex items-center gap-2 px-3 py-2.5 bg-neutral-50/80 dark:bg-neutral-800/50">
-                <FolderOpen className="h-3.5 w-3.5 text-amber-500 ml-7" />
-                <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">{isEn ? "Uncategorized" : "Sans catégorie"}</span>
-                <span className="text-[11px] text-neutral-400">{uncat.length}</span>
+                <div className="w-5" />
+                <FolderOpen className="h-3.5 w-3.5 text-amber-500" />
+                <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                  {isEn ? "Uncategorized" : "Sans catégorie"}
+                </span>
+                <span className="text-[11px] text-neutral-400">
+                  {uncat.length}
+                </span>
               </div>
-              <div className="divide-y divide-neutral-100 dark:divide-neutral-800/50">
-                {uncat.map((course, idx) => (
-                  <CourseRow key={course.id} course={course} idx={idx} total={uncat.length} catName={null} />
-                ))}
-              </div>
+              <SortableCourseList
+                courses={uncat}
+                isEn={isEn}
+                onReorder={(ids) => handleCourseReorder(null, ids)}
+                onToggleFeatured={toggleFeatured}
+                onTogglePublished={togglePublished}
+              />
             </div>
           );
         })()}
@@ -329,8 +605,16 @@ export default function AdminExplorerPage() {
 
       {/* Summary */}
       <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
-        <span>{courses.length} {isEn ? "courses" : "cours"} · {categories.length} {isEn ? "categories" : "catégories"}</span>
-        <span>{courses.filter((c) => c.is_published).length} {isEn ? "published" : "publiés"} · {courses.filter((c) => c.is_featured).length} {isEn ? "featured" : "en avant"}</span>
+        <span>
+          {courses.length} {isEn ? "courses" : "cours"} · {categories.length}{" "}
+          {isEn ? "categories" : "catégories"}
+        </span>
+        <span>
+          {courses.filter((c) => c.is_published).length}{" "}
+          {isEn ? "published" : "publiés"} ·{" "}
+          {courses.filter((c) => c.is_featured).length}{" "}
+          {isEn ? "featured" : "en avant"}
+        </span>
       </div>
     </div>
   );
