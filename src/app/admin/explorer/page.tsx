@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -421,6 +421,7 @@ export default function AdminExplorerPage() {
   const [hasChanges, setHasChanges] = useState(false);
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const initialPublishState = useRef<Record<string, boolean>>({});
 
   // Sensors for category drag
   const catSensors = useSensors(
@@ -443,8 +444,13 @@ export default function AdminExplorerPage() {
         .order("sort_order"),
       supabase.from("categories").select("id, name, sort_order").order("sort_order"),
     ]);
-    setCourses((c as unknown as Course[]) || []);
+    const courseList = (c as unknown as Course[]) || [];
+    setCourses(courseList);
     setCategories(cat || []);
+    // Snapshot initial publish state to detect newly published courses on save
+    initialPublishState.current = Object.fromEntries(
+      courseList.map((course) => [course.id, course.is_published])
+    );
     setLoading(false);
 
     // Fetch enrollment stats (non-blocking)
@@ -525,6 +531,24 @@ export default function AdminExplorerPage() {
         .eq("id", c.id)
     );
     await Promise.all([...catUpdates, ...courseUpdates]);
+
+    // Detect courses that were just published (false → true) and send announcement emails
+    const newlyPublished = courses.filter(
+      (c) => c.is_published && initialPublishState.current[c.id] === false
+    );
+    for (const course of newlyPublished) {
+      fetch("/api/email/new-course", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId: course.id }),
+      }).catch(() => {});
+    }
+
+    // Update snapshot so re-saving doesn't re-trigger
+    initialPublishState.current = Object.fromEntries(
+      courses.map((c) => [c.id, c.is_published])
+    );
+
     setSaving(false);
     setSaved(true);
     setHasChanges(false);

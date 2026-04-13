@@ -205,7 +205,11 @@ export default function SettingsPage() {
       setPasswordSuccess(true);
       setNewPassword("");
       setConfirmPassword("");
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
       setTimeout(() => setPasswordSuccess(false), 3000);
+      // Send confirmation email (fire-and-forget)
+      fetch("/api/email/password-changed", { method: "POST" }).catch(() => {});
     }
   };
 

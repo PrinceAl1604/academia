@@ -364,3 +364,164 @@ export async function sendRenewalReminderEmail({
     }),
   });
 }
+
+/* ─── Pro expired email ───────────────────────────────────── */
+export async function sendProExpiredEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name: string;
+}) {
+  const firstName = name.split(" ")[0] || name;
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `Your Pro plan has expired`,
+    html: emailWrapper({
+      heading: `Your Pro plan has ended`,
+      preheading: `Your account is now on the Free plan. Renew to get access back.`,
+      body: `
+        <p style="margin:0 0 20px;">
+          Hi ${firstName}, your Pro membership has expired and your account has been
+          switched to the <strong>Free plan</strong>.
+        </p>
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
+          <tr>
+            <td style="padding:16px 20px; background:#fef2f2; border-radius:10px; border-left:4px solid #ef4444;">
+              <p style="margin:0 0 4px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:#dc2626;">What you've lost access to</p>
+              <p style="margin:0; font-size:15px; color:#525252; line-height:1.7;">Premium courses, downloadable resources, and priority support.</p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0;">
+          Renew your subscription to pick up right where you left off — your progress is saved.
+        </p>`,
+      buttonLabel: "Renew Pro",
+      buttonUrl: "https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout",
+    }),
+  });
+}
+
+/* ─── New course announcement ─────────────────────────────── */
+export async function sendNewCourseEmail({
+  to,
+  name,
+  courseTitle,
+  courseDescription,
+}: {
+  to: string;
+  name: string;
+  courseTitle: string;
+  courseDescription?: string;
+}) {
+  const firstName = name.split(" ")[0] || name;
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `New course: ${courseTitle}`,
+    html: emailWrapper({
+      heading: `A new course just dropped`,
+      preheading: `"${courseTitle}" is now available on ${APP_NAME}.`,
+      body: `
+        <p style="margin:0 0 20px;">
+          Hi ${firstName}, we just published a new course and thought you'd want to know.
+        </p>
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
+          <tr>
+            <td style="padding:20px; background:#f0fdf4; border-radius:10px; border-left:4px solid #16a34a;">
+              <p style="margin:0 0 4px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:#16a34a;">New Course</p>
+              <p style="margin:0 0 6px; font-size:18px; font-weight:700; color:#171717;">${courseTitle}</p>
+              ${courseDescription ? `<p style="margin:0; font-size:14px; color:#525252; line-height:1.5;">${courseDescription}</p>` : ""}
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0;">
+          Check it out and start learning today.
+        </p>`,
+      buttonLabel: "View Course",
+      buttonUrl: APP_URL,
+    }),
+  });
+}
+
+/* ─── Inactive user nudge ─────────────────────────────────── */
+export async function sendInactiveNudgeEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name: string;
+}) {
+  const firstName = name.split(" ")[0] || name;
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `We miss you, ${firstName}!`,
+    html: emailWrapper({
+      heading: `It's been a while, ${firstName}`,
+      preheading: `Your courses are waiting for you on ${APP_NAME}. Come back and keep learning.`,
+      body: `
+        <p style="margin:0 0 20px;">
+          You haven't logged in for a couple of weeks. Your learning
+          journey is still here, exactly where you left off.
+        </p>
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
+          <tr>
+            <td align="center" style="padding:24px; background:#fafaf9; border-radius:10px;">
+              <p style="margin:0 0 8px; font-size:14px; color:#737373;">Just 15 minutes a day can make a big difference.</p>
+              <p style="margin:0; font-size:14px; color:#737373;">Pick up where you left off and keep building your skills.</p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0;">
+          We'd love to see you back.
+        </p>`,
+      buttonLabel: "Continue Learning",
+      buttonUrl: `${APP_URL}/dashboard/courses`,
+    }),
+  });
+}
+
+/* ─── Password changed confirmation ───────────────────────── */
+export async function sendPasswordChangedEmail({
+  to,
+  name,
+}: {
+  to: string;
+  name: string;
+}) {
+  const firstName = name.split(" ")[0] || name;
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `Your password was changed`,
+    html: emailWrapper({
+      heading: `Password updated`,
+      preheading: `Your ${APP_NAME} password was just changed.`,
+      body: `
+        <p style="margin:0 0 20px;">
+          Hi ${firstName}, your password was successfully changed. If you made this change,
+          no further action is needed.
+        </p>
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
+          <tr>
+            <td style="padding:16px 20px; background:#fffbeb; border-radius:10px; border-left:4px solid #f59e0b;">
+              <p style="margin:0; font-size:14px; color:#525252; line-height:1.6;">
+                <strong style="color:#171717;">Didn't make this change?</strong><br>
+                Contact us immediately at
+                <a href="mailto:${HELP_EMAIL}" style="color:#16a34a; text-decoration:none;">${HELP_EMAIL}</a>
+                to secure your account.
+              </p>
+            </td>
+          </tr>
+        </table>`,
+      buttonLabel: "Go to Dashboard",
+      buttonUrl: `${APP_URL}/dashboard`,
+    }),
+  });
+}
