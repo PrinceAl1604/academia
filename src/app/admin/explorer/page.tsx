@@ -19,6 +19,8 @@ import {
   RotateCcw,
   ChevronRight,
   FolderOpen,
+  Users,
+  TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -63,6 +65,13 @@ interface Category {
   id: string;
   name: string;
   sort_order: number;
+}
+
+interface CourseStats {
+  enrollments: number;
+  completions: number;
+  avgProgress: number;
+  recent7d: number;
 }
 
 /* ─── Sortable Category Header ─────────────────────────────── */
@@ -136,11 +145,13 @@ function SortableCategoryHeader({
 function SortableCourseRow({
   course,
   isEn,
+  stats,
   onToggleFeatured,
   onTogglePublished,
 }: {
   course: Course;
   isEn: boolean;
+  stats?: CourseStats;
   onToggleFeatured: (id: string) => void;
   onTogglePublished: (id: string) => void;
 }) {
@@ -211,6 +222,39 @@ function SortableCourseRow({
         </div>
       </div>
 
+      {/* Stats */}
+      {stats && stats.enrollments > 0 && (
+        <div className="hidden md:flex items-center gap-3 shrink-0 text-[11px]">
+          <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400" title={isEn ? "Enrolled students" : "Étudiants inscrits"}>
+            <Users className="h-3 w-3" />
+            {stats.enrollments}
+          </span>
+          {stats.completions > 0 && (
+            <span className="flex items-center gap-1 text-green-600 dark:text-green-400" title={isEn ? "Completions" : "Complétions"}>
+              <Check className="h-3 w-3" />
+              {stats.completions}
+            </span>
+          )}
+          {stats.avgProgress > 0 && (
+            <div className="flex items-center gap-1.5" title={`${isEn ? "Avg progress" : "Progrès moyen"}: ${stats.avgProgress}%`}>
+              <div className="h-1 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-blue-500 dark:bg-blue-400"
+                  style={{ width: `${Math.min(stats.avgProgress, 100)}%` }}
+                />
+              </div>
+              <span className="text-neutral-400">{stats.avgProgress}%</span>
+            </div>
+          )}
+          {stats.recent7d > 0 && (
+            <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400" title={isEn ? "New this week" : "Nouveaux cette semaine"}>
+              <TrendingUp className="h-3 w-3" />
+              +{stats.recent7d}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Badges */}
       <div className="flex items-center gap-1.5 shrink-0">
         {course.is_free && (
@@ -280,12 +324,14 @@ function SortableCourseRow({
 function SortableCourseList({
   courses,
   isEn,
+  statsMap,
   onReorder,
   onToggleFeatured,
   onTogglePublished,
 }: {
   courses: Course[];
   isEn: boolean;
+  statsMap: Record<string, CourseStats>;
   onReorder: (courseIds: string[]) => void;
   onToggleFeatured: (id: string) => void;
   onTogglePublished: (id: string) => void;
@@ -330,6 +376,7 @@ function SortableCourseList({
               key={course.id}
               course={course}
               isEn={isEn}
+              stats={statsMap[course.id]}
               onToggleFeatured={onToggleFeatured}
               onTogglePublished={onTogglePublished}
             />
@@ -347,6 +394,7 @@ export default function AdminExplorerPage() {
   const isEn = t.nav.signIn === "Sign In";
   const [courses, setCourses] = useState<Course[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [statsMap, setStatsMap] = useState<Record<string, CourseStats>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -377,6 +425,12 @@ export default function AdminExplorerPage() {
     setCourses((c as unknown as Course[]) || []);
     setCategories(cat || []);
     setLoading(false);
+
+    // Fetch enrollment stats (non-blocking)
+    fetch("/api/admin/course-stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => { if (json?.stats) setStatsMap(json.stats); })
+      .catch(() => {});
   };
 
   const toggleCollapse = (catId: string) => {
@@ -564,6 +618,7 @@ export default function AdminExplorerPage() {
                     <SortableCourseList
                       courses={catCourses}
                       isEn={isEn}
+                      statsMap={statsMap}
                       onReorder={(ids) => handleCourseReorder(cat.name, ids)}
                       onToggleFeatured={toggleFeatured}
                       onTogglePublished={togglePublished}
@@ -594,6 +649,7 @@ export default function AdminExplorerPage() {
               <SortableCourseList
                 courses={uncat}
                 isEn={isEn}
+                statsMap={statsMap}
                 onReorder={(ids) => handleCourseReorder(null, ids)}
                 onToggleFeatured={toggleFeatured}
                 onTogglePublished={togglePublished}
@@ -608,6 +664,10 @@ export default function AdminExplorerPage() {
         <span>
           {courses.length} {isEn ? "courses" : "cours"} · {categories.length}{" "}
           {isEn ? "categories" : "catégories"}
+          {Object.keys(statsMap).length > 0 && (
+            <> · {Object.values(statsMap).reduce((s, v) => s + v.enrollments, 0)}{" "}
+            {isEn ? "enrollments" : "inscriptions"}</>
+          )}
         </span>
         <span>
           {courses.filter((c) => c.is_published).length}{" "}
