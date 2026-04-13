@@ -418,6 +418,17 @@ export const translations = {
     community: {
       title: "Community",
       subtitle: "Chat with fellow students",
+      channels: "Channels",
+      general: "General",
+      announcements: "Announcements",
+      courseChannels: "Courses",
+      announcementsDesc: "Important updates from admins",
+      courseChat: "Course discussion",
+      pinnedMessages: "Pinned Messages",
+      noMessages: "No messages yet",
+      beFirst: "Be the first to say hello!",
+      announcementsEmpty: "No announcements yet",
+      announcementsOnly: "Only admins can post in this channel",
     },
 
     // Pro upsell
@@ -993,6 +1004,17 @@ export const translations = {
     community: {
       title: "Communauté",
       subtitle: "Discutez avec les autres étudiants",
+      channels: "Salons",
+      general: "Général",
+      announcements: "Annonces",
+      courseChannels: "Cours",
+      announcementsDesc: "Mises à jour importantes des administrateurs",
+      courseChat: "Discussion du cours",
+      pinnedMessages: "Messages épinglés",
+      noMessages: "Aucun message",
+      beFirst: "Soyez le premier à dire bonjour !",
+      announcementsEmpty: "Aucune annonce pour le moment",
+      announcementsOnly: "Seuls les administrateurs peuvent publier ici",
     },
 
     // Pro upsell

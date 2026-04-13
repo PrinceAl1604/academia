@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -28,16 +28,37 @@ import { ReferralModal } from "@/components/shared/referral-modal";
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { isAdmin, userName, logout } = useAuth();
+  const { isAdmin, userName, logout, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const { collapsed, toggle } = useSidebar();
   const [referralOpen, setReferralOpen] = useState(false);
+  const [unreadChat, setUnreadChat] = useState(0);
+
+  // Poll unread chat count every 30s
+  const fetchUnread = useCallback(async () => {
+    try {
+      const res = await fetch("/api/chat/unread");
+      if (res.ok) {
+        const { count } = await res.json();
+        setUnreadChat(count ?? 0);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30_000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, fetchUnread]);
 
   // ─── Navigation ─────────────────────────────────────────────
   const studentNav = [
     { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
     { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
-    { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare },
+    { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
   ];
 
   const studentAccountNav = [
@@ -54,7 +75,7 @@ export function DashboardSidebar() {
     { label: t.admin.referrals, href: "/admin/referrals", icon: Gift },
     { label: t.sidebar.students, href: "/admin/students", icon: Users },
     { label: t.admin.analytics, href: "/admin/analytics", icon: BarChart3 },
-    { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare },
+    { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
   ];
 
   const adminAccountNav = [
@@ -109,6 +130,7 @@ export function DashboardSidebar() {
                 label={item.label}
                 isActive={isActive}
                 collapsed={collapsed}
+                badge={"badge" in item ? (item as { badge?: number }).badge : undefined}
               />
             );
           })}
@@ -220,12 +242,14 @@ function SidebarItem({
   label,
   isActive,
   collapsed,
+  badge,
 }: {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   isActive: boolean;
   collapsed: boolean;
+  badge?: number;
 }) {
   return (
     <Link
@@ -240,13 +264,31 @@ function SidebarItem({
           : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 hover:text-neutral-800 dark:hover:text-neutral-200"
       )}
     >
-      <Icon className={cn("shrink-0", collapsed ? "h-[18px] w-[18px]" : "h-4 w-4")} />
-      {!collapsed && <span className="text-sm font-medium truncate">{label}</span>}
+      <span className="relative shrink-0">
+        <Icon className={cn(collapsed ? "h-[18px] w-[18px]" : "h-4 w-4")} />
+        {/* Badge dot — collapsed mode */}
+        {collapsed && !!badge && badge > 0 && (
+          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-600 ring-2 ring-white dark:ring-neutral-950" />
+        )}
+      </span>
+      {!collapsed && <span className="flex-1 text-sm font-medium truncate">{label}</span>}
+
+      {/* Badge count — expanded mode */}
+      {!collapsed && !!badge && badge > 0 && (
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white px-1 shrink-0">
+          {badge > 99 ? "99+" : badge}
+        </span>
+      )}
 
       {/* Tooltip — only in collapsed mode */}
       {collapsed && (
         <span className="pointer-events-none absolute left-full ml-3 z-50 hidden rounded-lg bg-neutral-800 dark:bg-neutral-700 px-2.5 py-1.5 text-xs font-medium text-white shadow-lg group-hover:block whitespace-nowrap">
           {label}
+          {!!badge && badge > 0 && (
+            <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-green-600 text-[9px] font-bold text-white px-1">
+              {badge > 99 ? "99+" : badge}
+            </span>
+          )}
         </span>
       )}
     </Link>
