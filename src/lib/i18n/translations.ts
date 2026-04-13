@@ -310,6 +310,13 @@ export const translations = {
       deleteBtn: "Delete",
       irreversible: "Irreversible actions",
       deleteDesc: "Permanently remove your account and data",
+      deleteConfirmTitle: "Delete your account?",
+      deleteConfirmDesc: "This action is permanent and cannot be undone. All your data, progress, and enrollments will be deleted.",
+      deleteConfirmLabel: "Type your email to confirm",
+      deleteConfirmBtn: "Permanently Delete Account",
+      deleting: "Deleting...",
+      notifSaving: "Saving...",
+      notifSaved: "Preferences saved",
     },
 
     // Subscription
@@ -403,6 +410,7 @@ export const translations = {
       daysEarned: "Days earned",
       inviteFriends: "Invite Friends",
       referralCode: "Referral Code",
+      codeHint: "Share this code with friends to earn a free Pro month",
       optional: "optional",
     },
 
@@ -870,6 +878,13 @@ export const translations = {
       deleteBtn: "Supprimer",
       irreversible: "Actions irréversibles",
       deleteDesc: "Supprimez définitivement votre compte",
+      deleteConfirmTitle: "Supprimer votre compte ?",
+      deleteConfirmDesc: "Cette action est permanente et irréversible. Toutes vos données, votre progression et vos inscriptions seront supprimées.",
+      deleteConfirmLabel: "Tapez votre email pour confirmer",
+      deleteConfirmBtn: "Supprimer définitivement",
+      deleting: "Suppression...",
+      notifSaving: "Enregistrement...",
+      notifSaved: "Préférences enregistrées",
     },
 
     // Subscription
@@ -964,6 +979,7 @@ export const translations = {
       daysEarned: "Jours gagnés",
       inviteFriends: "Inviter des amis",
       referralCode: "Code de parrainage",
+      codeHint: "Partagez ce code avec vos amis pour gagner un mois Pro gratuit",
       optional: "optionnel",
     },
 
