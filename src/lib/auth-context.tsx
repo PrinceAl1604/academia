@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -47,41 +48,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadUserProfile(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          loadUserProfile(session.user.id);
-        } else {
-          setRole(null);
-          setPlan("free");
-          setProExpiresAt(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Middleware handles redirecting authenticated users away from auth routes.
-  // No client-side redirect needed here.
-
-  const loadUserProfile = async (userId: string) => {
+  const loadUserProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from("users")
       .select("role, subscription_tier, pro_expires_at, has_onboarded, referral_code")
       .eq("id", userId)
       .single();
+
+    // Update last_active_at (non-blocking, for inactive nudge emails)
+    supabase
+      .from("users")
+      .update({ last_active_at: new Date().toISOString() })
+      .eq("id", userId)
+      .then(() => {});
+
 
     // If user doesn't exist in users table, create them
     if (error && error.code === "PGRST116") {
@@ -128,7 +108,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole("user");
       setPlan("free");
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          loadUserProfile(session.user.id);
+        } else {
+          setRole(null);
+          setPlan("free");
+          setProExpiresAt(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [loadUserProfile]);
 
   const markOnboarded = useCallback(() => {
     setHasOnboarded(true);
@@ -145,40 +151,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/");
   }, [router]);
 
-  const userName =
-    user?.user_metadata?.full_name ||
-    user?.email?.split("@")[0] ||
-    null;
+  const userName = useMemo(
+    () =>
+      user?.user_metadata?.full_name ||
+      user?.email?.split("@")[0] ||
+      null,
+    [user]
+  );
 
-  // Calculate days until expiry
-  const daysUntilExpiry = proExpiresAt
-    ? Math.ceil((new Date(proExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null;
+  // Memoize expensive calculations
+  const daysUntilExpiry = useMemo(
+    () =>
+      proExpiresAt
+        ? Math.ceil((new Date(proExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        : null,
+    [proExpiresAt]
+  );
 
-  const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry > 0 && daysUntilExpiry <= 5;
-  const isExpired = daysUntilExpiry !== null && daysUntilExpiry <= 0 && role !== "admin";
+  const isExpiringSoon = useMemo(
+    () => daysUntilExpiry !== null && daysUntilExpiry > 0 && daysUntilExpiry <= 5,
+    [daysUntilExpiry]
+  );
+
+  const isExpired = useMemo(
+    () => daysUntilExpiry !== null && daysUntilExpiry <= 0 && role !== "admin",
+    [daysUntilExpiry, role]
+  );
+
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  const contextValue = useMemo<AuthContextType>(
+    () => ({
+      user,
+      isAuthenticated: !!user,
+      isAdmin: role === "admin",
+      role,
+      plan: isExpired ? "free" : plan,
+      isPro: isExpired ? false : plan === "pro",
+      userName,
+      loading,
+      proExpiresAt,
+      daysUntilExpiry,
+      isExpiringSoon,
+      isExpired,
+      hasOnboarded,
+      referralCode,
+      markOnboarded,
+      logout,
+    }),
+    [user, role, plan, userName, loading, proExpiresAt, daysUntilExpiry, isExpiringSoon, isExpired, hasOnboarded, referralCode, markOnboarded, logout]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isAdmin: role === "admin",
-        role,
-        plan: isExpired ? "free" : plan,
-        isPro: isExpired ? false : plan === "pro",
-        userName,
-        loading,
-        proExpiresAt,
-        daysUntilExpiry,
-        isExpiringSoon,
-        isExpired,
-        hasOnboarded,
-        referralCode,
-        markOnboarded,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

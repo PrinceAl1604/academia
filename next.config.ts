@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  // Compress responses for faster delivery
+  compress: true,
+
+  // Optimize package imports — tree-shake heavy libraries
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@dnd-kit/core", "@dnd-kit/sortable"],
+  },
 };
 
 export default nextConfig;

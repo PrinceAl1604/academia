@@ -8,6 +8,7 @@ import { createServerClient } from "@supabase/ssr";
  * 1. Refresh auth session (keep cookies fresh)
  * 2. Redirect unauthenticated users away from /dashboard and /admin
  * 3. Redirect authenticated users away from /sign-in and /sign-up
+ * 4. Verify admin role for /admin routes (using cached role from user_metadata)
  */
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({ request });
@@ -58,7 +59,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // ─── Admin routes: verify admin role ──────────────────────────
+  // First try user_metadata (fast, no DB call), then fallback to DB query
   if (pathname.startsWith("/admin") && user) {
+    const metaRole = user.user_metadata?.role;
+
+    if (metaRole === "admin") {
+      // Trusted — role is cached in JWT metadata
+      return response;
+    }
+
+    // Fallback: check DB (only happens on first admin visit or if metadata not set)
     const { data: profile } = await supabase
       .from("users")
       .select("role")
@@ -68,6 +78,9 @@ export async function middleware(request: NextRequest) {
     if (!profile || profile.role !== "admin") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
+
+    // Cache role in user_metadata for future requests (non-blocking)
+    supabase.auth.updateUser({ data: { role: "admin" } }).catch(() => {});
   }
 
   return response;

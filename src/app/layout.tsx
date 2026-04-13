@@ -4,6 +4,7 @@ import { Geist } from "next/font/google";
 const geist = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 import { LanguageProvider } from "@/lib/i18n/language-context";
 import { AuthProvider } from "@/lib/auth-context";
