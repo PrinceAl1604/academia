@@ -18,6 +18,7 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeft,
+  MessageSquare,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
@@ -36,6 +37,7 @@ export function DashboardSidebar() {
   const studentNav = [
     { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
     { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
+    { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare },
   ];
 
   const studentAccountNav = [

@@ -414,6 +414,12 @@ export const translations = {
       optional: "optional",
     },
 
+    // Community
+    community: {
+      title: "Community",
+      subtitle: "Chat with fellow students",
+    },
+
     // Pro upsell
     pro: {
       membership: "Pro membership",
@@ -981,6 +987,12 @@ export const translations = {
       referralCode: "Code de parrainage",
       codeHint: "Partagez ce code avec vos amis pour gagner un mois Pro gratuit",
       optional: "optionnel",
+    },
+
+    // Community
+    community: {
+      title: "Communauté",
+      subtitle: "Discutez avec les autres étudiants",
     },
 
     // Pro upsell

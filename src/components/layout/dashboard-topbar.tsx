@@ -18,6 +18,7 @@ import {
   CreditCard,
   LayoutDashboard,
   BookOpen,
+  MessageSquare,
   UserPlus,
   BookPlus,
   Moon,
@@ -61,6 +62,7 @@ export function DashboardTopbar() {
   const mobileNav = [
     { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
     { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
+    { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare },
     { label: t.subscription.title || "Subscription", href: "/dashboard/subscription", icon: CreditCard },
     { label: t.settings.title || "Settings", href: "/dashboard/settings", icon: Settings },
   ];
