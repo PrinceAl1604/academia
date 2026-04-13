@@ -21,6 +21,7 @@ import {
   FolderOpen,
   Users,
   TrendingUp,
+  X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -146,12 +147,16 @@ function SortableCourseRow({
   course,
   isEn,
   stats,
+  selected,
+  onToggleSelect,
   onToggleFeatured,
   onTogglePublished,
 }: {
   course: Course;
   isEn: boolean;
   stats?: CourseStats;
+  selected: boolean;
+  onToggleSelect: (id: string) => void;
   onToggleFeatured: (id: string) => void;
   onTogglePublished: (id: string) => void;
 }) {
@@ -175,8 +180,9 @@ function SortableCourseRow({
       style={style}
       className={cn(
         "group flex items-center gap-3 px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors",
-        !course.is_published && "opacity-50",
-        course.is_featured && "bg-amber-50/50 dark:bg-amber-900/10",
+        !course.is_published && !selected && "opacity-50",
+        selected && "bg-blue-50/60 dark:bg-blue-900/15",
+        course.is_featured && !selected && "bg-amber-50/50 dark:bg-amber-900/10",
         isDragging && "z-50 shadow-lg bg-white dark:bg-neutral-800 ring-2 ring-neutral-900/10 dark:ring-white/10 rounded-lg opacity-100"
       )}
     >
@@ -189,6 +195,14 @@ function SortableCourseRow({
       >
         <GripVertical className="h-3.5 w-3.5" />
       </button>
+
+      {/* Checkbox */}
+      <input
+        type="checkbox"
+        checked={selected}
+        onChange={() => onToggleSelect(course.id)}
+        className="h-3.5 w-3.5 rounded border-neutral-300 dark:border-neutral-600 text-blue-600 focus:ring-blue-500 shrink-0 cursor-pointer"
+      />
 
       {/* Thumbnail */}
       <div className="relative h-9 w-14 rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 shrink-0">
@@ -325,6 +339,8 @@ function SortableCourseList({
   courses,
   isEn,
   statsMap,
+  selectedIds,
+  onToggleSelect,
   onReorder,
   onToggleFeatured,
   onTogglePublished,
@@ -332,6 +348,8 @@ function SortableCourseList({
   courses: Course[];
   isEn: boolean;
   statsMap: Record<string, CourseStats>;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
   onReorder: (courseIds: string[]) => void;
   onToggleFeatured: (id: string) => void;
   onTogglePublished: (id: string) => void;
@@ -377,6 +395,8 @@ function SortableCourseList({
               course={course}
               isEn={isEn}
               stats={statsMap[course.id]}
+              selected={selectedIds.has(course.id)}
+              onToggleSelect={onToggleSelect}
               onToggleFeatured={onToggleFeatured}
               onTogglePublished={onTogglePublished}
             />
@@ -400,6 +420,7 @@ export default function AdminExplorerPage() {
   const [saved, setSaved] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Sensors for category drag
   const catSensors = useSensors(
@@ -508,6 +529,41 @@ export default function AdminExplorerPage() {
     setSaved(true);
     setHasChanges(false);
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  /* ─── Selection + Bulk Actions ─────────────────────────────── */
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const bulkPublish = () => {
+    setCourses((p) => p.map((c) => selectedIds.has(c.id) ? { ...c, is_published: true } : c));
+    setHasChanges(true);
+    clearSelection();
+  };
+
+  const bulkUnpublish = () => {
+    setCourses((p) => p.map((c) => selectedIds.has(c.id) ? { ...c, is_published: false } : c));
+    setHasChanges(true);
+    clearSelection();
+  };
+
+  const bulkFeature = () => {
+    setCourses((p) => p.map((c) => selectedIds.has(c.id) ? { ...c, is_featured: true } : c));
+    setHasChanges(true);
+    clearSelection();
+  };
+
+  const bulkUnfeature = () => {
+    setCourses((p) => p.map((c) => selectedIds.has(c.id) ? { ...c, is_featured: false } : c));
+    setHasChanges(true);
+    clearSelection();
   };
 
   /* ─── Render ─────────────────────────────────────────────── */
@@ -619,6 +675,8 @@ export default function AdminExplorerPage() {
                       courses={catCourses}
                       isEn={isEn}
                       statsMap={statsMap}
+                      selectedIds={selectedIds}
+                      onToggleSelect={toggleSelect}
                       onReorder={(ids) => handleCourseReorder(cat.name, ids)}
                       onToggleFeatured={toggleFeatured}
                       onTogglePublished={togglePublished}
@@ -650,6 +708,8 @@ export default function AdminExplorerPage() {
                 courses={uncat}
                 isEn={isEn}
                 statsMap={statsMap}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
                 onReorder={(ids) => handleCourseReorder(null, ids)}
                 onToggleFeatured={toggleFeatured}
                 onTogglePublished={togglePublished}
@@ -658,6 +718,49 @@ export default function AdminExplorerPage() {
           );
         })()}
       </div>
+
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="sticky bottom-4 z-40 mx-auto w-fit animate-in slide-in-from-bottom-4 fade-in duration-200">
+          <div className="flex items-center gap-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 py-2.5 shadow-lg">
+            <span className="text-sm font-medium text-neutral-900 dark:text-white mr-1">
+              {selectedIds.size} {isEn ? "selected" : "sélectionné(s)"}
+            </span>
+
+            <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
+
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={bulkPublish}>
+              <Eye className="h-3.5 w-3.5 text-green-500" />
+              {isEn ? "Publish" : "Publier"}
+            </Button>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={bulkUnpublish}>
+              <EyeOff className="h-3.5 w-3.5 text-neutral-400" />
+              {isEn ? "Unpublish" : "Dépublier"}
+            </Button>
+
+            <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
+
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={bulkFeature}>
+              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+              {isEn ? "Feature" : "En avant"}
+            </Button>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={bulkUnfeature}>
+              <Star className="h-3.5 w-3.5 text-neutral-400" />
+              {isEn ? "Unfeature" : "Retirer"}
+            </Button>
+
+            <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
+
+            <button
+              onClick={clearSelection}
+              className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+              title={isEn ? "Clear selection" : "Désélectionner"}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Summary */}
       <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
