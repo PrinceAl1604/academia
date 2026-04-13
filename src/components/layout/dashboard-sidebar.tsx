@@ -54,6 +54,7 @@ export function DashboardSidebar() {
     { label: t.admin.referrals, href: "/admin/referrals", icon: Gift },
     { label: t.sidebar.students, href: "/admin/students", icon: Users },
     { label: t.admin.analytics, href: "/admin/analytics", icon: BarChart3 },
+    { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare },
   ];
 
   const adminAccountNav = [
