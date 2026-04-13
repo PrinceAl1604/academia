@@ -5,14 +5,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverContent,
@@ -23,7 +15,6 @@ import {
   Menu,
   Search,
   Settings,
-  LogOut,
   CreditCard,
   LayoutDashboard,
   BookOpen,
@@ -37,7 +28,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
-import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/shared/logo";
 import { ExpiryBanner } from "@/components/shared/expiry-banner";
 import { supabase } from "@/lib/supabase";
@@ -57,7 +47,7 @@ export function DashboardTopbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const pathname = usePathname();
   const router = useRouter();
-  const { isAdmin, isAuthenticated, userName, logout } = useAuth();
+  const { isAdmin, isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -275,38 +265,6 @@ export function DashboardTopbar() {
               </PopoverContent>
             </Popover>
 
-            {/* Profile Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={<Button variant="ghost" className="h-9 gap-2 pl-2 pr-3" aria-label="Account menu" />}
-              >
-                <Avatar className="h-7 w-7">
-                  <AvatarFallback className="bg-neutral-200 text-xs font-medium">
-                    {(userName || "U")
-                      .split(" ")
-                      .map((n: string) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="hidden text-sm font-medium lg:inline">
-                  {(userName || "User").split(" ")[0]}
-                </span>
-                {isAdmin && (
-                  <Badge className="hidden sm:inline-flex bg-red-100 text-red-700">Admin</Badge>
-                )}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem render={<Link href={isAdmin ? "/admin/settings" : "/dashboard/settings"} />} className="gap-2">
-                  <Settings className="h-4 w-4" />
-                  {t.settings.title}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-2 text-red-600" onClick={logout}>
-                  <LogOut className="h-4 w-4" />
-                  {t.dashboard.signOut}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </>
         ) : (
           /* Desktop-only sign-in/sign-up — mobile uses the hamburger sheet */
