@@ -500,6 +500,9 @@ export const translations = {
       account: "Account",
       student: "Student",
       collapse: "Collapse",
+      content: "Content",
+      management: "Management",
+      engage: "Engage",
     },
 
     // Course card
@@ -1086,6 +1089,9 @@ export const translations = {
       account: "Compte",
       student: "Étudiant",
       collapse: "Réduire",
+      content: "Contenu",
+      management: "Gestion",
+      engage: "Engagement",
     },
 
     // Course card

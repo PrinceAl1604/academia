@@ -54,35 +54,66 @@ export function DashboardSidebar() {
     return () => clearInterval(interval);
   }, [isAuthenticated, fetchUnread]);
 
-  // ─── Navigation ─────────────────────────────────────────────
-  const studentNav = [
-    { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
-    { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
-    { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
+  // ─── Navigation (grouped) ────────────────────────────────────
+  type NavItem = {
+    label: string;
+    href: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge?: number;
+  };
+  type NavGroup = { label?: string; items: NavItem[] };
+
+  const studentNavGroups: NavGroup[] = [
+    {
+      items: [
+        { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
+        { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
+        { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
+      ],
+    },
   ];
 
-  const studentAccountNav = [
+  const adminNavGroups: NavGroup[] = [
+    {
+      items: [
+        { label: t.admin.dashboard, href: "/admin", icon: Shield },
+        { label: t.admin.analytics, href: "/admin/analytics", icon: BarChart3 },
+      ],
+    },
+    {
+      label: t.sidebar.content || "Content",
+      items: [
+        { label: t.sidebar.explorer, href: "/admin/explorer", icon: LayoutDashboard },
+        { label: t.admin.manageCourses, href: "/admin/courses", icon: BookOpen },
+        { label: t.sidebar.categories, href: "/admin/categories", icon: FolderOpen },
+      ],
+    },
+    {
+      label: t.sidebar.management || "Management",
+      items: [
+        { label: t.sidebar.students, href: "/admin/students", icon: Users },
+        { label: t.admin.licences, href: "/admin/licences", icon: KeyRound },
+        { label: t.admin.referrals, href: "/admin/referrals", icon: Gift },
+      ],
+    },
+    {
+      label: t.sidebar.engage || "Engage",
+      items: [
+        { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
+      ],
+    },
+  ];
+
+  const studentAccountNav: NavItem[] = [
     { label: t.subscription.title || "Subscription", href: "/dashboard/subscription", icon: CreditCard },
     { label: t.settings.title || "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
-  const adminNav = [
-    { label: t.admin.dashboard, href: "/admin", icon: Shield },
-    { label: t.sidebar.explorer, href: "/admin/explorer", icon: LayoutDashboard },
-    { label: t.admin.manageCourses, href: "/admin/courses", icon: BookOpen },
-    { label: t.sidebar.categories, href: "/admin/categories", icon: FolderOpen },
-    { label: t.admin.licences, href: "/admin/licences", icon: KeyRound },
-    { label: t.admin.referrals, href: "/admin/referrals", icon: Gift },
-    { label: t.sidebar.students, href: "/admin/students", icon: Users },
-    { label: t.admin.analytics, href: "/admin/analytics", icon: BarChart3 },
-    { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
-  ];
-
-  const adminAccountNav = [
+  const adminAccountNav: NavItem[] = [
     { label: t.settings.title || "Settings", href: "/admin/settings", icon: Settings },
   ];
 
-  const navItems = isAdmin ? adminNav : studentNav;
+  const navGroups = isAdmin ? adminNavGroups : studentNavGroups;
   const accountItems = isAdmin ? adminAccountNav : studentAccountNav;
 
   const initials = (userName || "U")
@@ -117,24 +148,43 @@ export function DashboardSidebar() {
 
       {/* ─── Main Navigation ───────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto py-3 px-2.5" aria-label="Main navigation">
-        <div className="space-y-0.5">
-          {navItems.map((item) => {
-            const isActive = item.href === "/"
-              ? pathname === "/"
-              : pathname === item.href || pathname.startsWith(item.href + "/");
-            return (
-              <SidebarItem
-                key={item.href}
-                href={item.href}
-                icon={item.icon}
-                label={item.label}
-                isActive={isActive}
-                collapsed={collapsed}
-                badge={"badge" in item ? (item as { badge?: number }).badge : undefined}
-              />
-            );
-          })}
-        </div>
+        {navGroups.map((group, gi) => (
+          <div key={gi} className={gi > 0 ? "mt-4" : ""}>
+            {/* Group label (expanded) / divider (collapsed) */}
+            {group.label && (
+              <>
+                {!collapsed && (
+                  <p className="mb-1.5 px-2.5 text-[11px] font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                    {group.label}
+                  </p>
+                )}
+                {collapsed && (
+                  <div className="mb-1.5 mx-2.5 h-px bg-neutral-200/70 dark:bg-neutral-800" />
+                )}
+              </>
+            )}
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const isActive =
+                  item.href === "/"
+                    ? pathname === "/"
+                    : pathname === item.href ||
+                      pathname.startsWith(item.href + "/");
+                return (
+                  <SidebarItem
+                    key={item.href}
+                    href={item.href}
+                    icon={item.icon}
+                    label={item.label}
+                    isActive={isActive}
+                    collapsed={collapsed}
+                    badge={item.badge}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ))}
 
         {/* ─── Invite Friends (students only) ─────────────── */}
         {!isAdmin && (
