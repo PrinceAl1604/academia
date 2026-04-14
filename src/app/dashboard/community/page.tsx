@@ -464,20 +464,20 @@ export default function CommunityPage() {
       {/* ─── Channel Sidebar ────────────────────────────────── */}
       <div
         className={cn(
-          "shrink-0 flex-col border-r border-border bg-muted/40 transition-[width,opacity] duration-200 overflow-hidden",
+          "shrink-0 flex-col border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 transition-[width,opacity] duration-200 overflow-hidden",
           showSidebar
             ? "w-56 opacity-100 flex"
             : "w-0 opacity-0 hidden md:flex md:w-0"
         )}
       >
         {/* Sidebar header */}
-        <div className="flex items-center justify-between px-3 py-3 border-b border-border">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+        <div className="flex items-center justify-between px-3 py-3 border-b border-neutral-200 dark:border-neutral-800">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
             {t.community?.channels || "Channels"}
           </h2>
-          <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-medium text-primary">
+          <div className="flex items-center gap-1.5 rounded-full bg-green-50 dark:bg-green-900/20 px-2 py-0.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[10px] font-medium text-green-700 dark:text-green-400">
               {onlineCount}
             </span>
           </div>
@@ -496,8 +496,8 @@ export default function CommunityPage() {
                 className={cn(
                   "flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors",
                   isActive
-                    ? "bg-card text-foreground shadow-sm ring-1 ring-primary/15"
-                    : "text-muted-foreground hover:bg-card/60 hover:text-foreground"
+                    ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-white/60 dark:hover:bg-neutral-800/40"
                 )}
               >
                 <ChannelIcon
@@ -505,10 +505,8 @@ export default function CommunityPage() {
                   className={cn(
                     "h-4 w-4 shrink-0",
                     ch.type === "announcements"
-                      ? "text-amber-500 dark:text-amber-400"
-                      : isActive
-                        ? "text-primary"
-                        : "text-muted-foreground/70"
+                      ? "text-amber-500"
+                      : "text-neutral-400 dark:text-neutral-500"
                   )}
                 />
                 <span className="flex-1 text-sm font-medium truncate">
@@ -519,7 +517,7 @@ export default function CommunityPage() {
                     : ch.name}
                 </span>
                 {unread > 0 && (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white px-1">
                     {unread > 99 ? "99+" : unread}
                   </span>
                 )}
@@ -531,7 +529,7 @@ export default function CommunityPage() {
           {courseChannels.length > 0 && (
             <>
               <div className="pt-3 pb-1 px-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                   {t.community?.courseChannels || "Courses"}
                 </p>
               </div>
@@ -545,23 +543,23 @@ export default function CommunityPage() {
                     className={cn(
                       "flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors",
                       isActive
-                        ? "bg-card text-foreground shadow-sm ring-1 ring-primary/15"
-                        : "text-muted-foreground hover:bg-card/60 hover:text-foreground"
+                        ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm"
+                        : "text-neutral-600 dark:text-neutral-400 hover:bg-white/60 dark:hover:bg-neutral-800/40"
                     )}
                   >
                     <BookOpen
                       className={cn(
                         "h-4 w-4 shrink-0",
                         isActive
-                          ? "text-primary"
-                          : "text-muted-foreground/70"
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-neutral-400 dark:text-neutral-500"
                       )}
                     />
                     <span className="flex-1 text-sm font-medium truncate">
                       {ch.name}
                     </span>
                     {unread > 0 && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground px-1">
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white px-1">
                         {unread > 99 ? "99+" : unread}
                       </span>
                     )}
@@ -576,13 +574,13 @@ export default function CommunityPage() {
       {/* ─── Chat Area ──────────────────────────────────────── */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* ─── Chat Header ────────────────────────────────────── */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
           <div className="flex items-center gap-2.5 min-w-0">
             {/* Toggle sidebar */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 shrink-0 text-muted-foreground"
+              className="h-8 w-8 shrink-0 text-neutral-400"
               onClick={() => setShowSidebar(!showSidebar)}
             >
               {showSidebar ? (
@@ -600,12 +598,12 @@ export default function CommunityPage() {
                   className={cn(
                     "h-5 w-5 shrink-0",
                     activeChannel.type === "announcements"
-                      ? "text-amber-500 dark:text-amber-400"
-                      : "text-muted-foreground"
+                      ? "text-amber-500"
+                      : "text-neutral-500 dark:text-neutral-400"
                   )}
                 />
                 <div className="min-w-0">
-                  <h1 className="text-sm font-bold text-foreground truncate">
+                  <h1 className="text-sm font-bold text-neutral-900 dark:text-white truncate">
                     {activeChannel.type === "general"
                       ? t.community?.general || "General"
                       : activeChannel.type === "announcements"
@@ -621,7 +619,7 @@ export default function CommunityPage() {
                     </p>
                   )}
                   {activeChannel.type === "course" && (
-                    <p className="text-[11px] text-muted-foreground/80">
+                    <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
                       {t.community?.courseChat ||
                         (isEn
                           ? "Course discussion"
@@ -639,7 +637,7 @@ export default function CommunityPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1.5 text-muted-foreground h-8"
+                className="gap-1.5 text-neutral-500 h-8"
                 onClick={() => setShowPinned(!showPinned)}
               >
                 <Pin className="h-3.5 w-3.5" />
@@ -648,9 +646,9 @@ export default function CommunityPage() {
             )}
 
             {/* Online indicator (mobile-friendly) */}
-            <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1">
-              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-medium text-primary">
+            <div className="flex items-center gap-1.5 rounded-full bg-green-50 dark:bg-green-900/20 px-2.5 py-1">
+              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs font-medium text-green-700 dark:text-green-400">
                 {onlineCount} {isEn ? "online" : "en ligne"}
               </span>
             </div>
@@ -659,7 +657,7 @@ export default function CommunityPage() {
 
         {/* ─── Pinned Messages Panel ──────────────────────────── */}
         {showPinned && pinnedMessages.length > 0 && (
-          <div className="border-b border-border bg-amber-50/50 dark:bg-amber-900/10 p-3 space-y-2">
+          <div className="border-b border-neutral-200 dark:border-neutral-800 bg-amber-50/50 dark:bg-amber-900/10 p-3 space-y-2">
             <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
               <Pin className="h-3 w-3" />
               {t.community?.pinnedMessages ||
@@ -668,12 +666,12 @@ export default function CommunityPage() {
             {pinnedMessages.map((msg) => (
               <div
                 key={msg.id}
-                className="flex items-start gap-2 rounded-lg bg-card p-2.5 text-sm"
+                className="flex items-start gap-2 rounded-lg bg-white dark:bg-neutral-900 p-2.5 text-sm"
               >
-                <span className="font-medium text-foreground shrink-0">
+                <span className="font-medium text-neutral-900 dark:text-white shrink-0">
                   {msg.user?.name || "User"}:
                 </span>
-                <span className="text-muted-foreground">
+                <span className="text-neutral-600 dark:text-neutral-400">
                   {msg.content}
                 </span>
               </div>
@@ -689,10 +687,10 @@ export default function CommunityPage() {
         >
           {loading ? (
             <div className="flex h-full items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <div className="flex flex-col items-center justify-center h-full text-neutral-400 dark:text-neutral-500">
               {activeChannel && (
                 <ChannelIcon
                   type={activeChannel.type}
@@ -726,7 +724,7 @@ export default function CommunityPage() {
                 <div
                   key={msg.id}
                   className={cn(
-                    "group flex items-start gap-2.5 px-2 py-1 rounded-lg transition-colors hover:bg-muted",
+                    "group flex items-start gap-2.5 px-2 py-1 rounded-lg transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/30",
                     msg.is_pinned &&
                       !msg.is_deleted &&
                       "bg-amber-50/40 dark:bg-amber-900/10"
@@ -741,7 +739,7 @@ export default function CommunityPage() {
                             "text-[11px] font-semibold",
                             isMsgAdmin
                               ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                              : "bg-primary/10 text-primary"
+                              : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
                           )}
                         >
                           {getInitials(msg.user?.name || "")}
@@ -759,7 +757,7 @@ export default function CommunityPage() {
                             "text-sm font-semibold",
                             isMsgAdmin
                               ? "text-red-600 dark:text-red-400"
-                              : "text-foreground"
+                              : "text-neutral-900 dark:text-white"
                           )}
                         >
                           {msg.user?.name || "User"}
@@ -770,22 +768,22 @@ export default function CommunityPage() {
                           </Badge>
                         )}
                         {msg.is_pinned && !msg.is_deleted && (
-                          <Pin className="h-3 w-3 text-amber-500 dark:text-amber-400" />
+                          <Pin className="h-3 w-3 text-amber-500" />
                         )}
-                        <span className="text-[11px] text-muted-foreground/80">
+                        <span className="text-[11px] text-neutral-400 dark:text-neutral-500">
                           {formatTime(msg.created_at)}
                         </span>
                       </div>
                     )}
 
                     {msg.is_deleted ? (
-                      <p className="text-sm italic text-muted-foreground/80">
+                      <p className="text-sm italic text-neutral-400 dark:text-neutral-500">
                         {isEn
                           ? "This message was deleted"
                           : "Ce message a été supprimé"}
                       </p>
                     ) : (
-                      <p className="text-sm text-foreground/85 whitespace-pre-wrap break-words">
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap break-words">
                         {msg.content}
                       </p>
                     )}
@@ -856,7 +854,7 @@ export default function CommunityPage() {
           <div className="relative">
             <button
               onClick={scrollToBottom}
-              className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+              className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-neutral-900 dark:bg-white px-3 py-1.5 text-xs font-medium text-white dark:text-neutral-900 shadow-lg hover:opacity-90 transition-opacity"
             >
               <ChevronDown className="h-3.5 w-3.5" />
               {isEn ? "New messages" : "Nouveaux messages"}
@@ -866,14 +864,14 @@ export default function CommunityPage() {
 
         {/* ─── Input Area ─────────────────────────────────────── */}
         {canPost ? (
-          <div className="border-t border-border px-4 pt-3 pb-2">
+          <div className="border-t border-neutral-200 dark:border-neutral-800 px-4 pt-3 pb-2">
             {showEmoji && (
               <div className="flex gap-1 mb-2 flex-wrap">
                 {QUICK_EMOJIS.map((emoji) => (
                   <button
                     key={emoji}
                     onClick={() => setInput((prev) => prev + emoji)}
-                    className="h-9 w-9 rounded-lg text-lg hover:bg-muted transition-colors"
+                    className="h-9 w-9 rounded-lg text-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                   >
                     {emoji}
                   </button>
@@ -884,7 +882,7 @@ export default function CommunityPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 shrink-0 text-muted-foreground"
+                className="h-9 w-9 shrink-0 text-neutral-400"
                 onClick={() => setShowEmoji(!showEmoji)}
               >
                 <Smile className="h-4 w-4" />
@@ -896,7 +894,7 @@ export default function CommunityPage() {
                 placeholder={
                   isEn ? "Type a message..." : "Écrire un message..."
                 }
-                className="flex-1"
+                className="flex-1 dark:bg-neutral-800 dark:border-neutral-700"
                 maxLength={1000}
               />
               <Button
@@ -914,8 +912,8 @@ export default function CommunityPage() {
             </div>
           </div>
         ) : (
-          <div className="border-t border-border px-4 py-3">
-            <p className="text-center text-sm text-muted-foreground">
+          <div className="border-t border-neutral-200 dark:border-neutral-800 px-4 py-3">
+            <p className="text-center text-sm text-neutral-400 dark:text-neutral-500">
               <Megaphone className="inline h-4 w-4 mr-1.5 -mt-0.5" />
               {t.community?.announcementsOnly ||
                 (isEn

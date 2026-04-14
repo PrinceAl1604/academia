@@ -91,11 +91,11 @@ export function ReferralModal({ open, onClose }: ReferralModalProps) {
       />
 
       {/* Card */}
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-card border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-2xl animate-in fade-in zoom-in-95 duration-300">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute top-4 right-4 z-10 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
           aria-label="Close"
         >
           <X className="h-5 w-5" />
@@ -110,10 +110,10 @@ export function ReferralModal({ open, onClose }: ReferralModalProps) {
 
           <div className="mt-3 flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">
+              <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">
                 {t.referral.title}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
                 {t.referral.subtitle}
               </p>
             </div>
@@ -129,7 +129,7 @@ export function ReferralModal({ open, onClose }: ReferralModalProps) {
         <div className="px-6 py-5 space-y-5">
           {/* How it works */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 mb-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-3">
               {t.referral.howItWorks}
             </h3>
             <div className="space-y-3">
@@ -138,7 +138,7 @@ export function ReferralModal({ open, onClose }: ReferralModalProps) {
                   <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${step.color}`}>
                     <step.icon className="h-4 w-4" />
                   </div>
-                  <p className="text-sm text-foreground/80">
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">
                     {step.text}
                   </p>
                 </div>
@@ -148,18 +148,18 @@ export function ReferralModal({ open, onClose }: ReferralModalProps) {
 
           {/* Your referral code */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2 block">
               {t.referral.referralCode}
             </label>
             <div className="flex items-center gap-2">
-              <div className="flex-1 rounded-lg border border-border bg-muted px-4 py-3 text-center">
-                <p className="font-mono text-lg font-bold tracking-[0.25em] text-foreground">
+              <div className="flex-1 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-4 py-3 text-center">
+                <p className="font-mono text-lg font-bold tracking-[0.25em] text-neutral-900 dark:text-white">
                   {referralCode}
                 </p>
               </div>
               <Button
                 onClick={copyCode}
-                className="shrink-0 gap-1.5"
+                className="shrink-0 gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
                 size="lg"
               >
                 {copiedCode ? (
@@ -174,12 +174,12 @@ export function ReferralModal({ open, onClose }: ReferralModalProps) {
 
           {/* Your invite link */}
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 mb-2 block">
+            <label className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2 block">
               {t.referral.yourLink}
             </label>
             <div className="flex items-center gap-2">
-              <div className="flex-1 min-w-0 rounded-lg border border-border bg-muted/50 px-3 py-2">
-                <p className="truncate font-mono text-xs text-muted-foreground">
+              <div className="flex-1 min-w-0 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 px-3 py-2">
+                <p className="truncate font-mono text-xs text-neutral-500 dark:text-neutral-400">
                   {referralLink}
                 </p>
               </div>

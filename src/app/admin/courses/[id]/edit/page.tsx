@@ -135,7 +135,7 @@ export default function AdminCourseEditPage({ params }: PageProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
       </div>
     );
   }
@@ -146,11 +146,11 @@ export default function AdminCourseEditPage({ params }: PageProps) {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/courses"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border hover:bg-muted transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
           {isEn ? "Edit Course" : "Modifier le cours"}
         </h1>
       </div>
@@ -188,7 +188,7 @@ export default function AdminCourseEditPage({ params }: PageProps) {
                     onChange={(e) => setSlug(e.target.value)}
                     className="font-mono text-sm"
                   />
-                  <p className="text-xs text-muted-foreground/70">/courses/{slug || "..."}</p>
+                  <p className="text-xs text-neutral-400">/courses/{slug || "..."}</p>
                 </div>
 
                 {/* Description */}
@@ -223,7 +223,7 @@ export default function AdminCourseEditPage({ params }: PageProps) {
                           </SelectContent>
                         </Select>
                         {!creatingCat ? (
-                          <button type="button" onClick={() => setCreatingCat(true)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                          <button type="button" onClick={() => setCreatingCat(true)} className="flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-700">
                             <Plus className="h-3 w-3" /> {isEn ? "Add new" : "Ajouter"}
                           </button>
                         ) : (
@@ -246,9 +246,9 @@ export default function AdminCourseEditPage({ params }: PageProps) {
                         )}
                       </div>
                     ) : (
-                      <div className="rounded-lg border border-dashed border-border p-3 text-center">
-                        <FolderOpen className="mx-auto h-5 w-5 text-muted-foreground/60" />
-                        <p className="mt-1 text-xs text-muted-foreground">{isEn ? "No categories yet" : "Aucune catégorie"}</p>
+                      <div className="rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 p-3 text-center">
+                        <FolderOpen className="mx-auto h-5 w-5 text-neutral-300" />
+                        <p className="mt-1 text-xs text-neutral-500">{isEn ? "No categories yet" : "Aucune catégorie"}</p>
                         <div className="mt-2 flex gap-2 justify-center">
                           <Input
                             placeholder={isEn ? "e.g. UI/UX Design" : "ex. UI/UX Design"}
@@ -290,22 +290,22 @@ export default function AdminCourseEditPage({ params }: PageProps) {
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
                   />
-                  <p className="text-xs text-muted-foreground/70">{isEn ? "Separate with commas: design, figma, prototyping" : "Séparez par des virgules"}</p>
+                  <p className="text-xs text-neutral-400">{isEn ? "Separate with commas: design, figma, prototyping" : "Séparez par des virgules"}</p>
                 </div>
 
                 {/* Toggles */}
-                <div className="space-y-4 rounded-lg border border-border p-4">
+                <div className="space-y-4 rounded-lg border p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>{isEn ? "Free Course" : "Cours gratuit"}</Label>
-                      <p className="text-xs text-muted-foreground">{isEn ? "Available without membership" : "Disponible sans abonnement"}</p>
+                      <p className="text-xs text-neutral-500">{isEn ? "Available without membership" : "Disponible sans abonnement"}</p>
                     </div>
                     <Switch checked={isFree} onCheckedChange={setIsFree} />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>{isEn ? "Published" : "Publié"}</Label>
-                      <p className="text-xs text-muted-foreground">{isEn ? "Visible to students" : "Visible par les étudiants"}</p>
+                      <p className="text-xs text-neutral-500">{isEn ? "Visible to students" : "Visible par les étudiants"}</p>
                     </div>
                     <Switch checked={isPublished} onCheckedChange={setIsPublished} />
                   </div>
@@ -315,7 +315,7 @@ export default function AdminCourseEditPage({ params }: PageProps) {
 
             {/* Error + Actions */}
             <div>
-              {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
+              {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Button type="submit" className="gap-2 w-full sm:w-auto" disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -334,10 +334,10 @@ export default function AdminCourseEditPage({ params }: PageProps) {
             <Card>
               <CardContent className="space-y-4 pt-6">
                 <div>
-                  <p className="font-semibold text-foreground">
+                  <p className="font-semibold text-neutral-900 dark:text-white">
                     {t.courseDetail.curriculum}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-neutral-500">
                     {isEn ? "Add chapters and lessons with video embeds" : "Ajoutez des chapitres et leçons avec des vidéos"}
                   </p>
                 </div>
@@ -354,23 +354,23 @@ export default function AdminCourseEditPage({ params }: PageProps) {
             {/* Quick Info */}
             <Card>
               <CardContent className="space-y-3 pt-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
                   {isEn ? "Quick Info" : "Aperçu"}
                 </p>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{isEn ? "Status" : "Statut"}</span>
-                    <span className={isPublished ? "text-primary font-medium" : "text-muted-foreground"}>
+                    <span className="text-neutral-500">{isEn ? "Status" : "Statut"}</span>
+                    <span className={isPublished ? "text-green-600 font-medium" : "text-neutral-400"}>
                       {isPublished ? (isEn ? "Published" : "Publié") : (isEn ? "Draft" : "Brouillon")}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{isEn ? "Access" : "Accès"}</span>
-                    <span className="text-foreground">{isFree ? (isEn ? "Free" : "Gratuit") : "Pro"}</span>
+                    <span className="text-neutral-500">{isEn ? "Access" : "Accès"}</span>
+                    <span className="text-neutral-700 dark:text-neutral-300">{isFree ? (isEn ? "Free" : "Gratuit") : "Pro"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{isEn ? "Level" : "Niveau"}</span>
-                    <span className="text-foreground">{level}</span>
+                    <span className="text-neutral-500">{isEn ? "Level" : "Niveau"}</span>
+                    <span className="text-neutral-700 dark:text-neutral-300">{level}</span>
                   </div>
                 </div>
               </CardContent>

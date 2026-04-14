@@ -70,7 +70,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
       </div>
     );
   }
@@ -81,33 +81,33 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
           {t.dashboard.welcomeBack}, {firstName}!
         </h1>
-        <p className="mt-1 text-muted-foreground">{t.dashboard.continueSubtitle}</p>
+        <p className="mt-1 text-neutral-500 dark:text-neutral-400">{t.dashboard.continueSubtitle}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
         <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100/70 dark:bg-blue-900/30 ring-1 ring-blue-200/60 dark:ring-blue-700/40">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/10">
               <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground tabular-nums">{enrolledCourses.length}</p>
-              <p className="text-sm text-muted-foreground">{t.dashboard.enrolledCourses}</p>
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{enrolledCourses.length}</p>
+              <p className="text-sm text-neutral-500">{t.dashboard.enrolledCourses}</p>
             </div>
           </div>
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/15">
-              <Play className="h-5 w-5 text-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 dark:bg-green-500/10">
+              <Play className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground tabular-nums">{completedCount}</p>
-              <p className="text-sm text-muted-foreground">{t.dashboard.lessonsCompleted}</p>
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">{completedCount}</p>
+              <p className="text-sm text-neutral-500">{t.dashboard.lessonsCompleted}</p>
             </div>
           </div>
         </Card>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
       {/* Enrolled Courses */}
       <div>
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">{t.dashboard.continueLearning}</h2>
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">{t.dashboard.continueLearning}</h2>
           <Button variant="ghost" size="sm" className="gap-1" render={<Link href="/dashboard/courses" />}>
             {t.dashboard.viewAll}
             <ArrowRight className="h-3.5 w-3.5" />
@@ -125,8 +125,8 @@ export default function DashboardPage() {
 
         {enrolledCourses.length === 0 ? (
           <Card className="mt-4 p-8 text-center">
-            <BookOpen className="mx-auto h-10 w-10 text-muted-foreground/60" />
-            <p className="mt-3 text-sm text-muted-foreground">
+            <BookOpen className="mx-auto h-10 w-10 text-neutral-300" />
+            <p className="mt-3 text-sm text-neutral-500">
               {t.dashboard.noCourses}
             </p>
             <Button variant="outline" className="mt-4 gap-2" render={<Link href="/" />}>
@@ -137,16 +137,16 @@ export default function DashboardPage() {
         ) : (
           <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {enrolledCourses.map((course) => (
-              <Card key={course.id} className="overflow-hidden transition-all hover:border-primary/30">
-                <div className="aspect-video bg-muted">
+              <Card key={course.id} className="overflow-hidden">
+                <div className="aspect-video bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
                   <div className="flex h-full items-center justify-center">
-                    <BookOpen className="h-8 w-8 text-muted-foreground/60" />
+                    <BookOpen className="h-8 w-8 text-neutral-300" />
                   </div>
                 </div>
                 <div className="p-4">
                   <Badge variant="secondary" className="mb-2 text-xs">{course.category_name}</Badge>
-                  <h3 className="font-semibold text-foreground line-clamp-1">{course.title}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <h3 className="font-semibold text-neutral-900 dark:text-white line-clamp-1">{course.title}</h3>
+                  <p className="mt-1 text-xs text-neutral-500">
                     {course.total_lessons} {t.courseDetail.lessons} · {course.duration_hours}h
                   </p>
                   <Button

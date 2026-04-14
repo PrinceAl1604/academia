@@ -50,7 +50,7 @@ function SignInForm() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-[#faf9f7]">
       {/* Logo + Language Toggle */}
       <div className="flex items-center justify-between p-4 sm:p-8">
         <Link href="/sign-in" className="inline-block">
@@ -62,18 +62,18 @@ function SignInForm() {
       {/* Sign In Form */}
       <div className="flex flex-1 items-center justify-center px-4 pb-12 sm:pb-20">
         <div className="w-full max-w-sm space-y-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t.auth.signIn}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900">{t.auth.signIn}</h1>
 
           <form onSubmit={handleEmailSignIn} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm text-foreground/80">
+              <Label htmlFor="email" className="text-sm text-neutral-700">
                 {t.auth.email}
               </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder={t.auth.emailPlaceholder}
-                className="h-12 rounded-xl border-border bg-card text-base placeholder:text-muted-foreground/70"
+                className="h-12 rounded-lg border-neutral-300 bg-white text-base placeholder:text-neutral-400"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(null); }}
                 required
@@ -81,7 +81,7 @@ function SignInForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm text-foreground/80">
+              <Label htmlFor="password" className="text-sm text-neutral-700">
                 {t.auth.password}
               </Label>
               <div className="relative">
@@ -89,7 +89,7 @@ function SignInForm() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder={t.auth.passwordPlaceholder}
-                  className="h-12 rounded-xl border-border bg-card pr-12 text-base placeholder:text-muted-foreground/70"
+                  className="h-12 rounded-lg border-neutral-300 bg-white pr-12 text-base placeholder:text-neutral-400"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(null); }}
                   required
@@ -97,18 +97,18 @@ function SignInForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
             </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-red-500">{error}</p>}
 
             <Button
               type="submit"
-              className="h-12 w-full rounded-xl bg-primary text-base font-medium text-primary-foreground hover:bg-primary/90"
+              className="h-12 w-full rounded-lg bg-neutral-800 text-base font-medium text-white hover:bg-neutral-700"
               disabled={loading || !email || !password}
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t.auth.continueEmail}
@@ -116,7 +116,7 @@ function SignInForm() {
           </form>
 
           <div className="text-center">
-            <Link href="/reset-password" className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            <Link href="/reset-password" className="text-sm text-neutral-600 underline underline-offset-4 hover:text-neutral-900">
               {t.auth.resetPassword}
             </Link>
           </div>
@@ -124,16 +124,16 @@ function SignInForm() {
       </div>
 
       {/* Footer */}
-      <div className="flex flex-col gap-3 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex flex-col gap-3 border-t border-neutral-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="flex items-center gap-2 text-sm text-neutral-600">
           {t.auth.noAccount}
-          <Link href="/sign-up" className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors">
+          <Link href="/sign-up" className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
             {t.auth.signUpButton}
           </Link>
         </div>
         <div className="flex items-center gap-6">
-          <Link href="/privacy" className="text-sm text-muted-foreground hover:text-foreground py-1">{t.auth.privacy}</Link>
-          <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground py-1">{t.auth.terms}</Link>
+          <Link href="/privacy" className="text-sm text-neutral-500 hover:text-neutral-700 py-1">{t.auth.privacy}</Link>
+          <Link href="/terms" className="text-sm text-neutral-500 hover:text-neutral-700 py-1">{t.auth.terms}</Link>
         </div>
       </div>
     </div>

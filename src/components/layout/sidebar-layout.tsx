@@ -22,7 +22,7 @@ function SidebarLayoutInner({ children }: { children: React.ReactNode }) {
   }, [loading, isAuthenticated, hasOnboarded, router]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-neutral-50/50 dark:bg-neutral-950">
       <DashboardSidebar />
       <div className={cn("transition-[padding] duration-300 ease-in-out", collapsed ? "lg:pl-[68px]" : "lg:pl-60")}>
         <DashboardTopbar />

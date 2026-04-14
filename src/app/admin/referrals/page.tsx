@@ -97,7 +97,7 @@ export default function AdminReferralsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
       </div>
     );
   }
@@ -106,10 +106,10 @@ export default function AdminReferralsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
           {(t.admin as Record<string, string>).referrals || "Referrals"}
         </h1>
-        <p className="mt-1 text-muted-foreground">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
           {isEn
             ? "Track referral activity and rewards"
             : "Suivre l'activite des parrainages et recompenses"}
@@ -118,65 +118,65 @@ export default function AdminReferralsPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100/70 dark:bg-blue-900/30 ring-1 ring-blue-200/60 dark:ring-blue-700/40">
+        <Card className="dark:bg-neutral-900 dark:border-neutral-800">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
               <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground/70">
-                {isEn ? "Total Referrals" : "Total parrainages"}
-              </p>
-              <p className="text-2xl font-bold text-foreground tabular-nums">
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
                 {totalReferrals}
+              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {isEn ? "Total Referrals" : "Total parrainages"}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100/70 dark:bg-amber-900/30 ring-1 ring-amber-200/60 dark:ring-amber-700/40">
+        <Card className="dark:bg-neutral-900 dark:border-neutral-800">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
               <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground/70">
-                {isEn ? "Pending" : "En attente"}
-              </p>
-              <p className="text-2xl font-bold text-foreground tabular-nums">
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
                 {pendingCount}
               </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {isEn ? "Pending" : "En attente"}
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/15">
-              <CheckCircle className="h-5 w-5 text-primary" />
+        <Card className="dark:bg-neutral-900 dark:border-neutral-800">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30">
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground/70">
-                {isEn ? "Rewarded" : "Recompenses"}
-              </p>
-              <p className="text-2xl font-bold text-foreground tabular-nums">
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
                 {rewardedCount}
+              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {isEn ? "Rewarded" : "Recompenses"}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100/70 dark:bg-purple-900/30 ring-1 ring-purple-200/60 dark:ring-purple-700/40">
+        <Card className="dark:bg-neutral-900 dark:border-neutral-800">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
               <Key className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground/70">
-                {isEn ? "Keys Sent" : "Cles envoyees"}
-              </p>
-              <p className="text-2xl font-bold text-foreground tabular-nums">
+              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
                 {keysSentCount}
+              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {isEn ? "Keys Sent" : "Cles envoyees"}
               </p>
             </div>
           </CardContent>
@@ -185,7 +185,7 @@ export default function AdminReferralsPage() {
 
       {/* Search */}
       <div className="relative w-full sm:max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <Input
           placeholder={
             isEn
@@ -194,57 +194,57 @@ export default function AdminReferralsPage() {
           }
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
+          className="pl-10 dark:bg-neutral-900 dark:border-neutral-700"
         />
       </div>
 
       {/* Referrals Table */}
       {referrals.length === 0 ? (
         <div className="py-20 text-center">
-          <Gift className="mx-auto h-10 w-10 text-muted-foreground/60" />
-          <p className="mt-3 text-muted-foreground">
+          <Gift className="mx-auto h-10 w-10 text-neutral-300 dark:text-neutral-600" />
+          <p className="mt-3 text-neutral-500 dark:text-neutral-400">
             {isEn
               ? "No referrals yet. Referrals will appear here when students share their codes."
               : "Aucun parrainage pour le moment. Les parrainages apparaitront ici quand les etudiants partageront leurs codes."}
           </p>
         </div>
       ) : (
-        <Card>
+        <Card className="dark:bg-neutral-900 dark:border-neutral-800">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+                <tr className="border-b dark:border-neutral-800">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                     {isEn ? "Referrer" : "Parrain"}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                     {isEn ? "Referred Friend" : "Ami parraine"}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                     {isEn ? "Status" : "Statut"}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70 hidden md:table-cell">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400 hidden md:table-cell">
                     {isEn ? "Date" : "Date"}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70 hidden lg:table-cell">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400 hidden lg:table-cell">
                     {isEn ? "Rewarded Date" : "Date recompense"}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70 hidden lg:table-cell">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400 hidden lg:table-cell">
                     {isEn ? "Licence Key" : "Cle de licence"}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y dark:divide-neutral-800">
                 {filtered.map((referral) => (
                   <tr
                     key={referral.id}
-                    className="hover:bg-muted/40 transition-colors"
+                    className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                   >
                     {/* Referrer */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                          <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-xs font-medium dark:text-neutral-300">
                             {getInitials(
                               referral.referrer?.name,
                               referral.referrer?.email || ""
@@ -252,12 +252,12 @@ export default function AdminReferralsPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
+                          <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
                             {referral.referrer?.name ||
                               referral.referrer?.email?.split("@")[0] ||
                               "Unknown"}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
                             {referral.referrer?.email || ""}
                           </p>
                         </div>
@@ -268,7 +268,7 @@ export default function AdminReferralsPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                          <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-xs font-medium dark:text-neutral-300">
                             {getInitials(
                               referral.referred?.name,
                               referral.referred?.email || ""
@@ -276,12 +276,12 @@ export default function AdminReferralsPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
+                          <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
                             {referral.referred?.name ||
                               referral.referred?.email?.split("@")[0] ||
                               "Unknown"}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
                             {referral.referred?.email || ""}
                           </p>
                         </div>
@@ -291,7 +291,7 @@ export default function AdminReferralsPage() {
                     {/* Status */}
                     <td className="px-4 py-3">
                       {referral.status === "rewarded" ? (
-                        <Badge className="bg-primary/15 text-primary">
+                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                           {isEn ? "Rewarded" : "Recompense"}
                         </Badge>
                       ) : (
@@ -303,14 +303,14 @@ export default function AdminReferralsPage() {
 
                     {/* Date */}
                     <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-neutral-500 dark:text-neutral-400">
                         {formatDate(referral.created_at)}
                       </span>
                     </td>
 
                     {/* Rewarded Date */}
                     <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-neutral-500 dark:text-neutral-400">
                         {referral.rewarded_at
                           ? formatDate(referral.rewarded_at)
                           : "\u2014"}
@@ -320,11 +320,11 @@ export default function AdminReferralsPage() {
                     {/* Licence Key */}
                     <td className="px-4 py-3 hidden lg:table-cell">
                       {referral.licence_key_sent ? (
-                        <code className="rounded bg-muted px-2 py-0.5 text-xs font-mono text-foreground">
+                        <code className="rounded bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 text-xs font-mono text-neutral-700 dark:text-neutral-300">
                           {referral.licence_key_sent}
                         </code>
                       ) : (
-                        <span className="text-sm text-muted-foreground/60">{"\u2014"}</span>
+                        <span className="text-sm text-neutral-400">{"\u2014"}</span>
                       )}
                     </td>
                   </tr>
@@ -332,8 +332,8 @@ export default function AdminReferralsPage() {
               </tbody>
             </table>
           </div>
-          <div className="border-t border-border px-4 py-3">
-            <p className="text-xs text-muted-foreground">
+          <div className="border-t dark:border-neutral-800 px-4 py-3">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               {filtered.length}{" "}
               {isEn ? "referrals" : "parrainages"}
               {search && ` (${isEn ? "filtered" : "filtres"})`}

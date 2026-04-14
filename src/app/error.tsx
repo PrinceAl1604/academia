@@ -20,10 +20,10 @@ export default function GlobalError({
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10">
         <AlertTriangle className="h-7 w-7 text-red-500" />
       </div>
-      <h2 className="text-xl font-semibold text-foreground">
+      <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
         Something went wrong
       </h2>
-      <p className="max-w-md text-sm text-muted-foreground">
+      <p className="max-w-md text-sm text-neutral-500 dark:text-neutral-400">
         An unexpected error occurred. Try refreshing the page or come back later.
       </p>
       <Button onClick={reset} className="mt-2 gap-2">

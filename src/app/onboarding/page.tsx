@@ -164,12 +164,12 @@ export default function OnboardingPage() {
 
   /* ─── Render ───────────────────────────────────────────── */
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center bg-white dark:bg-neutral-950 px-4 py-12">
       {/* Skip button — top right */}
       {step > 0 && step < totalSteps - 1 && (
         <button
           onClick={() => setStep(step + 1)}
-          className="absolute top-6 right-6 text-sm font-medium text-muted-foreground/70 hover:text-foreground transition-colors"
+          className="absolute top-6 right-6 text-sm font-medium text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors"
         >
           {t.onboarding.skip}
         </button>
@@ -184,29 +184,29 @@ export default function OnboardingPage() {
           {step === 0 && (
             <div className="space-y-8">
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
                   {t.onboarding.personalizeTitle}
                 </h1>
               </div>
 
               {/* Name */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
+                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   {t.onboarding.whatsYourName}{" "}
-                  <span className="text-muted-foreground/70 font-normal">({t.onboarding.optional})</span>
+                  <span className="text-neutral-400 font-normal">({t.onboarding.optional})</span>
                 </label>
                 <input
                   type="text"
                   value={data.name}
                   onChange={(e) => setData({ ...data, name: e.target.value })}
                   placeholder={t.onboarding.yourName}
-                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/15 transition-colors"
+                  className="w-full rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 py-3 text-sm text-neutral-900 dark:text-white placeholder:text-neutral-400 outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors"
                 />
               </div>
 
               {/* Language */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
+                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   {t.onboarding.preferredLanguage}
                 </label>
                 <div className="flex gap-3">
@@ -215,8 +215,8 @@ export default function OnboardingPage() {
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
                       data.language === "en"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border text-muted-foreground hover:border-foreground/30 hover:bg-muted"
+                        ? "border-neutral-900 dark:border-white bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                        : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700"
                     )}
                   >
                     English
@@ -226,8 +226,8 @@ export default function OnboardingPage() {
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
                       data.language === "fr"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border text-muted-foreground hover:border-foreground/30 hover:bg-muted"
+                        ? "border-neutral-900 dark:border-white bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                        : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700"
                     )}
                   >
                     Français
@@ -237,7 +237,7 @@ export default function OnboardingPage() {
 
               {/* Theme */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
+                <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                   {t.onboarding.chooseTheme}
                 </label>
                 <div className="flex gap-3">
@@ -246,8 +246,8 @@ export default function OnboardingPage() {
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
                       data.theme === "light"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border text-muted-foreground hover:border-foreground/30 hover:bg-muted"
+                        ? "border-neutral-900 dark:border-white bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                        : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700"
                     )}
                   >
                     <Sun className="h-4 w-4" />
@@ -258,8 +258,8 @@ export default function OnboardingPage() {
                     className={cn(
                       "flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
                       data.theme === "dark"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border text-muted-foreground hover:border-foreground/30 hover:bg-muted"
+                        ? "border-neutral-900 dark:border-white bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                        : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700"
                     )}
                   >
                     <Moon className="h-4 w-4" />
@@ -273,7 +273,7 @@ export default function OnboardingPage() {
           {/* ─── Step 2: Who are you? ────────────────────── */}
           {step === 1 && (
             <div className="space-y-8">
-              <h1 className="text-3xl font-bold text-foreground">
+              <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
                 {t.onboarding.whichDescribes}
               </h1>
 
@@ -285,12 +285,12 @@ export default function OnboardingPage() {
                     className={cn(
                       "flex flex-col items-center gap-3 rounded-2xl border p-5 transition-all",
                       data.userType === id
-                        ? "border-primary bg-accent ring-1 ring-primary/40"
-                        : "border-border hover:border-foreground/30 hover:bg-muted"
+                        ? "border-neutral-900 dark:border-white bg-neutral-50 dark:bg-neutral-800 ring-1 ring-neutral-900 dark:ring-white"
+                        : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900"
                     )}
                   >
-                    <Icon className="h-6 w-6 text-foreground" />
-                    <span className="text-sm font-medium text-foreground">
+                    <Icon className="h-6 w-6 text-neutral-700 dark:text-neutral-300" />
+                    <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                       {USER_TYPE_LABELS[id]?.[data.language] || id}
                     </span>
                   </button>
@@ -303,10 +303,10 @@ export default function OnboardingPage() {
           {step === 2 && (
             <div className="space-y-8">
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
                   {t.onboarding.topicsInterest}
                 </h1>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
                   {t.onboarding.selectAll}
                 </p>
               </div>
@@ -321,17 +321,17 @@ export default function OnboardingPage() {
                       className={cn(
                         "relative flex items-center gap-2.5 rounded-2xl border p-4 transition-all text-left",
                         selected
-                          ? "border-primary bg-accent ring-1 ring-primary/40"
-                          : "border-border hover:border-foreground/30 hover:bg-muted"
+                          ? "border-neutral-900 dark:border-white bg-neutral-50 dark:bg-neutral-800 ring-1 ring-neutral-900 dark:ring-white"
+                          : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900"
                       )}
                     >
                       {selected && (
-                        <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                          <Check className="h-3 w-3 text-primary-foreground" />
+                        <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 dark:bg-white">
+                          <Check className="h-3 w-3 text-white dark:text-neutral-900" />
                         </div>
                       )}
-                      <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="text-sm font-medium text-foreground">
+                      <BookOpen className="h-4 w-4 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                      <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
                         {cat.name}
                       </span>
                     </button>
@@ -345,10 +345,10 @@ export default function OnboardingPage() {
           {step === 3 && (
             <div className="space-y-8">
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
                   {t.onboarding.referralTitle}
                 </h1>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
                   {t.onboarding.referralSubtitle}
                 </p>
               </div>
@@ -356,7 +356,7 @@ export default function OnboardingPage() {
               <div className="mx-auto max-w-sm space-y-4">
                 {/* Icon */}
                 <div className="flex justify-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 ring-1 ring-amber-200/60 dark:ring-amber-700/40">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20">
                     <Gift className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                   </div>
                 </div>
@@ -374,18 +374,18 @@ export default function OnboardingPage() {
                     maxLength={8}
                     disabled={referralStatus === "applied"}
                     className={cn(
-                      "w-full rounded-xl border px-4 py-3.5 text-center font-mono text-lg tracking-[0.2em] outline-none transition-colors placeholder:text-muted-foreground/60 placeholder:tracking-normal placeholder:font-sans placeholder:text-sm",
+                      "w-full rounded-xl border px-4 py-3.5 text-center font-mono text-lg tracking-[0.2em] outline-none transition-colors placeholder:text-neutral-400 placeholder:tracking-normal placeholder:font-sans placeholder:text-sm",
                       referralStatus === "applied"
-                        ? "border-primary/40 bg-primary/10 text-primary"
+                        ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
                         : referralStatus === "invalid"
-                          ? "border-red-300 dark:border-red-700 bg-card text-foreground"
-                          : "border-border bg-card text-foreground focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
+                          ? "border-red-300 dark:border-red-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white"
+                          : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white focus:border-neutral-400 dark:focus:border-neutral-600"
                     )}
                   />
 
                   {/* Status messages */}
                   {referralStatus === "applied" && (
-                    <p className="flex items-center justify-center gap-1.5 text-sm text-primary">
+                    <p className="flex items-center justify-center gap-1.5 text-sm text-green-600 dark:text-green-400">
                       <CheckCircle className="h-4 w-4" />
                       {t.onboarding.referralApplied}
                     </p>
@@ -409,7 +409,7 @@ export default function OnboardingPage() {
                   <button
                     onClick={submitReferralCode}
                     disabled={!data.referralCode || data.referralCode.length < 4}
-                    className="w-full rounded-xl bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl bg-neutral-900 dark:bg-white px-5 py-3 text-sm font-medium text-white dark:text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {data.language === "fr" ? "Appliquer" : "Apply"}
                   </button>
@@ -421,46 +421,46 @@ export default function OnboardingPage() {
           {/* ─── Step 5: All Set ─────────────────────────── */}
           {step === 4 && (
             <div className="space-y-8 text-center">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/15">
-                <Sparkles className="h-10 w-10 text-primary" />
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+                <Sparkles className="h-10 w-10 text-neutral-700 dark:text-neutral-300" />
               </div>
 
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
                   {t.onboarding.allSet}
                 </h1>
-                <p className="mt-2 text-muted-foreground">
+                <p className="mt-2 text-neutral-500 dark:text-neutral-400">
                   {t.onboarding.welcomeStart}{data.name ? `, ${data.name}` : ""}{t.onboarding.welcomeEnd}
                 </p>
               </div>
 
               {/* Summary */}
-              <div className="mx-auto max-w-sm rounded-2xl border border-border bg-card p-5 text-left space-y-3">
+              <div className="mx-auto max-w-sm rounded-2xl border border-neutral-200 dark:border-neutral-800 p-5 text-left space-y-3">
                 {data.userType && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t.onboarding.profileLabel}</span>
-                    <span className="font-medium text-foreground">
+                    <span className="text-neutral-500 dark:text-neutral-400">{t.onboarding.profileLabel}</span>
+                    <span className="font-medium text-neutral-800 dark:text-neutral-200">
                       {USER_TYPE_LABELS[data.userType]?.[data.language] || data.userType}
                     </span>
                   </div>
                 )}
                 {data.interests.length > 0 && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t.onboarding.interests}</span>
-                    <span className="font-medium text-foreground">
+                    <span className="text-neutral-500 dark:text-neutral-400">{t.onboarding.interests}</span>
+                    <span className="font-medium text-neutral-800 dark:text-neutral-200">
                       {data.interests.length} {t.onboarding.topics}
                     </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{t.onboarding.languageLabel}</span>
-                  <span className="font-medium text-foreground">
+                  <span className="text-neutral-500 dark:text-neutral-400">{t.onboarding.languageLabel}</span>
+                  <span className="font-medium text-neutral-800 dark:text-neutral-200">
                     {data.language === "en" ? "English" : "Français"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{t.onboarding.themeLabel}</span>
-                  <span className="font-medium text-foreground">
+                  <span className="text-neutral-500 dark:text-neutral-400">{t.onboarding.themeLabel}</span>
+                  <span className="font-medium text-neutral-800 dark:text-neutral-200">
                     {data.theme === "light" ? t.onboarding.light : t.onboarding.dark}
                   </span>
                 </div>
@@ -476,7 +476,7 @@ export default function OnboardingPage() {
             {step > 0 && (
               <button
                 onClick={() => setStep(step - 1)}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm font-medium text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
               >
                 {t.onboarding.back}
               </button>
@@ -490,7 +490,7 @@ export default function OnboardingPage() {
                 key={i}
                 className={cn(
                   "h-2 rounded-full transition-all duration-300",
-                  i === step ? "w-6 bg-primary" : "w-2 bg-border"
+                  i === step ? "w-6 bg-neutral-900 dark:bg-white" : "w-2 bg-neutral-200 dark:bg-neutral-700"
                 )}
               />
             ))}
@@ -501,7 +501,7 @@ export default function OnboardingPage() {
             <button
               onClick={() => setStep(step + 1)}
               disabled={!canProceed()}
-              className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 rounded-xl bg-neutral-900 dark:bg-white px-5 py-2.5 text-sm font-medium text-white dark:text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {t.onboarding.next}
               <ArrowRight className="h-4 w-4" />
@@ -510,7 +510,7 @@ export default function OnboardingPage() {
             <button
               onClick={handleFinish}
               disabled={saving}
-              className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:bg-primary/90 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-xl bg-neutral-900 dark:bg-white px-5 py-2.5 text-sm font-medium text-white dark:text-neutral-900 transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {saving
                 ? t.onboarding.saving

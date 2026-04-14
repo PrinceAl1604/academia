@@ -87,7 +87,7 @@ export default function AdminCategoriesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
       </div>
     );
   }
@@ -95,8 +95,8 @@ export default function AdminCategoriesPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Categories</h1>
-        <p className="mt-1 text-muted-foreground">
+        <h1 className="text-2xl font-bold text-neutral-900">Categories</h1>
+        <p className="mt-1 text-neutral-500">
           {categories.length} categories · Organize your courses
         </p>
       </div>
@@ -104,7 +104,7 @@ export default function AdminCategoriesPage() {
       {/* Add new category */}
       <Card>
         <CardContent className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 py-3">
-          <FolderOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+          <FolderOpen className="h-4 w-4 text-neutral-400 shrink-0" />
           <Input
             placeholder="New category name..."
             value={newName}
@@ -121,12 +121,12 @@ export default function AdminCategoriesPage() {
 
       {/* Category list */}
       <Card>
-        <CardContent className="divide-y divide-border p-0">
+        <CardContent className="divide-y p-0">
           {categories.length === 0 ? (
-            <p className="p-6 text-center text-muted-foreground">No categories yet</p>
+            <p className="p-6 text-center text-neutral-500">No categories yet</p>
           ) : (
             categories.map((cat) => (
-              <div key={cat.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
+              <div key={cat.id} className="flex items-center gap-3 px-4 py-3">
                 {editingId === cat.id ? (
                   <>
                     <Input
@@ -137,24 +137,24 @@ export default function AdminCategoriesPage() {
                       autoFocus
                     />
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleUpdate(cat.id)}>
-                      <Check className="h-4 w-4 text-primary" />
+                      <Check className="h-4 w-4 text-green-600" />
                     </Button>
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingId(null)}>
-                      <X className="h-4 w-4 text-muted-foreground" />
+                      <X className="h-4 w-4 text-neutral-400" />
                     </Button>
                   </>
                 ) : (
                   <>
-                    <FolderOpen className="h-4 w-4 text-primary/70 shrink-0" />
-                    <span className="flex-1 text-sm font-medium text-foreground">{cat.name}</span>
-                    <span className="text-xs text-muted-foreground font-mono">{cat.slug}</span>
+                    <FolderOpen className="h-4 w-4 text-neutral-300 shrink-0" />
+                    <span className="flex-1 text-sm font-medium text-neutral-900">{cat.name}</span>
+                    <span className="text-xs text-neutral-400 font-mono">{cat.slug}</span>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8"
                       onClick={() => { setEditingId(cat.id); setEditName(cat.name); }}
                     >
-                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                      <Pencil className="h-3.5 w-3.5 text-neutral-400" />
                     </Button>
                     <Button
                       size="icon"
@@ -166,7 +166,7 @@ export default function AdminCategoriesPage() {
                       {deleting === cat.id ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        <Trash2 className="h-3.5 w-3.5 text-red-400" />
                       )}
                     </Button>
                   </>

@@ -120,19 +120,19 @@ export default function AdminLicencesPage() {
 
   const statusColor = (status: string) => {
     switch (status) {
-      case "created": return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400";
-      case "active": return "bg-primary/15 text-primary";
-      case "inactive": return "bg-muted text-muted-foreground";
-      case "used": return "bg-muted text-muted-foreground";
-      case "expired": return "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400";
-      default: return "bg-muted text-muted-foreground";
+      case "created": return "bg-amber-100 text-amber-700";
+      case "active": return "bg-green-100 text-green-700";
+      case "inactive": return "bg-neutral-100 text-neutral-500";
+      case "used": return "bg-neutral-100 text-neutral-500";
+      case "expired": return "bg-red-100 text-red-600";
+      default: return "bg-neutral-100 text-neutral-500";
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
       </div>
     );
   }
@@ -141,8 +141,8 @@ export default function AdminLicencesPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Licence Keys</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Licence Keys</h1>
+          <p className="mt-1 text-sm text-neutral-500">
             {keys.length} keys · {keys.filter((k) => k.status === "created").length} available · {keys.filter((k) => k.status === "active").length} activated
           </p>
         </div>
@@ -164,16 +164,16 @@ export default function AdminLicencesPage() {
 
       {/* Newly generated keys banner */}
       {newlyGenerated.length > 0 && (
-        <Card className="border-primary/20 bg-primary/5 p-4">
+        <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20 p-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-primary">
+            <p className="text-sm font-medium text-green-800 dark:text-green-300">
               {newlyGenerated.length} keys generated! Copy them and upload to Chariow.
             </p>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+                className="gap-1.5 border-green-300 text-green-700 hover:bg-green-100"
                 onClick={copyAllNewKeys}
               >
                 {copiedId === "all-new" ? (
@@ -185,7 +185,7 @@ export default function AdminLicencesPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground"
+                className="text-green-600"
                 onClick={() => setNewlyGenerated([])}
               >
                 Dismiss
@@ -194,7 +194,7 @@ export default function AdminLicencesPage() {
           </div>
           <div className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
             {newlyGenerated.map((k) => (
-              <code key={k} className="rounded bg-card px-2 py-1 text-xs font-mono text-foreground ring-1 ring-border">
+              <code key={k} className="rounded bg-white dark:bg-neutral-800 px-2 py-1 text-xs font-mono text-neutral-700 dark:text-neutral-300">
                 {k}
               </code>
             ))}
@@ -209,7 +209,7 @@ export default function AdminLicencesPage() {
             <DialogTitle>Generate Licence Keys</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-neutral-500">
               Generate keys and upload them to Chariow as your product deliverable. Each key can only be used once.
             </p>
             <div className="space-y-2">
@@ -221,8 +221,8 @@ export default function AdminLicencesPage() {
                     onClick={() => setGenerateCount(n)}
                     className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
                       generateCount === n
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border hover:bg-muted"
+                        ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900"
+                        : "border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                     }`}
                   >
                     {n}
@@ -247,7 +247,7 @@ export default function AdminLicencesPage() {
 
       {/* Search */}
       <div className="relative w-full sm:max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <Input
           placeholder="Search by key, name, or email..."
           value={search}
@@ -261,7 +261,7 @@ export default function AdminLicencesPage() {
         <CardContent className="p-0 overflow-x-auto">
           <div className="min-w-[600px]">
           {/* Header */}
-          <div className="grid grid-cols-12 gap-4 border-b border-border px-4 py-3 text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+          <div className="grid grid-cols-12 gap-4 border-b px-4 py-3 text-xs font-medium uppercase tracking-wider text-neutral-400">
             <div className="col-span-4">Licence Key</div>
             <div className="col-span-3">Customer</div>
             <div className="col-span-2">Status</div>
@@ -271,38 +271,38 @@ export default function AdminLicencesPage() {
 
           {/* Rows */}
           {filteredKeys.length === 0 ? (
-            <p className="p-8 text-center text-muted-foreground">
+            <p className="p-8 text-center text-neutral-500">
               {keys.length === 0 ? "No licence keys yet. Keys are generated when students purchase on Chariow." : "No results found"}
             </p>
           ) : (
-            <div className="divide-y divide-border">
+            <div className="divide-y">
               {filteredKeys.map((lk) => (
                 <div
                   key={lk.id}
-                  className="grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-muted/50 cursor-pointer transition-colors"
+                  className="grid grid-cols-12 gap-4 px-4 py-3 items-center hover:bg-neutral-50 cursor-pointer"
                   onClick={() => setSelectedKey(lk)}
                 >
                   <div className="col-span-4 flex items-center gap-2">
-                    <KeyRound className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-                    <code className="text-xs font-mono text-foreground truncate">
+                    <KeyRound className="h-3.5 w-3.5 text-neutral-300 shrink-0" />
+                    <code className="text-xs font-mono text-neutral-700 truncate">
                       {lk.key}
                     </code>
                     <button
                       onClick={(e) => { e.stopPropagation(); copyKey(lk.id, lk.key); }}
-                      className="shrink-0 text-muted-foreground/60 hover:text-foreground transition-colors"
+                      className="shrink-0 text-neutral-300 hover:text-neutral-600"
                     >
                       {copiedId === lk.id ? (
-                        <Check className="h-3.5 w-3.5 text-primary" />
+                        <Check className="h-3.5 w-3.5 text-green-500" />
                       ) : (
                         <Copy className="h-3.5 w-3.5" />
                       )}
                     </button>
                   </div>
                   <div className="col-span-3">
-                    <p className="text-sm text-foreground truncate">
+                    <p className="text-sm text-neutral-900 truncate">
                       {lk.assigned_to || "—"}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-xs text-neutral-400 truncate">
                       {lk.assigned_email || ""}
                     </p>
                   </div>
@@ -311,10 +311,10 @@ export default function AdminLicencesPage() {
                       {lk.status}
                     </Badge>
                   </div>
-                  <div className="col-span-2 text-xs text-muted-foreground">
+                  <div className="col-span-2 text-xs text-neutral-500">
                     {new Date(lk.created_at).toLocaleDateString()}
                   </div>
-                  <div className="col-span-1 text-right text-xs text-muted-foreground/60">
+                  <div className="col-span-1 text-right text-xs text-neutral-400">
                     →
                   </div>
                 </div>
@@ -338,9 +338,9 @@ export default function AdminLicencesPage() {
           {selectedKey && (
             <div className="space-y-4 mt-2">
               {/* Key */}
-              <div className="rounded-lg bg-muted/60 ring-1 ring-border p-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Key</p>
-                <code className="text-lg font-mono font-bold text-foreground">
+              <div className="rounded-lg bg-neutral-50 p-4 text-center">
+                <p className="text-xs text-neutral-500 mb-1">Key</p>
+                <code className="text-lg font-mono font-bold text-neutral-900">
                   {selectedKey.key}
                 </code>
                 <div className="mt-2">
@@ -351,7 +351,7 @@ export default function AdminLicencesPage() {
                     onClick={() => copyKey(selectedKey.id, selectedKey.key)}
                   >
                     {copiedId === selectedKey.id ? (
-                      <><Check className="h-3.5 w-3.5 text-primary" /> Copied</>
+                      <><Check className="h-3.5 w-3.5 text-green-500" /> Copied</>
                     ) : (
                       <><Copy className="h-3.5 w-3.5" /> Copy</>
                     )}
@@ -362,29 +362,29 @@ export default function AdminLicencesPage() {
               {/* Details grid */}
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <User className="h-4 w-4 text-muted-foreground" />
+                  <User className="h-4 w-4 text-neutral-400" />
                   <div className="flex-1">
-                    <p className="text-xs text-muted-foreground">Customer</p>
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-xs text-neutral-500">Customer</p>
+                    <p className="text-sm font-medium text-neutral-900">
                       {selectedKey.assigned_to || "Not assigned"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-muted-foreground text-sm">@</span>
+                  <span className="text-neutral-400 text-sm">@</span>
                   <div className="flex-1">
-                    <p className="text-xs text-muted-foreground">Email</p>
-                    <p className="text-sm text-foreground">
+                    <p className="text-xs text-neutral-500">Email</p>
+                    <p className="text-sm text-neutral-900">
                       {selectedKey.assigned_email || "—"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <Shield className="h-4 w-4 text-neutral-400" />
                   <div className="flex-1">
-                    <p className="text-xs text-muted-foreground">Status</p>
+                    <p className="text-xs text-neutral-500">Status</p>
                     <Badge variant="secondary" className={statusColor(selectedKey.status)}>
                       {selectedKey.status}
                     </Badge>
@@ -392,18 +392,18 @@ export default function AdminLicencesPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-muted-foreground text-sm">🏷</span>
+                  <span className="text-neutral-400 text-sm">🏷</span>
                   <div className="flex-1">
-                    <p className="text-xs text-muted-foreground">Type</p>
-                    <p className="text-sm text-foreground">{selectedKey.type}</p>
+                    <p className="text-xs text-neutral-500">Type</p>
+                    <p className="text-sm text-neutral-900">{selectedKey.type}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="h-4 w-4 text-neutral-400" />
                   <div className="flex-1">
-                    <p className="text-xs text-muted-foreground">Created</p>
-                    <p className="text-sm text-foreground">
+                    <p className="text-xs text-neutral-500">Created</p>
+                    <p className="text-sm text-neutral-900">
                       {new Date(selectedKey.created_at).toLocaleString()}
                     </p>
                   </div>
@@ -411,10 +411,10 @@ export default function AdminLicencesPage() {
 
                 {selectedKey.activated_at && (
                   <div className="flex items-center gap-3">
-                    <Check className="h-4 w-4 text-primary" />
+                    <Check className="h-4 w-4 text-green-500" />
                     <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Activated</p>
-                      <p className="text-sm text-foreground">
+                      <p className="text-xs text-neutral-500">Activated</p>
+                      <p className="text-sm text-neutral-900">
                         {new Date(selectedKey.activated_at).toLocaleString()}
                       </p>
                     </div>
@@ -423,10 +423,10 @@ export default function AdminLicencesPage() {
 
                 {selectedKey.expires_at && (
                   <div className="flex items-center gap-3">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <Clock className="h-4 w-4 text-neutral-400" />
                     <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Expires</p>
-                      <p className="text-sm text-foreground">
+                      <p className="text-xs text-neutral-500">Expires</p>
+                      <p className="text-sm text-neutral-900">
                         {new Date(selectedKey.expires_at).toLocaleString()}
                       </p>
                     </div>
