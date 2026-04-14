@@ -64,7 +64,7 @@ export default function MyCoursesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -72,16 +72,16 @@ export default function MyCoursesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">{t.myCourses.title}</h1>
-        <p className="mt-1 text-neutral-500">
+        <h1 className="text-2xl font-bold text-foreground">{t.myCourses.title}</h1>
+        <p className="mt-1 text-muted-foreground">
           {t.myCourses.enrolledIn} {courses.length} {t.myCourses.coursesLabel}
         </p>
       </div>
 
       {courses.length === 0 ? (
         <Card className="p-8 text-center">
-          <BookOpen className="mx-auto h-10 w-10 text-neutral-300" />
-          <p className="mt-3 text-neutral-500">
+          <BookOpen className="mx-auto h-10 w-10 text-muted-foreground/60" />
+          <p className="mt-3 text-muted-foreground">
             {t.nav.signIn === "Sign In"
               ? "You haven't started any courses yet."
               : "Vous n'avez pas encore commencé de cours."}
@@ -93,10 +93,10 @@ export default function MyCoursesPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => (
-            <Card key={course.id} className="overflow-hidden">
-              <div className="aspect-video bg-gradient-to-br from-neutral-100 to-neutral-200">
+            <Card key={course.id} className="overflow-hidden transition-all hover:border-primary/30">
+              <div className="aspect-video bg-muted">
                 <div className="flex h-full items-center justify-center">
-                  <BookOpen className="h-8 w-8 text-neutral-300" />
+                  <BookOpen className="h-8 w-8 text-muted-foreground/60" />
                 </div>
               </div>
               <div className="p-4">
@@ -104,8 +104,8 @@ export default function MyCoursesPage() {
                   <Badge variant="secondary" className="text-xs">{course.category_name}</Badge>
                   <Badge variant="secondary" className="text-xs">{course.level}</Badge>
                 </div>
-                <h3 className="font-semibold text-neutral-900 line-clamp-1">{course.title}</h3>
-                <p className="mt-1 text-xs text-neutral-500">
+                <h3 className="font-semibold text-foreground line-clamp-1">{course.title}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
                   {course.total_lessons} {t.courseDetail.lessons} · {course.duration_hours}h
                 </p>
                 <Button

@@ -50,15 +50,15 @@ export function CourseCarousel({
       {/* Header */}
       <div className="flex items-end justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold text-neutral-900">{title}</h2>
-          <p className="mt-0.5 text-sm text-neutral-500">{subtitle}</p>
+          <h2 className="text-xl font-bold text-foreground">{title}</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => scroll("left")}
             disabled={!canScrollLeft}
             aria-label="Scroll left"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -66,7 +66,7 @@ export function CourseCarousel({
             onClick={() => scroll("right")}
             disabled={!canScrollRight}
             aria-label="Scroll right"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronRight className="h-5 w-5" />
           </button>

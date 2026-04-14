@@ -266,11 +266,11 @@ export default function AdminCourseNewPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/courses"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-neutral-50"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border hover:bg-muted transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="text-2xl font-bold text-neutral-900">
+        <h1 className="text-2xl font-bold text-foreground">
           {t.admin.createCourse}
         </h1>
       </div>
@@ -306,7 +306,7 @@ export default function AdminCourseNewPage() {
                 onChange={(e) => setSlug(e.target.value)}
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-neutral-400">/courses/{slug || "..."}</p>
+              <p className="text-xs text-muted-foreground/70">/courses/{slug || "..."}</p>
             </div>
 
             <div className="space-y-2">
@@ -339,7 +339,7 @@ export default function AdminCourseNewPage() {
                       </SelectContent>
                     </Select>
                     {!creatingCat ? (
-                      <button type="button" onClick={() => setCreatingCat(true)} className="flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-700">
+                      <button type="button" onClick={() => setCreatingCat(true)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
                         <Plus className="h-3 w-3" /> {isEn ? "Add new" : "Ajouter"}
                       </button>
                     ) : (
@@ -364,9 +364,9 @@ export default function AdminCourseNewPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-dashed border-neutral-300 p-3 text-center">
-                    <FolderOpen className="mx-auto h-5 w-5 text-neutral-300" />
-                    <p className="mt-1 text-xs text-neutral-500">{isEn ? "No categories yet" : "Aucune catégorie"}</p>
+                  <div className="rounded-lg border border-dashed border-border p-3 text-center">
+                    <FolderOpen className="mx-auto h-5 w-5 text-muted-foreground/60" />
+                    <p className="mt-1 text-xs text-muted-foreground">{isEn ? "No categories yet" : "Aucune catégorie"}</p>
                     <div className="mt-2 flex gap-2 justify-center">
                       <Input placeholder={isEn ? "e.g. UI/UX Design" : "ex. UI/UX Design"} value={newCatName} onChange={(e) => setNewCatName(e.target.value)} className="h-8 max-w-[180px] text-xs"
                         onKeyDown={async (e) => {
@@ -407,22 +407,22 @@ export default function AdminCourseNewPage() {
             <div className="space-y-2">
               <Label htmlFor="tags">{t.admin.tags}</Label>
               <Input id="tags" placeholder={t.admin.tagsPlaceholder} value={tags} onChange={(e) => setTags(e.target.value)} />
-              <p className="text-xs text-neutral-400">{isEn ? "Separate with commas: design, figma, prototyping" : "Séparez par des virgules"}</p>
+              <p className="text-xs text-muted-foreground/70">{isEn ? "Separate with commas: design, figma, prototyping" : "Séparez par des virgules"}</p>
             </div>
 
             {/* Toggles */}
-            <div className="space-y-4 rounded-lg border p-4">
+            <div className="space-y-4 rounded-lg border border-border p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <Label>{isEn ? "Free Course" : "Cours gratuit"}</Label>
-                  <p className="text-xs text-neutral-500">{isEn ? "Available without membership" : "Disponible sans abonnement"}</p>
+                  <p className="text-xs text-muted-foreground">{isEn ? "Available without membership" : "Disponible sans abonnement"}</p>
                 </div>
                 <Switch checked={isFree} onCheckedChange={setIsFree} />
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <Label>{isEn ? "Published" : "Publié"}</Label>
-                  <p className="text-xs text-neutral-500">{isEn ? "Visible to students" : "Visible par les étudiants"}</p>
+                  <p className="text-xs text-muted-foreground">{isEn ? "Visible to students" : "Visible par les étudiants"}</p>
                 </div>
                 <Switch checked={isPublished} onCheckedChange={setIsPublished} />
               </div>
@@ -432,7 +432,7 @@ export default function AdminCourseNewPage() {
 
         {/* Error + Actions under course details */}
         <div>
-          {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
+          {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button type="submit" className="gap-2 w-full sm:w-auto" disabled={saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -449,10 +449,10 @@ export default function AdminCourseNewPage() {
         <div className="lg:sticky lg:top-20 lg:self-start space-y-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900">
+              <h2 className="text-lg font-semibold text-foreground">
                 {isEn ? "Chapters" : "Chapitres"}
               </h2>
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-muted-foreground">
                 {chapters.length} {isEn ? "chapters" : "chapitres"} · {chapters.reduce((s, c) => s + c.lessons.length, 0)} {isEn ? "lessons" : "leçons"}
               </p>
             </div>
@@ -464,29 +464,29 @@ export default function AdminCourseNewPage() {
                 <CardContent className="p-0">
                   {/* Chapter header */}
                   <div
-                    className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-neutral-50"
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/40 transition-colors"
                     onClick={() => toggleChapter(chapter.id)}
                   >
-                    <GripVertical className="h-4 w-4 text-neutral-300" />
+                    <GripVertical className="h-4 w-4 text-muted-foreground/60" />
                     {chapter.expanded ? (
-                      <ChevronDown className="h-4 w-4 text-neutral-400" />
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                      <ChevronRight className="h-4 w-4 text-neutral-400" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     )}
-                    <span className="flex h-6 w-6 items-center justify-center rounded bg-neutral-100 text-xs font-bold text-neutral-600">
+                    <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-xs font-bold text-muted-foreground">
                       {chIdx + 1}
                     </span>
-                    <span className="flex-1 text-sm font-semibold text-neutral-900">
+                    <span className="flex-1 text-sm font-semibold text-foreground">
                       {chapter.title || (isEn ? "Untitled Chapter" : "Chapitre sans titre")}
                     </span>
-                    <span className="text-xs text-neutral-400">
+                    <span className="text-xs text-muted-foreground">
                       {chapter.lessons.length} {isEn ? "lessons" : "leçons"}
                     </span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-red-400 hover:text-red-600"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
                       onClick={(e) => { e.stopPropagation(); removeChapter(chapter.id); }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -495,7 +495,7 @@ export default function AdminCourseNewPage() {
 
                   {/* Chapter content (expanded) */}
                   {chapter.expanded && (
-                    <div className="border-t px-4 py-4 space-y-4">
+                    <div className="border-t border-border px-4 py-4 space-y-4">
                       {/* Chapter title + description */}
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="space-y-1">
@@ -521,13 +521,13 @@ export default function AdminCourseNewPage() {
                       {/* Lessons */}
                       <div className="space-y-3">
                         {chapter.lessons.map((lesson, lIdx) => (
-                          <div key={lesson.id} className="rounded-lg border p-3 space-y-3">
+                          <div key={lesson.id} className="rounded-lg border border-border p-3 space-y-3">
                             <div className="flex items-center gap-2">
-                              <Video className="h-4 w-4 text-neutral-400 shrink-0" />
-                              <span className="text-xs font-medium text-neutral-400">{isEn ? "Lesson" : "Leçon"} {lIdx + 1}</span>
+                              <Video className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <span className="text-xs font-medium text-muted-foreground">{isEn ? "Lesson" : "Leçon"} {lIdx + 1}</span>
                               <div className="flex-1" />
                               <div className="flex items-center gap-1.5">
-                                <Label className="text-xs text-neutral-400">{isEn ? "Free" : "Gratuit"}</Label>
+                                <Label className="text-xs text-muted-foreground">{isEn ? "Free" : "Gratuit"}</Label>
                                 <Switch
                                   checked={lesson.isFree}
                                   onCheckedChange={(v) => updateLesson(chapter.id, lesson.id, "isFree", v)}
@@ -535,7 +535,7 @@ export default function AdminCourseNewPage() {
                                 />
                               </div>
                               <Button
-                                type="button" variant="ghost" size="icon" className="h-6 w-6 text-red-400"
+                                type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive"
                                 onClick={() => removeLesson(chapter.id, lesson.id)}
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -561,7 +561,7 @@ export default function AdminCourseNewPage() {
                               <div className="flex items-center justify-between">
                                 <Label className="text-xs">{isEn ? "Video Embed Code" : "Code d'intégration vidéo"}</Label>
                                 <div className="flex items-center gap-1">
-                                  <Label className="text-xs text-neutral-400">{isEn ? "Duration" : "Durée"}</Label>
+                                  <Label className="text-xs text-muted-foreground">{isEn ? "Duration" : "Durée"}</Label>
                                   <Input
                                     type="number"
                                     min="0"
@@ -570,7 +570,7 @@ export default function AdminCourseNewPage() {
                                     onChange={(e) => updateLesson(chapter.id, lesson.id, "durationMinutes", e.target.value)}
                                     className="h-7 w-16 text-xs"
                                   />
-                                  <span className="text-xs text-neutral-400">min</span>
+                                  <span className="text-xs text-muted-foreground">min</span>
                                 </div>
                               </div>
                               <Textarea
@@ -585,7 +585,7 @@ export default function AdminCourseNewPage() {
                                 const idMatch = lesson.youtubeUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
                                 const videoId = idMatch?.[1];
                                 return videoId ? (
-                                  <div className="aspect-video w-full overflow-hidden rounded-lg border bg-black">
+                                  <div className="aspect-video w-full overflow-hidden rounded-lg border border-border bg-black">
                                     <iframe
                                       src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&color=white`}
                                       className="h-full w-full"

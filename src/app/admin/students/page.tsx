@@ -192,10 +192,10 @@ export default function AdminStudentsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-foreground">
           {isEn ? "Students" : "Étudiants"}
         </h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="mt-1 text-muted-foreground">
           {isEn
             ? "Manage your students and view their progress"
             : "Gérez vos étudiants et consultez leur progression"}
@@ -204,65 +204,65 @@ export default function AdminStudentsPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="dark:bg-neutral-900 dark:border-neutral-800">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+        <Card>
+          <CardContent className="flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100/70 dark:bg-blue-900/30 ring-1 ring-blue-200/60 dark:ring-blue-700/40">
               <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
-                {totalStudents}
-              </p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground/70">
                 {isEn ? "Total Students" : "Total étudiants"}
+              </p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">
+                {totalStudents}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="dark:bg-neutral-900 dark:border-neutral-800">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+        <Card>
+          <CardContent className="flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100/70 dark:bg-amber-900/30 ring-1 ring-amber-200/60 dark:ring-amber-700/40">
               <Crown className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
-                {proStudents}
-              </p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground/70">
                 {isEn ? "Pro Members" : "Membres Pro"}
               </p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">
+                {proStudents}
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="dark:bg-neutral-900 dark:border-neutral-800">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30">
-              <UserCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
+        <Card>
+          <CardContent className="flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/15">
+              <UserCheck className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
-                {activeToday}
-              </p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground/70">
                 {isEn ? "Active Today" : "Actifs aujourd'hui"}
+              </p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">
+                {activeToday}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="dark:bg-neutral-900 dark:border-neutral-800">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
+        <Card>
+          <CardContent className="flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100/70 dark:bg-purple-900/30 ring-1 ring-purple-200/60 dark:ring-purple-700/40">
               <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-neutral-900 dark:text-white">
-                {newThisWeek}
-              </p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground/70">
                 {isEn ? "New This Week" : "Nouveaux cette semaine"}
+              </p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">
+                {newThisWeek}
               </p>
             </div>
           </CardContent>
@@ -272,12 +272,12 @@ export default function AdminStudentsPage() {
       {/* Search + Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={isEn ? "Search students..." : "Rechercher un étudiant..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 dark:bg-neutral-900 dark:border-neutral-700"
+            className="pl-10"
           />
         </div>
 
@@ -321,61 +321,61 @@ export default function AdminStudentsPage() {
       {/* Student List */}
       {loading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="py-20 text-center">
-          <Users className="mx-auto h-10 w-10 text-neutral-300 dark:text-neutral-600" />
-          <p className="mt-3 text-neutral-500 dark:text-neutral-400">
+          <Users className="mx-auto h-10 w-10 text-muted-foreground/60" />
+          <p className="mt-3 text-muted-foreground">
             {search
               ? isEn ? "No students match your search" : "Aucun étudiant trouvé"
               : isEn ? "No students yet" : "Aucun étudiant pour le moment"}
           </p>
         </div>
       ) : (
-        <Card className="dark:bg-neutral-900 dark:border-neutral-800">
+        <Card>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b dark:border-neutral-800">
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                <tr className="border-b border-border">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
                     {isEn ? "Student" : "Étudiant"}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
                     {isEn ? "Plan" : "Plan"}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400 hidden sm:table-cell">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70 hidden sm:table-cell">
                     {isEn ? "Courses" : "Cours"}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400 hidden md:table-cell">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70 hidden md:table-cell">
                     {isEn ? "Joined" : "Inscription"}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400 hidden lg:table-cell">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground/70 hidden lg:table-cell">
                     {isEn ? "Last Active" : "Dernière activité"}
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
                     {isEn ? "Action" : "Action"}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y dark:divide-neutral-800">
+              <tbody className="divide-y divide-border">
                 {filtered.map((student) => (
                   <tr
                     key={student.id}
-                    className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+                    className="hover:bg-muted/40 transition-colors"
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-xs font-medium dark:text-neutral-300">
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                             {getInitials(student.name, student.email)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {student.name || student.email.split("@")[0]}
                           </p>
-                          <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                          <p className="text-xs text-muted-foreground truncate">
                             {student.email}
                           </p>
                         </div>
@@ -388,23 +388,23 @@ export default function AdminStudentsPage() {
                           Pro
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-neutral-500 dark:text-neutral-400 dark:border-neutral-700">
+                        <Badge variant="outline" className="text-muted-foreground">
                           Free
                         </Badge>
                       )}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                      <span className="text-sm text-foreground">
                         {student.enrollment_count || 0}
                       </span>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="text-sm text-neutral-500 dark:text-neutral-400">
+                      <span className="text-sm text-muted-foreground">
                         {formatDate(student.created_at)}
                       </span>
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-sm text-neutral-500 dark:text-neutral-400">
+                      <span className="text-sm text-muted-foreground">
                         {student.last_active_at
                           ? formatDate(student.last_active_at)
                           : "-"}
@@ -425,8 +425,8 @@ export default function AdminStudentsPage() {
               </tbody>
             </table>
           </div>
-          <div className="border-t dark:border-neutral-800 px-4 py-3">
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          <div className="border-t border-border px-4 py-3">
+            <p className="text-xs text-muted-foreground">
               {filtered.length} {isEn ? "students" : "étudiants"}
               {search && ` (${isEn ? "filtered" : "filtrés"})`}
             </p>
@@ -439,21 +439,21 @@ export default function AdminStudentsPage() {
         open={!!selectedStudent}
         onOpenChange={(open) => !open && setSelectedStudent(null)}
       >
-        <DialogContent className="sm:max-w-lg dark:bg-neutral-900 dark:border-neutral-800">
+        <DialogContent className="sm:max-w-lg">
           {selectedStudent && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-sm font-medium dark:text-neutral-300">
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
                       {getInitials(selectedStudent.name, selectedStudent.email)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-lg font-semibold text-neutral-900 dark:text-white">
+                    <p className="text-lg font-semibold text-foreground">
                       {selectedStudent.name || selectedStudent.email.split("@")[0]}
                     </p>
-                    <p className="text-sm font-normal text-neutral-500 dark:text-neutral-400">
+                    <p className="text-sm font-normal text-muted-foreground">
                       {selectedStudent.email}
                     </p>
                   </div>
@@ -462,12 +462,12 @@ export default function AdminStudentsPage() {
 
               {/* Info Grid */}
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div className="rounded-lg border dark:border-neutral-800 p-3">
-                  <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                <div className="rounded-lg border border-border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Shield className="h-3 w-3" />
                     {isEn ? "Plan" : "Plan"}
                   </div>
-                  <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-white">
+                  <p className="mt-1 text-sm font-medium text-foreground">
                     {selectedStudent.subscription_tier === "pro" ? (
                       <span className="flex items-center gap-1">
                         <Crown className="h-3.5 w-3.5 text-amber-500" /> Pro
@@ -477,39 +477,39 @@ export default function AdminStudentsPage() {
                     )}
                   </p>
                   {selectedStudent.pro_expires_at && (
-                    <p className="text-xs text-neutral-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground/70 mt-0.5">
                       {isEn ? "Expires" : "Expire"}{" "}
                       {formatDate(selectedStudent.pro_expires_at)}
                     </p>
                   )}
                 </div>
 
-                <div className="rounded-lg border dark:border-neutral-800 p-3">
-                  <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                <div className="rounded-lg border border-border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     {isEn ? "Joined" : "Inscription"}
                   </div>
-                  <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-white">
+                  <p className="mt-1 text-sm font-medium text-foreground">
                     {formatDate(selectedStudent.created_at)}
                   </p>
                 </div>
 
-                <div className="rounded-lg border dark:border-neutral-800 p-3">
-                  <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                <div className="rounded-lg border border-border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <BookOpen className="h-3 w-3" />
                     {isEn ? "Enrolled Courses" : "Cours inscrits"}
                   </div>
-                  <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-white">
+                  <p className="mt-1 text-sm font-medium text-foreground">
                     {selectedStudent.enrollment_count || 0}
                   </p>
                 </div>
 
-                <div className="rounded-lg border dark:border-neutral-800 p-3">
-                  <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                <div className="rounded-lg border border-border p-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
                     {isEn ? "Last Active" : "Dernière activité"}
                   </div>
-                  <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-white">
+                  <p className="mt-1 text-sm font-medium text-foreground">
                     {selectedStudent.last_active_at
                       ? formatDate(selectedStudent.last_active_at)
                       : isEn ? "Never" : "Jamais"}
@@ -518,18 +518,18 @@ export default function AdminStudentsPage() {
               </div>
 
               {/* Enrolled Courses */}
-              <Separator className="my-4 dark:bg-neutral-800" />
+              <Separator className="my-4" />
               <div>
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3">
+                <h3 className="text-sm font-semibold text-foreground mb-3">
                   {isEn ? "Enrolled Courses" : "Cours inscrits"}
                 </h3>
 
                 {loadingDetail ? (
                   <div className="flex justify-center py-6">
-                    <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                   </div>
                 ) : studentEnrollments.length === 0 ? (
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">
+                  <p className="text-sm text-muted-foreground text-center py-4">
                     {isEn
                       ? "No courses enrolled yet"
                       : "Aucun cours inscrit"}
@@ -539,27 +539,27 @@ export default function AdminStudentsPage() {
                     {studentEnrollments.map((enrollment) => (
                       <div
                         key={enrollment.id}
-                        className="flex items-center gap-3 rounded-lg border dark:border-neutral-800 p-3"
+                        className="flex items-center gap-3 rounded-lg border border-border p-3"
                       >
-                        <div className="flex h-8 w-8 items-center justify-center rounded bg-neutral-100 dark:bg-neutral-800">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
                           {enrollment.completed_at ? (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <CheckCircle className="h-4 w-4 text-primary" />
                           ) : (
-                            <BookOpen className="h-4 w-4 text-neutral-400" />
+                            <BookOpen className="h-4 w-4 text-muted-foreground" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {enrollment.course?.title || "Unknown Course"}
                           </p>
-                          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                          <p className="text-xs text-muted-foreground">
                             {enrollment.course?.category?.name || ""} ·{" "}
                             {isEn ? "Enrolled" : "Inscrit"}{" "}
                             {formatDate(enrollment.enrolled_at)}
                           </p>
                         </div>
                         {enrollment.completed_at && (
-                          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">
+                          <Badge className="bg-primary/15 text-primary text-xs">
                             {isEn ? "Completed" : "Terminé"}
                           </Badge>
                         )}
@@ -570,12 +570,12 @@ export default function AdminStudentsPage() {
               </div>
 
               {/* Actions */}
-              <Separator className="my-4 dark:bg-neutral-800" />
+              <Separator className="my-4" />
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-1.5 text-xs dark:border-neutral-700 dark:text-neutral-300"
+                  className="gap-1.5 text-xs"
                   onClick={() => {
                     window.location.href = `mailto:${selectedStudent.email}`;
                   }}

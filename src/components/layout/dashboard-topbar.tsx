@@ -132,7 +132,7 @@ export function DashboardTopbar() {
   return (
     <>
     <ExpiryBanner />
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/80 dark:bg-neutral-950/80 px-4 backdrop-blur-md lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/85 px-4 backdrop-blur-md lg:px-8">
       {/* Mobile menu — visible below lg */}
       <Sheet>
         <SheetTrigger
@@ -155,8 +155,8 @@ export function DashboardTopbar() {
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-neutral-100 text-neutral-900"
-                      : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900"
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -205,7 +205,7 @@ export function DashboardTopbar() {
         ) : (
           <Button
             variant="ghost"
-            className="gap-2 text-neutral-500"
+            className="gap-2 text-muted-foreground"
             onClick={() => setIsSearchOpen(true)}
             aria-label={t.nav.searchCourses}
           >
@@ -236,29 +236,29 @@ export function DashboardTopbar() {
                 )}
               </PopoverTrigger>
               <PopoverContent className="w-[calc(100vw-1rem)] sm:w-80 p-0" align="end" sideOffset={8}>
-                <div className="border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">
+                <div className="border-b border-border px-4 py-3">
+                  <p className="text-sm font-semibold text-foreground">
                     {t.nav.signIn === "Sign In" ? "Notifications" : "Notifications"}
                   </p>
                 </div>
-                <div className="max-h-64 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
+                <div className="max-h-64 overflow-y-auto divide-y divide-border">
                   {notifications.length === 0 ? (
-                    <p className="p-4 text-sm text-neutral-500 dark:text-neutral-400 text-center">
+                    <p className="p-4 text-sm text-muted-foreground text-center">
                       {t.nav.signIn === "Sign In" ? "No notifications" : "Aucune notification"}
                     </p>
                   ) : (
                     notifications.map((n) => (
-                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 shrink-0 mt-0.5">
+                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0 mt-0.5">
                           {n.type === "new_student" ? (
                             <UserPlus className="h-4 w-4 text-blue-500" />
                           ) : (
-                            <BookPlus className="h-4 w-4 text-green-500" />
+                            <BookPlus className="h-4 w-4 text-primary" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-neutral-700 dark:text-neutral-300">{n.message}</p>
-                          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">{n.time}</p>
+                          <p className="text-sm text-foreground">{n.message}</p>
+                          <p className="text-xs text-muted-foreground/70 mt-0.5">{n.time}</p>
                         </div>
                       </div>
                     ))

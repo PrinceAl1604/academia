@@ -15,7 +15,7 @@ export function LanguageToggle() {
     <Button
       variant="ghost"
       size="sm"
-      className="gap-1.5 text-neutral-600 hover:text-neutral-900"
+      className="gap-1.5 text-muted-foreground hover:text-foreground"
       onClick={toggle}
       aria-label={language === "en" ? "Switch to French" : "Switch to English"}
     >

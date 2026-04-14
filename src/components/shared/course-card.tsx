@@ -68,7 +68,7 @@ export function CourseCard({
   if (variant === "compact") {
     const compactCard = (
       <div
-        className={`group relative rounded-xl border border-neutral-200/60 dark:border-neutral-800 bg-white dark:bg-neutral-900 transition-all hover:shadow-md ${
+        className={`group relative rounded-xl border border-border bg-card transition-all hover:shadow-md hover:border-primary/30 ${
           locked ? "opacity-70" : ""
         }`}
       >
@@ -86,16 +86,16 @@ export function CourseCard({
               />
             )}
             {locked && (
-              <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/30 rounded-lg">
-                <Lock className="h-4 w-4 text-white" />
+              <div className="absolute inset-0 flex items-center justify-center bg-foreground/30 rounded-lg">
+                <Lock className="h-4 w-4 text-background" />
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
+            <h3 className="text-sm font-semibold text-foreground truncate">
               {course.title}
             </h3>
-            <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {totalLessons} {totalLessons === 1 ? t.courseCard.class : t.courseCard.classes}
             </p>
           </div>
@@ -116,19 +116,19 @@ export function CourseCard({
 
   const defaultCard = (
     <div
-      className={`group relative w-[280px] sm:w-[320px] flex-shrink-0 rounded-xl border border-neutral-200/60 dark:border-neutral-800 bg-white dark:bg-neutral-900 transition-all hover:shadow-md ${
+      className={`group relative w-[280px] sm:w-[320px] flex-shrink-0 rounded-xl border border-border bg-card transition-all hover:shadow-md hover:border-primary/30 ${
         locked ? "opacity-70" : ""
       }`}
     >
       {/* Header with number + category tag */}
       <div className="flex items-center gap-2 px-4 pt-3 pb-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 text-xs font-semibold text-neutral-600 dark:text-neutral-300">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
           {index + 1}
         </span>
-        <span className="rounded-full bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 text-xs font-medium text-neutral-600 dark:text-neutral-300">
+        <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
           {categoryName}
         </span>
-        {locked && <Lock className="ml-auto h-3.5 w-3.5 text-neutral-400" />}
+        {locked && <Lock className="ml-auto h-3.5 w-3.5 text-muted-foreground" />}
       </div>
 
       {/* Thumbnail */}
@@ -146,16 +146,16 @@ export function CourseCard({
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center p-4">
-              <div className="w-full space-y-2 rounded-lg bg-white/60 p-3 backdrop-blur-sm">
-                <div className="h-2 w-3/4 rounded-full bg-neutral-300/50" />
-                <div className="h-2 w-1/2 rounded-full bg-neutral-300/50" />
-                <div className="h-2 w-2/3 rounded-full bg-neutral-300/50" />
+              <div className="w-full space-y-2 rounded-lg bg-background/60 p-3 backdrop-blur-sm">
+                <div className="h-2 w-3/4 rounded-full bg-foreground/10" />
+                <div className="h-2 w-1/2 rounded-full bg-foreground/10" />
+                <div className="h-2 w-2/3 rounded-full bg-foreground/10" />
               </div>
             </div>
           )}
           {locked && (
-            <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/30 rounded-lg">
-              <Lock className="h-6 w-6 text-white" />
+            <div className="absolute inset-0 flex items-center justify-center bg-foreground/30 rounded-lg">
+              <Lock className="h-6 w-6 text-background" />
             </div>
           )}
         </div>
@@ -163,16 +163,16 @@ export function CourseCard({
 
       {/* Content */}
       <div className="px-4 pt-3 pb-4">
-        <h3 className="text-sm font-semibold text-neutral-900 dark:text-white leading-snug">
+        <h3 className="text-sm font-semibold text-foreground leading-snug">
           {course.title}
         </h3>
-        <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+        <p className="mt-1 text-xs text-muted-foreground">
           {totalLessons} {totalLessons === 1 ? t.courseCard.class : t.courseCard.classes}
         </p>
 
         {/* Progress bar */}
         <div className="mt-3 flex items-center gap-2">
-          <span className="text-[11px] font-medium text-neutral-400 tabular-nums">
+          <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
             {durationLabel}
           </span>
           <Progress value={progressValue} className="h-1 flex-1" />

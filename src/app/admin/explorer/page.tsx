@@ -107,15 +107,15 @@ function SortableCategoryHeader({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group flex items-center gap-2 px-3 py-2.5 bg-neutral-50/80 dark:bg-neutral-800/50 transition-colors",
-        isDragging && "z-50 shadow-lg bg-white dark:bg-neutral-800 ring-2 ring-neutral-900/10 dark:ring-white/10 rounded-lg"
+        "group flex items-center gap-2 px-3 py-2.5 bg-muted/50 transition-colors",
+        isDragging && "z-50 shadow-lg bg-card ring-2 ring-primary/15 rounded-lg"
       )}
     >
       {/* Drag handle */}
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing p-0.5 text-neutral-300 hover:text-neutral-500 dark:text-neutral-600 dark:hover:text-neutral-400 touch-none"
+        className="cursor-grab active:cursor-grabbing p-0.5 text-muted-foreground/60 hover:text-foreground transition-colors touch-none"
         aria-label="Drag to reorder"
       >
         <GripVertical className="h-4 w-4" />
@@ -127,15 +127,15 @@ function SortableCategoryHeader({
       >
         <ChevronRight
           className={cn(
-            "h-3.5 w-3.5 text-neutral-400 transition-transform",
+            "h-3.5 w-3.5 text-muted-foreground transition-transform",
             !isCollapsed && "rotate-90"
           )}
         />
-        <FolderOpen className="h-3.5 w-3.5 text-neutral-400" />
-        <span className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
+        <FolderOpen className="h-3.5 w-3.5 text-primary/70" />
+        <span className="text-sm font-semibold text-foreground truncate">
           {cat.name}
         </span>
-        <span className="text-[11px] text-neutral-400 shrink-0">{count}</span>
+        <span className="text-[11px] text-muted-foreground shrink-0">{count}</span>
       </button>
     </div>
   );
@@ -179,18 +179,18 @@ function SortableCourseRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group flex items-center gap-3 px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors",
+        "group flex items-center gap-3 px-3 py-2 hover:bg-muted/40 transition-colors",
         !course.is_published && !selected && "opacity-50",
-        selected && "bg-blue-50/60 dark:bg-blue-900/15",
+        selected && "bg-primary/5",
         course.is_featured && !selected && "bg-amber-50/50 dark:bg-amber-900/10",
-        isDragging && "z-50 shadow-lg bg-white dark:bg-neutral-800 ring-2 ring-neutral-900/10 dark:ring-white/10 rounded-lg opacity-100"
+        isDragging && "z-50 shadow-lg bg-card ring-2 ring-primary/15 rounded-lg opacity-100"
       )}
     >
       {/* Drag handle */}
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing p-0.5 text-neutral-300 hover:text-neutral-500 dark:text-neutral-600 dark:hover:text-neutral-400 touch-none"
+        className="cursor-grab active:cursor-grabbing p-0.5 text-muted-foreground/60 hover:text-foreground transition-colors touch-none"
         aria-label="Drag to reorder"
       >
         <GripVertical className="h-3.5 w-3.5" />
@@ -201,16 +201,16 @@ function SortableCourseRow({
         type="checkbox"
         checked={selected}
         onChange={() => onToggleSelect(course.id)}
-        className="h-3.5 w-3.5 rounded border-neutral-300 dark:border-neutral-600 text-blue-600 focus:ring-blue-500 shrink-0 cursor-pointer"
+        className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary shrink-0 cursor-pointer"
       />
 
       {/* Thumbnail */}
-      <div className="relative h-9 w-14 rounded-md overflow-hidden bg-neutral-100 dark:bg-neutral-800 shrink-0">
+      <div className="relative h-9 w-14 rounded-md overflow-hidden bg-muted shrink-0">
         {course.cover_url ? (
           <Image src={course.cover_url} alt="" fill className="object-cover" sizes="56px" />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <BookOpen className="h-3 w-3 text-neutral-300 dark:text-neutral-600" />
+            <BookOpen className="h-3 w-3 text-muted-foreground/60" />
           </div>
         )}
       </div>
@@ -218,14 +218,14 @@ function SortableCourseRow({
       {/* Title + meta */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium text-neutral-900 dark:text-white truncate">
+          <span className="text-sm font-medium text-foreground truncate">
             {course.title}
           </span>
           {course.is_featured && (
             <Star className="h-3 w-3 text-amber-500 fill-amber-500 shrink-0" />
           )}
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-neutral-400">
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span>{course.level}</span>
           <span>·</span>
           <span>{course.duration_hours}h</span>
@@ -244,20 +244,20 @@ function SortableCourseRow({
             {stats.enrollments}
           </span>
           {stats.completions > 0 && (
-            <span className="flex items-center gap-1 text-green-600 dark:text-green-400" title={isEn ? "Completions" : "Complétions"}>
+            <span className="flex items-center gap-1 text-primary" title={isEn ? "Completions" : "Complétions"}>
               <Check className="h-3 w-3" />
               {stats.completions}
             </span>
           )}
           {stats.avgProgress > 0 && (
             <div className="flex items-center gap-1.5" title={`${isEn ? "Avg progress" : "Progrès moyen"}: ${stats.avgProgress}%`}>
-              <div className="h-1 w-10 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
+              <div className="h-1 w-10 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-blue-500 dark:bg-blue-400"
+                  className="h-full rounded-full bg-primary"
                   style={{ width: `${Math.min(stats.avgProgress, 100)}%` }}
                 />
               </div>
-              <span className="text-neutral-400">{stats.avgProgress}%</span>
+              <span className="text-muted-foreground">{stats.avgProgress}%</span>
             </div>
           )}
           {stats.recent7d > 0 && (
@@ -272,14 +272,14 @@ function SortableCourseRow({
       {/* Badges */}
       <div className="flex items-center gap-1.5 shrink-0">
         {course.is_free && (
-          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] h-5 px-1.5">
+          <Badge className="bg-primary/15 text-primary text-[10px] h-5 px-1.5">
             Free
           </Badge>
         )}
         {!course.is_published && (
           <Badge
             variant="outline"
-            className="text-[10px] h-5 px-1.5 text-neutral-400 dark:border-neutral-700"
+            className="text-[10px] h-5 px-1.5 text-muted-foreground"
           >
             {isEn ? "Draft" : "Brouillon"}
           </Badge>
@@ -294,7 +294,7 @@ function SortableCourseRow({
             "p-1.5 rounded-md transition-colors",
             course.is_featured
               ? "text-amber-500"
-              : "text-neutral-300 hover:text-amber-500 dark:text-neutral-600"
+              : "text-muted-foreground/60 hover:text-amber-500"
           )}
           title={isEn ? "Feature" : "Mettre en avant"}
         >
@@ -305,8 +305,8 @@ function SortableCourseRow({
           className={cn(
             "p-1.5 rounded-md transition-colors",
             course.is_published
-              ? "text-green-500"
-              : "text-neutral-300 hover:text-green-500 dark:text-neutral-600"
+              ? "text-primary"
+              : "text-muted-foreground/60 hover:text-primary"
           )}
           title={course.is_published ? "Unpublish" : "Publish"}
         >
@@ -318,13 +318,13 @@ function SortableCourseRow({
         </button>
         <Link
           href={`/admin/courses/${course.id}/edit`}
-          className="p-1.5 rounded-md text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300"
+          className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground transition-colors"
         >
           <Pencil className="h-3.5 w-3.5" />
         </Link>
         <Link
           href={`/courses/${course.slug}`}
-          className="p-1.5 rounded-md text-neutral-300 hover:text-neutral-600 dark:text-neutral-600 dark:hover:text-neutral-300"
+          className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground transition-colors"
         >
           <ExternalLink className="h-3.5 w-3.5" />
         </Link>
@@ -374,7 +374,7 @@ function SortableCourseList({
   if (courses.length === 0) {
     return (
       <div className="px-3 py-4 text-center">
-        <p className="text-xs text-neutral-400">
+        <p className="text-xs text-muted-foreground">
           {isEn ? "No courses" : "Aucun cours"}
         </p>
       </div>
@@ -388,7 +388,7 @@ function SortableCourseList({
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={courseIds} strategy={verticalListSortingStrategy}>
-        <div className="divide-y divide-neutral-100 dark:divide-neutral-800/50">
+        <div className="divide-y divide-border/50">
           {courses.map((course) => (
             <SortableCourseRow
               key={course.id}
@@ -594,7 +594,7 @@ export default function AdminExplorerPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -606,10 +606,10 @@ export default function AdminExplorerPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             {isEn ? "Explorer" : "Explorateur"}
           </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="mt-1 text-muted-foreground">
             {isEn
               ? "Drag to reorder — changes apply to the student site"
               : "Glissez pour réorganiser — les modifications s'appliquent au site étudiant"}
@@ -620,7 +620,7 @@ export default function AdminExplorerPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="gap-1.5 text-xs text-neutral-500"
+              className="gap-1.5 text-xs text-muted-foreground"
               onClick={() => {
                 setLoading(true);
                 setHasChanges(false);
@@ -664,7 +664,7 @@ export default function AdminExplorerPage() {
       )}
 
       {/* Category sections with drag & drop */}
-      <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white dark:bg-neutral-900">
+      <div className="rounded-xl border border-border overflow-hidden bg-card">
         <DndContext
           sensors={catSensors}
           collisionDetection={closestCenter}
@@ -681,11 +681,7 @@ export default function AdminExplorerPage() {
               return (
                 <div
                   key={cat.id}
-                  className={
-                    catIdx > 0
-                      ? "border-t border-neutral-100 dark:border-neutral-800"
-                      : ""
-                  }
+                  className={catIdx > 0 ? "border-t border-border" : ""}
                 >
                   <SortableCategoryHeader
                     cat={cat}
@@ -717,14 +713,14 @@ export default function AdminExplorerPage() {
           const uncat = getCatCourses(null);
           if (uncat.length === 0) return null;
           return (
-            <div className="border-t border-neutral-100 dark:border-neutral-800">
-              <div className="flex items-center gap-2 px-3 py-2.5 bg-neutral-50/80 dark:bg-neutral-800/50">
+            <div className="border-t border-border">
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-muted/50">
                 <div className="w-5" />
                 <FolderOpen className="h-3.5 w-3.5 text-amber-500" />
                 <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">
                   {isEn ? "Uncategorized" : "Sans catégorie"}
                 </span>
-                <span className="text-[11px] text-neutral-400">
+                <span className="text-[11px] text-muted-foreground">
                   {uncat.length}
                 </span>
               </div>
@@ -746,38 +742,38 @@ export default function AdminExplorerPage() {
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
         <div className="sticky bottom-4 z-40 mx-auto w-fit animate-in slide-in-from-bottom-4 fade-in duration-200">
-          <div className="flex items-center gap-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 py-2.5 shadow-lg">
-            <span className="text-sm font-medium text-neutral-900 dark:text-white mr-1">
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 shadow-lg">
+            <span className="text-sm font-medium text-foreground mr-1">
               {selectedIds.size} {isEn ? "selected" : "sélectionné(s)"}
             </span>
 
-            <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
+            <div className="h-4 w-px bg-border" />
 
             <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={bulkPublish}>
-              <Eye className="h-3.5 w-3.5 text-green-500" />
+              <Eye className="h-3.5 w-3.5 text-primary" />
               {isEn ? "Publish" : "Publier"}
             </Button>
             <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={bulkUnpublish}>
-              <EyeOff className="h-3.5 w-3.5 text-neutral-400" />
+              <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
               {isEn ? "Unpublish" : "Dépublier"}
             </Button>
 
-            <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
+            <div className="h-4 w-px bg-border" />
 
             <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={bulkFeature}>
               <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
               {isEn ? "Feature" : "En avant"}
             </Button>
             <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={bulkUnfeature}>
-              <Star className="h-3.5 w-3.5 text-neutral-400" />
+              <Star className="h-3.5 w-3.5 text-muted-foreground" />
               {isEn ? "Unfeature" : "Retirer"}
             </Button>
 
-            <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-700" />
+            <div className="h-4 w-px bg-border" />
 
             <button
               onClick={clearSelection}
-              className="p-1.5 rounded-md text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
               title={isEn ? "Clear selection" : "Désélectionner"}
             >
               <X className="h-4 w-4" />
@@ -787,7 +783,7 @@ export default function AdminExplorerPage() {
       )}
 
       {/* Summary */}
-      <div className="flex items-center justify-between text-xs text-neutral-400 px-1">
+      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
         <span>
           {courses.length} {isEn ? "courses" : "cours"} · {categories.length}{" "}
           {isEn ? "categories" : "catégories"}

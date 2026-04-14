@@ -198,7 +198,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -211,15 +211,15 @@ export default function CurriculumEditorPage({ params }: PageProps) {
       <div className="flex items-center gap-4">
         <Link
           href={`/admin/courses/${courseId}/edit`}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-neutral-50"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border hover:bg-muted transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">
+          <h1 className="text-2xl font-bold text-foreground">
             Curriculum Editor
           </h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-muted-foreground">
             {courseTitle} · {modules.length} chapters · {totalLessons} lessons
           </p>
         </div>
@@ -231,10 +231,10 @@ export default function CurriculumEditorPage({ params }: PageProps) {
           <Card key={module.id}>
             <CardContent className="p-0">
               {/* Module Header */}
-              <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4">
+              <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-3 sm:gap-3 sm:px-4">
                 <button
                   onClick={() => toggleModule(module.id)}
-                  className="text-neutral-400 hover:text-neutral-700 shrink-0"
+                  className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                 >
                   {expandedModules.has(module.id) ? (
                     <ChevronDown className="h-4 w-4" />
@@ -242,8 +242,8 @@ export default function CurriculumEditorPage({ params }: PageProps) {
                     <ChevronRight className="h-4 w-4" />
                   )}
                 </button>
-                <GripVertical className="h-4 w-4 text-neutral-300 hidden sm:block shrink-0" />
-                <span className="flex h-6 w-6 items-center justify-center rounded bg-neutral-100 text-xs font-semibold text-neutral-600 shrink-0">
+                <GripVertical className="h-4 w-4 text-muted-foreground/60 hidden sm:block shrink-0" />
+                <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-xs font-semibold text-muted-foreground shrink-0">
                   {moduleIdx + 1}
                 </span>
                 <Input
@@ -268,7 +268,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-red-400 hover:text-red-600 shrink-0"
+                  className="h-8 w-8 text-destructive hover:text-destructive shrink-0"
                   onClick={() => handleDeleteModule(module.id, module.title)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -277,7 +277,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
 
               {/* Lessons */}
               {expandedModules.has(module.id) && (
-                <div className="divide-y">
+                <div className="divide-y divide-border">
                   {module.lessons.map((lesson, lessonIdx) => (
                     <LessonEditor
                       key={lesson.id}
@@ -297,7 +297,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="gap-1.5 text-neutral-500"
+                      className="gap-1.5 text-muted-foreground"
                       onClick={() => handleAddLesson(module.id)}
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -340,13 +340,13 @@ export default function CurriculumEditorPage({ params }: PageProps) {
       <div className="flex justify-between">
         <Link
           href={`/admin/courses/${courseId}/edit`}
-          className="text-sm text-neutral-500 hover:text-neutral-900"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           ← Back to course settings
         </Link>
         <Link
           href="/admin/courses"
-          className="text-sm text-neutral-500 hover:text-neutral-900"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           All courses →
         </Link>
@@ -379,11 +379,11 @@ function LessonEditor({
   };
 
   return (
-    <div className="space-y-2 px-4 py-3 hover:bg-neutral-50/50">
+    <div className="space-y-2 px-4 py-3 hover:bg-muted/40 transition-colors">
       {/* Row 1: Title + Type + Free + Delete */}
       <div className="flex flex-wrap items-center gap-2">
-        <GripVertical className="h-3.5 w-3.5 text-neutral-200 shrink-0" />
-        <span className="text-xs font-medium text-neutral-400 w-5 shrink-0">
+        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+        <span className="text-xs font-medium text-muted-foreground w-5 shrink-0">
           {index + 1}
         </span>
         <Input
@@ -409,7 +409,7 @@ function LessonEditor({
           </SelectContent>
         </Select>
         <div className="flex items-center gap-1.5 shrink-0">
-          <Label className="text-xs text-neutral-400">Free</Label>
+          <Label className="text-xs text-muted-foreground">Free</Label>
           <Switch
             checked={lesson.is_free}
             onCheckedChange={(checked) => onUpdate({ is_free: checked })}
@@ -419,7 +419,7 @@ function LessonEditor({
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-red-400 hover:text-red-600 shrink-0"
+          className="h-7 w-7 text-destructive hover:text-destructive shrink-0"
           onClick={onDelete}
         >
           <Trash2 className="h-3 w-3" />
@@ -431,9 +431,9 @@ function LessonEditor({
         <div className="space-y-2 pl-0 sm:pl-9">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="relative flex-1">
-              <Youtube className="absolute left-2.5 top-2 h-3.5 w-3.5 text-red-400" />
+              <Youtube className="absolute left-2.5 top-2 h-3.5 w-3.5 text-red-500" />
               <textarea
-                className="w-full rounded-md border border-neutral-200 bg-white py-1.5 pl-8 pr-3 text-xs font-mono placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 resize-none"
+                className="w-full rounded-md border border-border bg-background py-1.5 pl-8 pr-3 text-xs font-mono text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 resize-none"
                 placeholder='Paste embed code — <iframe src="https://www.youtube.com/embed/...">'
                 value={youtubeUrl}
                 onChange={(e) => setYoutubeUrl(e.target.value)}
@@ -456,7 +456,7 @@ function LessonEditor({
                   onUpdate({ duration_minutes: parseInt(duration) || 0 })
                 }
               />
-              <span className="text-xs text-neutral-400">min</span>
+              <span className="text-xs text-muted-foreground">min</span>
             </div>
           </div>
           {/* Live preview */}
@@ -464,7 +464,7 @@ function LessonEditor({
             const idMatch = youtubeUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
             const videoId = idMatch?.[1];
             return videoId ? (
-              <div className="aspect-video w-full max-w-md overflow-hidden rounded-lg border bg-black">
+              <div className="aspect-video w-full max-w-md overflow-hidden rounded-lg border border-border bg-black">
                 <iframe
                   src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&color=white`}
                   className="h-full w-full"

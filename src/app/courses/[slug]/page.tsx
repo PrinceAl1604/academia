@@ -58,7 +58,7 @@ export default function CourseDetailPage({ params }: PageProps) {
     return (
       <SidebarLayout>
         <div className="flex items-center justify-center py-32">
-          <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </SidebarLayout>
     );
@@ -247,35 +247,35 @@ export default function CourseDetailPage({ params }: PageProps) {
           <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
             {/* What's included — horizontal cards */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-10">
-              <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <Clock className="h-5 w-5 text-neutral-400 shrink-0" />
+              <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+                <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">{durationHours}h</p>
-                  <p className="text-xs text-neutral-500">{t.courseDetail.ofContent}</p>
+                  <p className="text-sm font-semibold text-foreground">{durationHours}h</p>
+                  <p className="text-xs text-muted-foreground">{t.courseDetail.ofContent}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <GraduationCap className="h-5 w-5 text-neutral-400 shrink-0" />
+              <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+                <GraduationCap className="h-5 w-5 text-muted-foreground shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">{totalLessons}</p>
-                  <p className="text-xs text-neutral-500">{t.courseDetail.lessons}</p>
+                  <p className="text-sm font-semibold text-foreground">{totalLessons}</p>
+                  <p className="text-xs text-muted-foreground">{t.courseDetail.lessons}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <Infinity className="h-5 w-5 text-neutral-400 shrink-0" />
+              <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+                <Infinity className="h-5 w-5 text-muted-foreground shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">{t.courseDetail.lifetime}</p>
-                  <p className="text-xs text-neutral-500">{t.courseDetail.accessLabel}</p>
+                  <p className="text-sm font-semibold text-foreground">{t.courseDetail.lifetime}</p>
+                  <p className="text-xs text-muted-foreground">{t.courseDetail.accessLabel}</p>
                 </div>
               </div>
             </div>
 
             {/* Curriculum */}
             <div>
-              <h2 className="text-xl font-bold text-neutral-900 dark:text-white">
+              <h2 className="text-xl font-bold text-foreground">
                 {t.courseDetail.curriculum}
               </h2>
-              <p className="mt-1 text-sm text-neutral-500">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {totalChapters} {t.courseDetail.chapters} · {totalLessons} {t.courseDetail.lessons} · {durationHours}h
               </p>
 
@@ -294,7 +294,7 @@ export default function CourseDetailPage({ params }: PageProps) {
                   ))}
                 </div>
               ) : (
-                <p className="mt-6 text-sm text-neutral-400 italic">
+                <p className="mt-6 text-sm text-muted-foreground italic">
                   {t.courseDetail.curriculumSoon}
                 </p>
               )}
@@ -303,14 +303,14 @@ export default function CourseDetailPage({ params }: PageProps) {
             {/* Tags */}
             {course.tags && course.tags.length > 0 && (
               <div className="mt-12">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
+                <h3 className="text-sm font-semibold text-foreground">
                   {t.courseDetail.skillsYoullLearn}
                 </h3>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {course.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-1 text-xs text-neutral-600 dark:text-neutral-300"
+                      className="rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground"
                     >
                       {tag}
                     </span>
@@ -344,27 +344,27 @@ function ChapterCard({
   const [expanded, setExpanded] = useState(index === 0);
 
   return (
-    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
       {/* Chapter header */}
       <button
-        className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+        className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-muted/40 transition-colors"
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800 text-sm font-bold text-neutral-600 dark:text-neutral-300 shrink-0">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-sm font-bold text-muted-foreground shrink-0">
           {index + 1}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
+          <p className="text-sm font-semibold text-foreground truncate">
             {module.title}
           </p>
-          <p className="text-xs text-neutral-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {module.lessons.length} {t.courseDetail.lessons}
             {module.description && ` · ${module.description}`}
           </p>
         </div>
         <svg
-          className={`h-5 w-5 text-neutral-400 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`}
+          className={`h-5 w-5 text-muted-foreground shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -375,7 +375,7 @@ function ChapterCard({
 
       {/* Lessons */}
       {expanded && (
-        <div className="border-t border-neutral-100 dark:border-neutral-800">
+        <div className="border-t border-border">
           {module.lessons.map((lesson, lIdx) => {
             const canPlay = !isLocked || lesson.is_free;
             const lessonLink =
@@ -386,51 +386,51 @@ function ChapterCard({
             return (
               <div key={lesson.id}>
                 {lIdx > 0 && (
-                  <div className="mx-5 border-t border-neutral-50 dark:border-neutral-800/50" />
+                  <div className="mx-5 border-t border-border/60" />
                 )}
                 {lessonLink ? (
                   <Link
                     href={lessonLink}
-                    className="flex items-center gap-4 px-5 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors group"
+                    className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/40 transition-colors group"
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 group-hover:bg-neutral-200 dark:group-hover:bg-neutral-700 transition-colors shrink-0">
-                      <Play className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted group-hover:bg-primary/10 transition-colors shrink-0">
+                      <Play className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-neutral-700 dark:text-neutral-300 group-hover:text-neutral-900 dark:group-hover:text-white transition-colors truncate">
+                      <p className="text-sm text-foreground/80 group-hover:text-foreground transition-colors truncate">
                         {lesson.title}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {lesson.is_free && (
-                        <span className="rounded-full bg-green-50 dark:bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">
+                        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
                           {t.courseDetail.free}
                         </span>
                       )}
                       {lesson.duration_minutes > 0 && (
-                        <span className="text-xs text-neutral-400">
+                        <span className="text-xs text-muted-foreground">
                           {lesson.duration_minutes}min
                         </span>
                       )}
                     </div>
                   </Link>
                 ) : (
-                  <div className="flex items-center gap-4 px-5 py-3.5 opacity-50">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 shrink-0">
-                      <Lock className="h-3.5 w-3.5 text-neutral-400" />
+                  <div className="flex items-center gap-4 px-5 py-3.5 opacity-60">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-neutral-500 truncate">
+                      <p className="text-sm text-muted-foreground truncate">
                         {lesson.title}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {lesson.duration_minutes > 0 && (
-                        <span className="text-xs text-neutral-400">
+                        <span className="text-xs text-muted-foreground">
                           {lesson.duration_minutes}min
                         </span>
                       )}
-                      <Lock className="h-3 w-3 text-neutral-300" />
+                      <Lock className="h-3 w-3 text-muted-foreground/60" />
                     </div>
                   </div>
                 )}

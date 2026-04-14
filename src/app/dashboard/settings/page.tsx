@@ -249,10 +249,10 @@ export default function SettingsPage() {
     <>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             {t.settings.title}
           </h1>
-          <p className="mt-1 text-neutral-500 dark:text-neutral-400">
+          <p className="mt-1 text-muted-foreground">
             {t.settings.manageAccount}
           </p>
         </div>
@@ -271,8 +271,8 @@ export default function SettingsPage() {
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   activeTab === tab.id
-                    ? "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white"
-                    : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800/50 dark:hover:text-white"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 <tab.icon className="h-4 w-4" />
@@ -293,8 +293,8 @@ export default function SettingsPage() {
                 className={cn(
                   "flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors",
                   activeTab === tab.id
-                    ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                    : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 )}
               >
                 <tab.icon className="h-3 w-3" />
@@ -307,27 +307,27 @@ export default function SettingsPage() {
           <div className="flex-1 max-w-2xl" role="tabpanel" id={`panel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
             {/* ─── Profile ──────────────────────────────────────── */}
             {activeTab === "profile" && (
-              <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
-                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold text-foreground">
                   {t.settings.personalInfo}
                 </h3>
-                <Separator className="my-4 dark:bg-neutral-800" />
+                <Separator className="my-4" />
 
                 <div className="flex items-center gap-4 mb-6">
                   <Avatar className="h-16 w-16">
-                    <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-lg font-semibold dark:text-neutral-300">
+                    <AvatarFallback className="bg-muted text-lg font-semibold text-muted-foreground">
                       {(userName || "U").split(" ").map((n) => n[0]).join("")}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold text-neutral-900 dark:text-white">{userName || "User"}</p>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">{user?.email}</p>
+                    <p className="font-semibold text-foreground">{userName || "User"}</p>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
                     <div className="mt-1 flex items-center gap-2">
                       <Badge className={isPro ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : ""}>
                         {isPro ? "Pro" : "Free"}
                       </Badge>
                       {user?.created_at && (
-                        <span className="flex items-center gap-1 text-xs text-neutral-400 dark:text-neutral-500">
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground/70">
                           <Calendar className="h-3 w-3" />
                           {t.profile.memberSince} {new Date(user.created_at).toLocaleDateString(language === "en" ? "en-US" : "fr-FR", { month: "short", year: "numeric" })}
                         </span>
@@ -338,19 +338,19 @@ export default function SettingsPage() {
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="dark:text-neutral-300">{t.settings.fullName}</Label>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} className="dark:bg-neutral-800 dark:border-neutral-700" />
+                    <Label>{t.settings.fullName}</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} />
                   </div>
                   <div className="space-y-2">
-                    <Label className="dark:text-neutral-300">Email</Label>
-                    <Input value={user?.email || ""} disabled className="opacity-60 dark:bg-neutral-800 dark:border-neutral-700" />
-                    <p className="text-xs text-neutral-400">{t.settings.emailCantChange}</p>
+                    <Label>Email</Label>
+                    <Input value={user?.email || ""} disabled className="opacity-60" />
+                    <p className="text-xs text-muted-foreground/70">{t.settings.emailCantChange}</p>
                   </div>
 
                   {/* Referral code */}
                   {referralCode && (
                     <div className="space-y-2">
-                      <Label className="dark:text-neutral-300 flex items-center gap-1.5">
+                      <Label className="flex items-center gap-1.5">
                         <Gift className="h-3.5 w-3.5 text-amber-500" />
                         {t.referral.referralCode}
                       </Label>
@@ -358,7 +358,7 @@ export default function SettingsPage() {
                         <Input
                           value={referralCode}
                           readOnly
-                          className="font-mono text-sm tracking-wider uppercase opacity-80 dark:bg-neutral-800 dark:border-neutral-700"
+                          className="font-mono text-sm tracking-wider uppercase opacity-80"
                         />
                         <Button
                           variant="outline"
@@ -370,10 +370,10 @@ export default function SettingsPage() {
                             setTimeout(() => setCodeCopied(false), 2000);
                           }}
                         >
-                          {codeCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                          {codeCopied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
                         </Button>
                       </div>
-                      <p className="text-xs text-neutral-400">
+                      <p className="text-xs text-muted-foreground/70">
                         {t.referral.codeHint}
                       </p>
                     </div>
@@ -381,7 +381,7 @@ export default function SettingsPage() {
 
                   <div className="flex items-center gap-3 justify-end pt-2">
                     {saved && (
-                      <span className="flex items-center gap-1 text-sm text-green-600">
+                      <span className="flex items-center gap-1 text-sm text-primary">
                         <Check className="h-4 w-4" /> {t.settings.saved}
                       </span>
                     )}
@@ -395,19 +395,19 @@ export default function SettingsPage() {
 
             {/* ─── Appearance ────────────────────────────────────── */}
             {activeTab === "appearance" && (
-              <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
-                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold text-foreground">
                   {t.settings.appearance}
                 </h3>
-                <Separator className="my-4 dark:bg-neutral-800" />
+                <Separator className="my-4" />
 
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      {darkMode ? <Moon className="h-5 w-5 text-neutral-400" /> : <Sun className="h-5 w-5 text-amber-500" />}
+                      {darkMode ? <Moon className="h-5 w-5 text-muted-foreground" /> : <Sun className="h-5 w-5 text-amber-500" />}
                       <div>
-                        <Label className="dark:text-neutral-300">{t.settings.darkMode}</Label>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                        <Label>{t.settings.darkMode}</Label>
+                        <p className="text-sm text-muted-foreground">
                           {t.settings.darkModeDesc}
                         </p>
                       </div>
@@ -415,12 +415,12 @@ export default function SettingsPage() {
                     <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
                   </div>
 
-                  <Separator className="dark:bg-neutral-800" />
+                  <Separator />
 
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <Label className="dark:text-neutral-300">{t.settings.language}</Label>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      <Label>{t.settings.language}</Label>
+                      <p className="text-sm text-muted-foreground">
                         {t.settings.languageChoose}
                       </p>
                     </div>
@@ -430,8 +430,8 @@ export default function SettingsPage() {
                         className={cn(
                           "rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:px-4",
                           language === "fr"
-                            ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                            : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-accent"
                         )}
                       >
                         Fran\u00e7ais
@@ -441,8 +441,8 @@ export default function SettingsPage() {
                         className={cn(
                           "rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:px-4",
                           language === "en"
-                            ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                            : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:bg-accent"
                         )}
                       >
                         English
@@ -455,27 +455,27 @@ export default function SettingsPage() {
 
             {/* ─── Notifications ─────────────────────────────────── */}
             {activeTab === "notifications" && (
-              <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
+              <Card className="p-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">{t.settings.notifications}</h3>
+                  <h3 className="text-lg font-semibold text-foreground">{t.settings.notifications}</h3>
                   {notifSaving && (
-                    <span className="flex items-center gap-1.5 text-xs text-neutral-400">
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Loader2 className="h-3 w-3 animate-spin" /> {t.settings.notifSaving}
                     </span>
                   )}
                   {notifSaved && !notifSaving && (
-                    <span className="flex items-center gap-1.5 text-xs text-green-600">
+                    <span className="flex items-center gap-1.5 text-xs text-primary">
                       <Check className="h-3 w-3" /> {t.settings.notifSaved}
                     </span>
                   )}
                 </div>
-                <Separator className="my-4 dark:bg-neutral-800" />
+                <Separator className="my-4" />
 
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="dark:text-neutral-300">{t.settings.courseUpdates}</Label>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      <Label>{t.settings.courseUpdates}</Label>
+                      <p className="text-sm text-muted-foreground">
                         {t.settings.courseUpdatesDesc}
                       </p>
                     </div>
@@ -487,8 +487,8 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="dark:text-neutral-300">{t.settings.newCourses}</Label>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      <Label>{t.settings.newCourses}</Label>
+                      <p className="text-sm text-muted-foreground">
                         {t.settings.newCoursesDesc}
                       </p>
                     </div>
@@ -500,8 +500,8 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="dark:text-neutral-300">{t.settings.weeklyDigest}</Label>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      <Label>{t.settings.weeklyDigest}</Label>
+                      <p className="text-sm text-muted-foreground">
                         {t.settings.weeklyDigestDesc}
                       </p>
                     </div>
@@ -513,8 +513,8 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="dark:text-neutral-300">{t.settings.promotional}</Label>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      <Label>{t.settings.promotional}</Label>
+                      <p className="text-sm text-muted-foreground">
                         {t.settings.promotionalDesc}
                       </p>
                     </div>
@@ -532,20 +532,20 @@ export default function SettingsPage() {
             {activeTab === "subscription" && (
               <div className="space-y-6">
                 {/* Current Plan */}
-                <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
+                <Card className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "flex h-10 w-10 items-center justify-center rounded-full",
-                        isPro ? "bg-amber-100 dark:bg-amber-900/30" : "bg-neutral-100 dark:bg-neutral-800"
+                        isPro ? "bg-amber-100 dark:bg-amber-900/30 ring-1 ring-amber-200/60 dark:ring-amber-700/40" : "bg-muted"
                       )}>
-                        <Crown className={cn("h-5 w-5", isPro ? "text-amber-600 dark:text-amber-400" : "text-neutral-400")} />
+                        <Crown className={cn("h-5 w-5", isPro ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                        <h3 className="text-lg font-semibold text-foreground">
                           {isPro ? t.settings.proPlan : t.settings.freePlan}
                         </h3>
-                        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                        <p className="text-sm text-muted-foreground">
                           {isPro ? t.settings.proFullAccess : t.settings.freeCoursesOnly}
                         </p>
                       </div>
@@ -557,11 +557,11 @@ export default function SettingsPage() {
 
                   {isPro && proExpiresAt && (
                     <>
-                      <Separator className="my-4 dark:bg-neutral-800" />
-                      <div className="flex items-center justify-between rounded-lg bg-neutral-50 dark:bg-neutral-800 px-4 py-3">
+                      <Separator className="my-4" />
+                      <div className="flex items-center justify-between rounded-lg bg-muted/40 px-4 py-3">
                         <div>
-                          <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.settings.expiresOn}</p>
-                          <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                          <p className="text-xs text-muted-foreground">{t.settings.expiresOn}</p>
+                          <p className="text-sm font-medium text-foreground">
                             {new Date(proExpiresAt).toLocaleDateString(language === "en" ? "en-US" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                           </p>
                         </div>
@@ -577,20 +577,20 @@ export default function SettingsPage() {
 
                 {/* Upgrade / Renew */}
                 {!isPro || isExpiringSoon ? (
-                  <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
-                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                  <Card className="p-6">
+                    <h3 className="text-lg font-semibold text-foreground">
                       {isPro ? t.settings.renewSub : t.settings.upgradePro}
                     </h3>
-                    <Separator className="my-4 dark:bg-neutral-800" />
+                    <Separator className="my-4" />
 
                     {/* Step 1: Pay */}
                     <div className="flex items-start gap-3 mb-4">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 dark:bg-white text-xs font-bold text-white dark:text-neutral-900 shrink-0">1</div>
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground shrink-0">1</div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                        <p className="text-sm font-medium text-foreground">
                           {t.settings.purchaseKey}
                         </p>
-                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           15,000 FCFA / {t.settings.month} (~$27 USD)
                         </p>
                         <Button
@@ -607,28 +607,28 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    <Separator className="my-4 dark:bg-neutral-800" />
+                    <Separator className="my-4" />
 
                     {/* Step 2: Activate */}
                     <div className="flex items-start gap-3">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 dark:bg-white text-xs font-bold text-white dark:text-neutral-900 shrink-0">2</div>
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground shrink-0">2</div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                        <p className="text-sm font-medium text-foreground">
                           {t.settings.activateKey}
                         </p>
 
                         {keySuccess ? (
-                          <div className="mt-3 flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-900/20 p-3">
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                            <p className="text-sm text-green-700 dark:text-green-400">{t.settings.proActivated}</p>
+                          <div className="mt-3 flex items-center gap-2 rounded-lg bg-primary/10 ring-1 ring-primary/15 p-3">
+                            <CheckCircle className="h-4 w-4 text-primary" />
+                            <p className="text-sm text-primary font-medium">{t.settings.proActivated}</p>
                           </div>
                         ) : (
                           <div className="mt-3 flex gap-2">
                             <div className="relative flex-1">
-                              <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                              <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                               <Input
                                 placeholder="XXXX-XXXX-XXXX-XXXX"
-                                className="pl-10 font-mono text-sm uppercase dark:bg-neutral-800 dark:border-neutral-700"
+                                className="pl-10 font-mono text-sm uppercase"
                                 value={licenceKey}
                                 onChange={(e) => { setLicenceKey(e.target.value); setKeyError(null); }}
                                 onKeyDown={(e) => e.key === "Enter" && handleActivateKey()}
@@ -651,55 +651,55 @@ export default function SettingsPage() {
             {/* ─── Security ──────────────────────────────────────── */}
             {activeTab === "security" && (
               <div className="space-y-6">
-                <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
+                <Card className="p-6">
                   <div className="flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-neutral-500" />
-                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold text-foreground">
                       {t.settings.changePassword}
                     </h3>
                   </div>
-                  <Separator className="my-4 dark:bg-neutral-800" />
+                  <Separator className="my-4" />
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="dark:text-neutral-300">{t.settings.newPassword}</Label>
+                      <Label>{t.settings.newPassword}</Label>
                       <div className="relative">
                         <Input
                           type={showNewPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pr-12 dark:bg-neutral-800 dark:border-neutral-700"
+                          className="pr-12"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                         />
                         <button
                           type="button"
                           onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground transition-colors"
                         >
                           {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label className="dark:text-neutral-300">{t.settings.confirmPassword}</Label>
+                      <Label>{t.settings.confirmPassword}</Label>
                       <div className="relative">
                         <Input
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pr-12 dark:bg-neutral-800 dark:border-neutral-700"
+                          className="pr-12"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                         />
                         <button
                           type="button"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-foreground transition-colors"
                         >
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
                     </div>
                     {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
-                    {passwordSuccess && <p className="text-xs text-green-600">{t.settings.passwordUpdated}</p>}
+                    {passwordSuccess && <p className="text-xs text-primary">{t.settings.passwordUpdated}</p>}
                     <Button onClick={handleChangePassword} disabled={passwordSaving || !newPassword}>
                       {passwordSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                       {t.settings.updatePassword}
@@ -707,16 +707,16 @@ export default function SettingsPage() {
                   </div>
                 </Card>
 
-                <Card className="border-red-200 dark:border-red-900/50 p-6 dark:bg-neutral-900">
+                <Card className="border-red-200 dark:border-red-900/50 p-6">
                   <h3 className="text-lg font-semibold text-red-600">{t.settings.dangerZone}</h3>
-                  <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {t.settings.irreversible}
                   </p>
-                  <Separator className="my-4 dark:bg-neutral-800" />
+                  <Separator className="my-4" />
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-neutral-900 dark:text-white">{t.settings.deleteAccount}</p>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.settings.deleteDesc}</p>
+                      <p className="text-sm font-medium text-foreground">{t.settings.deleteAccount}</p>
+                      <p className="text-sm text-muted-foreground">{t.settings.deleteDesc}</p>
                     </div>
                     <Button
                       variant="destructive"
@@ -736,30 +736,30 @@ export default function SettingsPage() {
       {/* ─── Delete Account Confirmation Modal ─────────────────── */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-xl bg-white dark:bg-neutral-900 p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-xl bg-card border border-border p-6 shadow-2xl">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
                   <AlertTriangle className="h-5 w-5 text-red-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-foreground">
                   {t.settings.deleteConfirmTitle}
                 </h3>
               </div>
               <button
                 onClick={() => { setShowDeleteModal(false); setDeleteConfirmEmail(""); setDeleteError(null); }}
-                className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800"
+                className="rounded-lg p-1 text-muted-foreground/70 hover:bg-muted hover:text-foreground transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
+            <p className="mt-4 text-sm text-muted-foreground">
               {t.settings.deleteConfirmDesc}
             </p>
 
             <div className="mt-4 space-y-2">
-              <Label className="text-sm text-neutral-700 dark:text-neutral-300">
+              <Label className="text-sm">
                 {t.settings.deleteConfirmLabel}
               </Label>
               <Input
@@ -767,7 +767,6 @@ export default function SettingsPage() {
                 placeholder={user?.email || ""}
                 value={deleteConfirmEmail}
                 onChange={(e) => { setDeleteConfirmEmail(e.target.value); setDeleteError(null); }}
-                className="dark:bg-neutral-800 dark:border-neutral-700"
               />
             </div>
 
