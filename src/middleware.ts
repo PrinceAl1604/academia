@@ -55,7 +55,20 @@ export async function middleware(request: NextRequest) {
     pathname === "/reset-password";
 
   if (isAuthRoute && user) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    // Send admins to /admin, students to home page
+    const metaRole = user.user_metadata?.role;
+    if (metaRole === "admin") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // ─── Home page: redirect admins to /admin ────────────────────
+  if (pathname === "/" && user) {
+    const metaRole = user.user_metadata?.role;
+    if (metaRole === "admin") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
   }
 
   // ─── Admin routes: verify admin role ──────────────────────────
@@ -92,6 +105,7 @@ export async function middleware(request: NextRequest) {
  */
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
     "/admin/:path*",
     "/sign-in",

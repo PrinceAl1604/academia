@@ -29,7 +29,7 @@ function SignInForm() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -38,8 +38,14 @@ function SignInForm() {
       setError(error.message);
       setLoading(false);
     } else {
-      const redirect = searchParams.get("redirect") || "/";
-      router.push(redirect);
+      const explicit = searchParams.get("redirect");
+      if (explicit) {
+        router.push(explicit);
+      } else {
+        // Send admins to /admin, students to home
+        const role = data.user?.user_metadata?.role;
+        router.push(role === "admin" ? "/admin" : "/");
+      }
     }
   };
 
