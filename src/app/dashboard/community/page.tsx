@@ -576,6 +576,14 @@ export default function CommunityPage() {
       .slice(0, 8);
   }, [mentionQuery, mentionableUsers, user]);
 
+  /* ─── Roster names for ChatMarkdown (stable reference) ────── */
+  // Memoized so ChatMarkdown doesn't rebuild its mention regex on every
+  // keystroke while the user is typing in the composer.
+  const mentionNames = useMemo(
+    () => mentionableUsers.map((u) => u.name),
+    [mentionableUsers]
+  );
+
   // Clamp the highlighted index whenever the filtered list shrinks beneath
   // the current cursor (otherwise Arrow+Enter could select a stale row).
   useEffect(() => {
@@ -1097,7 +1105,11 @@ export default function CommunityPage() {
                   {msg.user?.name || "User"}:
                 </span>
                 <div className="min-w-0 text-neutral-600 dark:text-neutral-400">
-                  <ChatMarkdown content={msg.content} />
+                  <ChatMarkdown
+                    content={msg.content}
+                    mentionableNames={mentionNames}
+                    currentUserName={userName ?? undefined}
+                  />
                 </div>
               </div>
             ))}
@@ -1263,7 +1275,11 @@ export default function CommunityPage() {
                       </div>
                     ) : (
                       <div className="text-sm text-neutral-700 dark:text-neutral-300">
-                        <ChatMarkdown content={msg.content} />
+                        <ChatMarkdown
+                          content={msg.content}
+                          mentionableNames={mentionNames}
+                          currentUserName={userName ?? undefined}
+                        />
                         {msg.edited_at && (
                           <span
                             className="ml-1.5 text-[10px] text-neutral-400 dark:text-neutral-500"
