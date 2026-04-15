@@ -30,6 +30,10 @@ import {
   Bell,
   AtSign,
   CheckCheck,
+  Reply,
+  MessageSquare,
+  CornerDownRight,
+  X,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -73,8 +77,15 @@ interface ChatMessage {
   is_deleted: boolean;
   created_at: string;
   edited_at: string | null;
+  // Thread root ref. NULL = top-level message, non-null = reply.
+  parent_message_id: string | null;
   user?: { name: string; role: string | null };
   reactions?: ChatReaction[];
+  // PostgREST embedded-count aggregate. Returned as `[{ count: N }]`;
+  // normalizeReplyCount() hoists the number onto `reply_count` for the
+  // rest of the code to read directly.
+  replies?: Array<{ count: number }>;
+  reply_count?: number;
 }
 
 interface ChatMention {
@@ -118,6 +129,24 @@ function ChannelIcon({
     default:
       return <Hash className={className} />;
   }
+}
+
+/**
+ * Flatten PostgREST's `replies:chat_messages!parent_message_id(count)`
+ * embed — which comes back as `[{ count: 3 }]` — into a plain `reply_count`
+ * field. We do this once at the data-fetching boundary so the rest of the
+ * render code can just read `msg.reply_count` without remembering the
+ * shape of the aggregate response.
+ *
+ * For single-row fetches (realtime hydrations) the embed isn't used, so
+ * reply_count stays undefined — treat that as "unknown, render no chip"
+ * in the UI.
+ */
+function normalizeReplyCount(msg: ChatMessage): ChatMessage {
+  if (msg.replies && msg.replies.length > 0) {
+    return { ...msg, reply_count: msg.replies[0].count };
+  }
+  return msg;
 }
 
 /* ─── Reaction helpers ────────────────────────────────────── */
@@ -192,6 +221,37 @@ export default function CommunityPage() {
     Array<{ name: string; user_id: string }>
   >([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  /* ─── Thread state ──────────────────────────────────────── */
+  // Which thread parents are currently expanded in the UI. Kept as a Set
+  // for O(1) toggle; a Map<id, boolean> would be equivalent but noisier.
+  const [expandedThreads, setExpandedThreads] = useState<Set<string>>(
+    new Set()
+  );
+  // Cached replies per parent. Populated on first expand; updated by the
+  // realtime INSERT handler so open threads stay live without a re-fetch.
+  const [threadReplies, setThreadReplies] = useState<
+    Map<string, ChatMessage[]>
+  >(new Map());
+  // Tracks an in-flight fetch per parent so rapid toggle-spamming doesn't
+  // kick off duplicate requests.
+  const loadingThreadsRef = useRef<Set<string>>(new Set());
+  // The parent whose reply composer is currently open. Only one active
+  // reply draft at a time — keeps the UI tidy and state minimal.
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState("");
+  const [replySending, setReplySending] = useState(false);
+  // Parallel mention state for the reply composer. We don't share with the
+  // main composer because both can be open simultaneously (reply open while
+  // user edits main input).
+  const [replyMentionQuery, setReplyMentionQuery] = useState<string | null>(
+    null
+  );
+  const [replyMentionIndex, setReplyMentionIndex] = useState(0);
+  const [replyPendingMentions, setReplyPendingMentions] = useState<
+    Array<{ name: string; user_id: string }>
+  >([]);
+  const replyInputRef = useRef<HTMLInputElement>(null);
 
   /* ─── Unread mentions feed ──────────────────────────────── */
   // Latest unread pings for the current user across every channel. Drives
@@ -300,11 +360,16 @@ export default function CommunityPage() {
     await Promise.all(
       channels.map(async (ch) => {
         const lastRead = readMap.get(ch.id);
+        // Replies live inside threads, not in the main stream — counting
+        // them here would inflate the unread badge above what the user
+        // actually sees when they open the channel. Pings in threads are
+        // surfaced via the separate @-mention feed instead.
         let query = supabase
           .from("chat_messages")
           .select("*", { count: "exact", head: true })
           .eq("channel_id", ch.id)
           .eq("is_deleted", false)
+          .is("parent_message_id", null)
           .neq("user_id", user.id);
 
         if (lastRead) query = query.gt("created_at", lastRead);
@@ -332,14 +397,23 @@ export default function CommunityPage() {
     // Fetch the NEWEST page (descending), then reverse for chronological display.
     // The old ascending+limit query returned the oldest messages in the channel,
     // which is wrong once a channel has more than MESSAGES_PER_PAGE rows.
+    // Only top-level messages in the stream (replies render inside their
+    // parent's expanded thread, not as standalone rows). The
+    // `replies:chat_messages!parent_message_id(count)` embed gives us the
+    // reply count per message inline, avoiding a second query.
     const { data } = await supabase
       .from("chat_messages")
-      .select("*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji)")
+      .select(
+        "*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
+      )
       .eq("channel_id", channelId)
+      .is("parent_message_id", null)
       .order("created_at", { ascending: false })
       .limit(MESSAGES_PER_PAGE);
 
-    const msgs = ((data as ChatMessage[]) || []).reverse();
+    const msgs = ((data as ChatMessage[]) || [])
+      .map(normalizeReplyCount)
+      .reverse();
     setMessages(msgs);
     setPinnedMessages(msgs.filter((m) => m.is_pinned && !m.is_deleted));
     // If we got fewer than a full page, there's nothing older to load
@@ -368,13 +442,18 @@ export default function CommunityPage() {
     const oldestMsg = messages[0];
     const { data } = await supabase
       .from("chat_messages")
-      .select("*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji)")
+      .select(
+        "*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
+      )
       .eq("channel_id", activeChannelRef.current)
+      .is("parent_message_id", null)
       .lt("created_at", oldestMsg.created_at)
       .order("created_at", { ascending: false })
       .limit(MESSAGES_PER_PAGE);
 
-    const older = ((data as ChatMessage[]) || []).reverse();
+    const older = ((data as ChatMessage[]) || [])
+      .map(normalizeReplyCount)
+      .reverse();
 
     if (older.length < MESSAGES_PER_PAGE) setHasMore(false);
 
@@ -447,12 +526,39 @@ export default function CommunityPage() {
         async (payload) => {
           const { data } = await supabase
             .from("chat_messages")
-            .select("*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji)")
+            .select(
+              "*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
+            )
             .eq("id", payload.new.id)
             .single();
           if (!data) return;
 
-          const msg = data as ChatMessage;
+          const msg = normalizeReplyCount(data as ChatMessage);
+
+          // Reply path: route to the parent's thread view instead of the
+          // main stream. Always bump parent's reply_count so the chip
+          // counter stays accurate even when the thread is collapsed.
+          if (msg.parent_message_id) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === msg.parent_message_id
+                  ? { ...m, reply_count: (m.reply_count ?? 0) + 1 }
+                  : m
+              )
+            );
+            setThreadReplies((prev) => {
+              // Only populate if we've actually expanded this thread; adding
+              // replies blindly would memory-leak every chat_messages insert
+              // into the cache over time.
+              if (!prev.has(msg.parent_message_id!)) return prev;
+              const list = prev.get(msg.parent_message_id!) ?? [];
+              if (list.some((r) => r.id === msg.id)) return prev; // dedup own-echo
+              const next = new Map(prev);
+              next.set(msg.parent_message_id!, [...list, msg]);
+              return next;
+            });
+            return;
+          }
 
           if (msg.channel_id === activeChannelRef.current) {
             // Message in active channel → add to list
@@ -485,19 +591,68 @@ export default function CommunityPage() {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "chat_messages" },
         async (payload) => {
-          const updated = payload.new as { id: string; channel_id: string };
+          const updated = payload.new as {
+            id: string;
+            channel_id: string;
+            parent_message_id: string | null;
+          };
           if (updated.channel_id !== activeChannelRef.current) return;
 
           const { data } = await supabase
             .from("chat_messages")
-            .select("*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji)")
+            .select(
+              "*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
+            )
             .eq("id", updated.id)
             .single();
           if (!data) return;
 
-          const msg = data as ChatMessage;
+          const msg = normalizeReplyCount(data as ChatMessage);
+
+          // Reply edit/delete: update the thread cache and — if a reply
+          // just transitioned to is_deleted — decrement the parent's
+          // reply_count so the chip counter reflects live replies only.
+          // Detecting the transition requires the previous cached value;
+          // when the thread has never been expanded we can't tell, so we
+          // skip the decrement (the count will self-correct on next page
+          // load). Edit-only updates leave reply_count alone.
+          if (msg.parent_message_id) {
+            let justDeleted = false;
+            setThreadReplies((prev) => {
+              if (!prev.has(msg.parent_message_id!)) return prev;
+              const list = prev.get(msg.parent_message_id!) ?? [];
+              const before = list.find((r) => r.id === msg.id);
+              if (before && !before.is_deleted && msg.is_deleted) {
+                justDeleted = true;
+              }
+              const next = new Map(prev);
+              next.set(
+                msg.parent_message_id!,
+                list.map((r) => (r.id === msg.id ? msg : r))
+              );
+              return next;
+            });
+            if (justDeleted) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === msg.parent_message_id
+                    ? {
+                        ...m,
+                        reply_count: Math.max(0, (m.reply_count ?? 1) - 1),
+                      }
+                    : m
+                )
+              );
+            }
+            return;
+          }
+
           setMessages((prev) =>
-            prev.map((m) => (m.id === msg.id ? msg : m))
+            prev.map((m) =>
+              m.id === msg.id
+                ? { ...msg, reply_count: m.reply_count ?? msg.reply_count }
+                : m
+            )
           );
           setPinnedMessages((prev) => {
             const without = prev.filter((m) => m.id !== msg.id);
@@ -606,6 +761,21 @@ export default function CommunityPage() {
       .slice(0, 8);
   }, [mentionQuery, mentionableUsers, user]);
 
+  // Same filter as the main composer but keyed off the reply-composer's
+  // own query state, so both dropdowns can be open simultaneously without
+  // cross-contaminating highlights.
+  const replyMentionMatches = useMemo(() => {
+    if (replyMentionQuery === null) return [];
+    const q = replyMentionQuery.toLowerCase();
+    return mentionableUsers
+      .filter(
+        (u) =>
+          u.id !== user?.id &&
+          (q === "" || u.name.toLowerCase().includes(q))
+      )
+      .slice(0, 8);
+  }, [replyMentionQuery, mentionableUsers, user]);
+
   /* ─── Roster names for ChatMarkdown (stable reference) ────── */
   // Memoized so ChatMarkdown doesn't rebuild its mention regex on every
   // keystroke while the user is typing in the composer.
@@ -676,6 +846,11 @@ export default function CommunityPage() {
     if (mentionIndex >= mentionMatches.length) setMentionIndex(0);
   }, [mentionMatches.length, mentionIndex]);
 
+  useEffect(() => {
+    if (replyMentionIndex >= replyMentionMatches.length)
+      setReplyMentionIndex(0);
+  }, [replyMentionMatches.length, replyMentionIndex]);
+
   /* ═══════════════════════════════════════════════════════════ */
   /*  Handlers                                                  */
   /* ═══════════════════════════════════════════════════════════ */
@@ -712,6 +887,15 @@ export default function CommunityPage() {
     // Drop any pending typeahead state so the next channel starts clean
     setMentionQuery(null);
     setPendingMentions([]);
+    // Drop thread state: cached replies are for this channel's messages,
+    // and the open reply composer is meaningless once those parents are
+    // no longer visible.
+    setExpandedThreads(new Set());
+    setThreadReplies(new Map());
+    setReplyingTo(null);
+    setReplyDraft("");
+    setReplyMentionQuery(null);
+    setReplyPendingMentions([]);
   };
 
   /**
@@ -859,6 +1043,216 @@ export default function CommunityPage() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  /* ─── Thread handlers ───────────────────────────────────── */
+
+  /**
+   * Fetch all non-deleted replies for a parent in chronological order.
+   * We load the whole thread rather than paginating — threads are
+   * typically short (< 50 messages) and pagination would complicate the
+   * realtime append flow.
+   */
+  const fetchReplies = useCallback(async (parentId: string) => {
+    if (loadingThreadsRef.current.has(parentId)) return;
+    loadingThreadsRef.current.add(parentId);
+    try {
+      const { data } = await supabase
+        .from("chat_messages")
+        .select(
+          "*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji)"
+        )
+        .eq("parent_message_id", parentId)
+        .order("created_at", { ascending: true });
+
+      const replies = ((data as ChatMessage[]) || []).map(normalizeReplyCount);
+      setThreadReplies((prev) => {
+        const next = new Map(prev);
+        next.set(parentId, replies);
+        return next;
+      });
+    } finally {
+      loadingThreadsRef.current.delete(parentId);
+    }
+  }, []);
+
+  /**
+   * Toggle a thread's expanded state. First expand triggers a fetch;
+   * subsequent expands are instant because replies stay cached (and the
+   * realtime subscription keeps them current).
+   */
+  const toggleThread = useCallback(
+    (msg: ChatMessage) => {
+      setExpandedThreads((prev) => {
+        const next = new Set(prev);
+        if (next.has(msg.id)) {
+          next.delete(msg.id);
+        } else {
+          next.add(msg.id);
+          // Lazy-fetch on first expand. Already-cached threads skip the
+          // fetch via the loadingThreadsRef guard + state check.
+          if (!threadReplies.has(msg.id)) {
+            fetchReplies(msg.id);
+          }
+        }
+        return next;
+      });
+    },
+    [threadReplies, fetchReplies]
+  );
+
+  /**
+   * Open the reply composer for a specific parent. Also auto-expands the
+   * thread so the user can see existing replies while they type.
+   */
+  const startReply = useCallback(
+    (msg: ChatMessage) => {
+      setReplyingTo(msg.id);
+      setReplyDraft("");
+      setReplyMentionQuery(null);
+      setReplyPendingMentions([]);
+      setExpandedThreads((prev) => {
+        if (prev.has(msg.id)) return prev;
+        const next = new Set(prev);
+        next.add(msg.id);
+        return next;
+      });
+      if (!threadReplies.has(msg.id)) {
+        fetchReplies(msg.id);
+      }
+      // Focus on next tick so the ref lands after the input mounts.
+      setTimeout(() => replyInputRef.current?.focus(), 0);
+    },
+    [threadReplies, fetchReplies]
+  );
+
+  const cancelReply = () => {
+    setReplyingTo(null);
+    setReplyDraft("");
+    setReplyMentionQuery(null);
+    setReplyPendingMentions([]);
+  };
+
+  /** Same `@` detection rules as the main composer. */
+  const handleReplyInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+    setReplyDraft(value);
+    const caret = e.target.selectionStart ?? value.length;
+    setReplyMentionQuery(detectMentionQuery(value, caret));
+  };
+
+  const applyReplyMention = (u: { id: string; name: string }) => {
+    const el = replyInputRef.current;
+    if (!el) return;
+    const caret = el.selectionStart ?? replyDraft.length;
+    const before = replyDraft.slice(0, caret);
+    const after = replyDraft.slice(caret);
+    const m = /@([^\s@]*)$/.exec(before);
+    if (!m) return;
+    const atStart = m.index;
+    const replacement = `@${u.name} `;
+    const nextValue = before.slice(0, atStart) + replacement + after;
+    const nextCaret = atStart + replacement.length;
+
+    setReplyDraft(nextValue);
+    setReplyPendingMentions((prev) =>
+      prev.some((p) => p.user_id === u.id)
+        ? prev
+        : [...prev, { name: u.name, user_id: u.id }]
+    );
+    setReplyMentionQuery(null);
+
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(nextCaret, nextCaret);
+    });
+  };
+
+  const handleReplySend = async (parent: ChatMessage) => {
+    const content = replyDraft.trim();
+    if (!content || !user || replySending) return;
+    setReplySending(true);
+    setReplyMentionQuery(null);
+
+    const activeMentions = replyPendingMentions.filter((m) => {
+      const escaped = m.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`(^|\\s)@${escaped}(?=\\s|$|[.,!?;:)])`);
+      return re.test(content);
+    });
+
+    const { data: inserted } = await supabase
+      .from("chat_messages")
+      .insert({
+        user_id: user.id,
+        channel_id: parent.channel_id,
+        content,
+        parent_message_id: parent.id,
+      })
+      .select("id")
+      .single();
+
+    if (inserted?.id && activeMentions.length > 0) {
+      const seen = new Set<string>();
+      const rows = activeMentions
+        .filter((m) => {
+          if (seen.has(m.user_id)) return false;
+          seen.add(m.user_id);
+          return true;
+        })
+        .map((m) => ({
+          message_id: inserted.id as string,
+          mentioned_user_id: m.user_id,
+          channel_id: parent.channel_id,
+        }));
+      supabase.from("chat_mentions").insert(rows);
+    }
+
+    // Keep the composer open after send so the user can fire off multiple
+    // replies in a row without re-clicking Reply. This matches Slack's
+    // behavior and is what "thread mode" implies.
+    setReplyDraft("");
+    setReplyPendingMentions([]);
+    setReplySending(false);
+  };
+
+  const handleReplyKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    parent: ChatMessage
+  ) => {
+    if (replyMentionQuery !== null && replyMentionMatches.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setReplyMentionIndex((i) => (i + 1) % replyMentionMatches.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setReplyMentionIndex(
+          (i) =>
+            (i - 1 + replyMentionMatches.length) % replyMentionMatches.length
+        );
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        applyReplyMention(replyMentionMatches[replyMentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setReplyMentionQuery(null);
+        return;
+      }
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleReplySend(parent);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelReply();
     }
   };
 
@@ -1531,6 +1925,282 @@ export default function CommunityPage() {
                         ) : null;
                       })()}
 
+                    {/* Thread: replies chip + expanded panel.
+                        - The chip is visible whenever there's at least
+                          one reply OR the user explicitly expanded the
+                          thread via "Reply" (in which case reply_count
+                          might still be 0 until they send).
+                        - Clicking the chip toggles expansion; the first
+                          toggle lazy-fetches the reply list. */}
+                    {!msg.is_deleted &&
+                      editingId !== msg.id &&
+                      ((msg.reply_count ?? 0) > 0 ||
+                        expandedThreads.has(msg.id)) && (
+                        <button
+                          onClick={() => toggleThread(msg)}
+                          className="mt-1 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                          aria-expanded={expandedThreads.has(msg.id)}
+                        >
+                          <MessageSquare className="h-3 w-3" />
+                          <span>
+                            {(msg.reply_count ?? 0) === 1
+                              ? isEn
+                                ? "1 reply"
+                                : "1 réponse"
+                              : isEn
+                              ? `${msg.reply_count ?? 0} replies`
+                              : `${msg.reply_count ?? 0} réponses`}
+                          </span>
+                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
+                            {expandedThreads.has(msg.id)
+                              ? isEn
+                                ? "(hide)"
+                                : "(masquer)"
+                              : isEn
+                              ? "(show)"
+                              : "(afficher)"}
+                          </span>
+                        </button>
+                      )}
+
+                    {/* Expanded thread body: replies + inline composer.
+                        Indented with a left border to visually tie them
+                        to the parent. Replies render with a more compact
+                        layout — the parent row already carries the
+                        full avatar/name/time header. */}
+                    {expandedThreads.has(msg.id) && (
+                      <div className="mt-1.5 ml-1 border-l-2 border-neutral-200 dark:border-neutral-800 pl-3 space-y-1">
+                        {(threadReplies.get(msg.id) ?? []).length === 0 &&
+                        !loadingThreadsRef.current.has(msg.id) ? (
+                          <p className="text-[11px] italic text-neutral-400 dark:text-neutral-500 py-1">
+                            {isEn
+                              ? "No replies yet — be the first"
+                              : "Aucune réponse — soyez le premier"}
+                          </p>
+                        ) : (
+                          (threadReplies.get(msg.id) ?? []).map((reply) => {
+                            const isOwnReply = reply.user_id === user?.id;
+                            const isReplyAdmin = reply.user?.role === "admin";
+                            return (
+                              <div
+                                key={reply.id}
+                                className="group/reply flex items-start gap-2 py-0.5 px-1 rounded hover:bg-neutral-50 dark:hover:bg-neutral-800/30"
+                              >
+                                <Avatar className="h-6 w-6 mt-0.5">
+                                  <AvatarFallback
+                                    className={cn(
+                                      "text-[9px] font-semibold",
+                                      isReplyAdmin
+                                        ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                                        : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                                    )}
+                                  >
+                                    {getInitials(reply.user?.name || "")}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5 mb-0.5">
+                                    <span
+                                      className={cn(
+                                        "text-xs font-semibold",
+                                        isReplyAdmin
+                                          ? "text-red-600 dark:text-red-400"
+                                          : "text-neutral-900 dark:text-white"
+                                      )}
+                                    >
+                                      {reply.user?.name || "User"}
+                                    </span>
+                                    {isReplyAdmin && (
+                                      <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[9px] px-1 py-0">
+                                        Admin
+                                      </Badge>
+                                    )}
+                                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
+                                      {formatTime(reply.created_at)}
+                                    </span>
+                                  </div>
+
+                                  {reply.is_deleted ? (
+                                    <p className="text-xs italic text-neutral-400 dark:text-neutral-500">
+                                      {isEn
+                                        ? "This message was deleted"
+                                        : "Ce message a été supprimé"}
+                                    </p>
+                                  ) : editingId === reply.id ? (
+                                    <div className="flex flex-col gap-1.5 mt-1">
+                                      <textarea
+                                        autoFocus
+                                        value={editDraft}
+                                        onChange={(e) =>
+                                          setEditDraft(e.target.value)
+                                        }
+                                        onKeyDown={(e) =>
+                                          handleEditKeyDown(e, reply)
+                                        }
+                                        rows={Math.min(
+                                          4,
+                                          Math.max(2, editDraft.split("\n").length)
+                                        )}
+                                        maxLength={1000}
+                                        className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-2 py-1 text-xs text-neutral-700 dark:text-neutral-200 resize-none focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-500/40"
+                                      />
+                                      <div className="flex items-center gap-1.5">
+                                        <Button
+                                          size="sm"
+                                          className="h-6 px-2 text-[11px]"
+                                          onClick={() => saveEdit(reply)}
+                                          disabled={!editDraft.trim()}
+                                        >
+                                          {isEn ? "Save" : "Enregistrer"}
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 px-2 text-[11px]"
+                                          onClick={cancelEdit}
+                                        >
+                                          {isEn ? "Cancel" : "Annuler"}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs text-neutral-700 dark:text-neutral-300">
+                                      <ChatMarkdown
+                                        content={reply.content}
+                                        mentionableNames={mentionNames}
+                                        currentUserName={userName ?? undefined}
+                                      />
+                                      {reply.edited_at && (
+                                        <span className="ml-1.5 text-[9px] text-neutral-400 dark:text-neutral-500">
+                                          ({isEn ? "edited" : "modifié"})
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Reply actions (hover). Scoped to
+                                    group/reply so they don't flicker on
+                                    top-level message hover. */}
+                                {!reply.is_deleted &&
+                                  editingId !== reply.id &&
+                                  (isOwnReply || isAdmin) && (
+                                    <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover/reply:opacity-100 transition-opacity">
+                                      {isOwnReply && (
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-6 w-6"
+                                          onClick={() => startEdit(reply)}
+                                          aria-label={
+                                            isEn ? "Edit reply" : "Modifier"
+                                          }
+                                        >
+                                          <Pencil className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                      {(isOwnReply || isAdmin) && (
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-6 w-6 text-red-500 hover:text-red-600"
+                                          onClick={() => deleteMessage(reply)}
+                                          aria-label={
+                                            isEn ? "Delete reply" : "Supprimer"
+                                          }
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  )}
+                              </div>
+                            );
+                          })
+                        )}
+
+                        {/* Inline reply composer. Positioned relative so
+                            the mention dropdown can anchor to it. */}
+                        {replyingTo === msg.id && canPost && (
+                          <div className="relative pt-1">
+                            {replyMentionQuery !== null &&
+                              replyMentionMatches.length > 0 && (
+                                <div className="absolute bottom-full left-0 mb-1 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg z-20 overflow-hidden">
+                                  {replyMentionMatches.map((u, idx) => (
+                                    <button
+                                      key={u.id}
+                                      type="button"
+                                      // onMouseDown fires before the input's
+                                      // blur, so the selection lands before
+                                      // the dropdown closes.
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        applyReplyMention(u);
+                                      }}
+                                      onMouseEnter={() =>
+                                        setReplyMentionIndex(idx)
+                                      }
+                                      className={cn(
+                                        "w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-colors",
+                                        idx === replyMentionIndex
+                                          ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                                          : "text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                                      )}
+                                    >
+                                      <AtSign className="h-3 w-3 shrink-0 opacity-60" />
+                                      <span className="font-medium truncate">
+                                        {u.name}
+                                      </span>
+                                      {u.role === "admin" && (
+                                        <Badge className="ml-auto bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[9px] px-1 py-0">
+                                          Admin
+                                        </Badge>
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+
+                            <div className="flex items-center gap-1.5">
+                              <CornerDownRight className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
+                              <input
+                                ref={replyInputRef}
+                                type="text"
+                                value={replyDraft}
+                                onChange={handleReplyInputChange}
+                                onKeyDown={(e) => handleReplyKeyDown(e, msg)}
+                                placeholder={
+                                  isEn
+                                    ? `Reply to ${msg.user?.name || "message"}…`
+                                    : `Répondre à ${msg.user?.name || "le message"}…`
+                                }
+                                maxLength={1000}
+                                disabled={replySending}
+                                className="flex-1 min-w-0 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-2.5 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-500/40"
+                              />
+                              <Button
+                                size="sm"
+                                className="h-7 px-2.5 text-[11px]"
+                                onClick={() => handleReplySend(msg)}
+                                disabled={!replyDraft.trim() || replySending}
+                              >
+                                {isEn ? "Reply" : "Envoyer"}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={cancelReply}
+                                aria-label={isEn ? "Cancel" : "Annuler"}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Reaction chips — hidden while editing or for tombstones */}
                     {!msg.is_deleted &&
                       editingId !== msg.id &&
@@ -1598,6 +2268,20 @@ export default function CommunityPage() {
                           </div>
                         </DropdownMenuContent>
                       </DropdownMenu>
+
+                      {/* Reply — opens the inline thread composer for this
+                          message. Threads have a depth cap (enforced by
+                          trigger), so this button is hidden entirely on
+                          rows that are themselves replies. */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => startReply(msg)}
+                        aria-label={isEn ? "Reply" : "Répondre"}
+                      >
+                        <Reply className="h-3.5 w-3.5" />
+                      </Button>
 
                       <DropdownMenu>
                         <DropdownMenuTrigger
