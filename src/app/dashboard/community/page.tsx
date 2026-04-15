@@ -42,6 +42,10 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { ChatMarkdown } from "@/components/community/chat-markdown";
+import {
+  LinkPreview,
+  extractFirstUrl,
+} from "@/components/community/link-preview";
 
 /* ─── Types ───────────────────────────────────────────────── */
 
@@ -1511,6 +1515,21 @@ export default function CommunityPage() {
                         )}
                       </div>
                     )}
+
+                    {/* Link preview — only show for live (non-deleted,
+                        non-editing) messages. One preview per message:
+                        multiple cards would dominate the thread. The
+                        LinkPreview component internally handles its own
+                        loading, error, and "no useful metadata" states
+                        (renders null), so we don't gate on those here. */}
+                    {!msg.is_deleted &&
+                      editingId !== msg.id &&
+                      (() => {
+                        const previewUrl = extractFirstUrl(msg.content);
+                        return previewUrl ? (
+                          <LinkPreview url={previewUrl} />
+                        ) : null;
+                      })()}
 
                     {/* Reaction chips — hidden while editing or for tombstones */}
                     {!msg.is_deleted &&
