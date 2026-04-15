@@ -19,6 +19,7 @@ import {
   Pencil,
   MoreVertical,
   Smile,
+  SmilePlus,
   ChevronDown,
   Loader2,
   Hash,
@@ -49,6 +50,13 @@ interface Channel {
   created_at: string;
 }
 
+interface ChatReaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+}
+
 interface ChatMessage {
   id: string;
   user_id: string;
@@ -59,6 +67,7 @@ interface ChatMessage {
   created_at: string;
   edited_at: string | null;
   user?: { name: string; role: string | null };
+  reactions?: ChatReaction[];
 }
 
 /* ─── Constants ───────────────────────────────────────────── */
@@ -84,6 +93,30 @@ function ChannelIcon({
     default:
       return <Hash className={className} />;
   }
+}
+
+/* ─── Reaction helpers ────────────────────────────────────── */
+
+/**
+ * Collapse a flat list of chat_reactions rows (one per user+emoji) into
+ * one entry per emoji with { count, mine }. `mine` drives the "I already
+ * reacted" highlight on the chip and tells the toggle handler whether a
+ * click should add or remove.
+ *
+ * O(R) per message; R is tiny in practice so no memoization needed.
+ */
+function groupReactions(
+  reactions: ChatReaction[],
+  currentUserId: string | undefined
+): Array<[string, { count: number; mine: boolean }]> {
+  const map = new Map<string, { count: number; mine: boolean }>();
+  for (const r of reactions) {
+    const entry = map.get(r.emoji) ?? { count: 0, mine: false };
+    entry.count += 1;
+    if (r.user_id === currentUserId) entry.mine = true;
+    map.set(r.emoji, entry);
+  }
+  return Array.from(map.entries());
 }
 
 /* ═══════════════════════════════════════════════════════════ */
@@ -254,7 +287,7 @@ export default function CommunityPage() {
     // which is wrong once a channel has more than MESSAGES_PER_PAGE rows.
     const { data } = await supabase
       .from("chat_messages")
-      .select("*, user:users(name, role)")
+      .select("*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji)")
       .eq("channel_id", channelId)
       .order("created_at", { ascending: false })
       .limit(MESSAGES_PER_PAGE);
@@ -288,7 +321,7 @@ export default function CommunityPage() {
     const oldestMsg = messages[0];
     const { data } = await supabase
       .from("chat_messages")
-      .select("*, user:users(name, role)")
+      .select("*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji)")
       .eq("channel_id", activeChannelRef.current)
       .lt("created_at", oldestMsg.created_at)
       .order("created_at", { ascending: false })
@@ -367,7 +400,7 @@ export default function CommunityPage() {
         async (payload) => {
           const { data } = await supabase
             .from("chat_messages")
-            .select("*, user:users(name, role)")
+            .select("*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji)")
             .eq("id", payload.new.id)
             .single();
           if (!data) return;
@@ -410,7 +443,7 @@ export default function CommunityPage() {
 
           const { data } = await supabase
             .from("chat_messages")
-            .select("*, user:users(name, role)")
+            .select("*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji)")
             .eq("id", updated.id)
             .single();
           if (!data) return;
@@ -423,6 +456,47 @@ export default function CommunityPage() {
             const without = prev.filter((m) => m.id !== msg.id);
             if (msg.is_pinned && !msg.is_deleted) return [...without, msg];
             return without;
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "chat_reactions" },
+        (payload) => {
+          const reaction = payload.new as ChatReaction;
+          setMessages((prev) => {
+            const idx = prev.findIndex((m) => m.id === reaction.message_id);
+            if (idx === -1) return prev; // message not in the loaded window
+            // Skip if we already have this reaction (e.g. optimistic client
+            // inserted it before the realtime echo arrives).
+            const existing = prev[idx].reactions ?? [];
+            if (existing.some((r) => r.id === reaction.id)) return prev;
+            const next = [...prev];
+            next[idx] = {
+              ...next[idx],
+              reactions: [...existing, reaction],
+            };
+            return next;
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "chat_reactions" },
+        (payload) => {
+          // REPLICA IDENTITY FULL guarantees the full row is in `old`
+          const deleted = payload.old as ChatReaction;
+          setMessages((prev) => {
+            const idx = prev.findIndex((m) => m.id === deleted.message_id);
+            if (idx === -1) return prev;
+            const next = [...prev];
+            next[idx] = {
+              ...next[idx],
+              reactions: (next[idx].reactions ?? []).filter(
+                (r) => r.id !== deleted.id
+              ),
+            };
+            return next;
           });
         }
       )
@@ -561,6 +635,41 @@ export default function CommunityPage() {
     } else if (e.key === "Escape") {
       e.preventDefault();
       cancelEdit();
+    }
+  };
+
+  /* ─── Reactions ──────────────────────────────────────────── */
+  const toggleReaction = async (msg: ChatMessage, emoji: string) => {
+    if (!user) return;
+    // Is the current user already reacting with this emoji?
+    const existing = (msg.reactions ?? []).find(
+      (r) => r.user_id === user.id && r.emoji === emoji
+    );
+    if (existing) {
+      // Optimistic remove — realtime DELETE event will be a no-op
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msg.id
+            ? {
+                ...m,
+                reactions: (m.reactions ?? []).filter(
+                  (r) => r.id !== existing.id
+                ),
+              }
+            : m
+        )
+      );
+      await supabase
+        .from("chat_reactions")
+        .delete()
+        .eq("id", existing.id);
+    } else {
+      // Let the DB assign the id; let realtime INSERT echo patch state
+      await supabase.from("chat_reactions").insert({
+        message_id: msg.id,
+        user_id: user.id,
+        emoji,
+      });
     }
   };
 
@@ -987,11 +1096,75 @@ export default function CommunityPage() {
                         )}
                       </div>
                     )}
+
+                    {/* Reaction chips — hidden while editing or for tombstones */}
+                    {!msg.is_deleted &&
+                      editingId !== msg.id &&
+                      (msg.reactions?.length ?? 0) > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {groupReactions(msg.reactions ?? [], user?.id).map(
+                            ([emoji, { count, mine }]) => (
+                              <button
+                                key={emoji}
+                                onClick={() => toggleReaction(msg, emoji)}
+                                className={cn(
+                                  "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors border",
+                                  mine
+                                    ? "bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-700 text-green-700 dark:text-green-400"
+                                    : "bg-neutral-100 dark:bg-neutral-800 border-transparent text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700"
+                                )}
+                                aria-label={
+                                  mine
+                                    ? isEn
+                                      ? `Remove ${emoji} reaction`
+                                      : `Retirer la réaction ${emoji}`
+                                    : isEn
+                                    ? `React with ${emoji}`
+                                    : `Réagir avec ${emoji}`
+                                }
+                              >
+                                <span>{emoji}</span>
+                                <span className="font-medium tabular-nums">
+                                  {count}
+                                </span>
+                              </button>
+                            )
+                          )}
+                        </div>
+                      )}
                   </div>
 
                   {/* Actions */}
-                  {!msg.is_deleted && (
-                    <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {!msg.is_deleted && editingId !== msg.id && (
+                    <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Quick reaction picker */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                            />
+                          }
+                        >
+                          <SmilePlus className="h-3.5 w-3.5" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="p-1">
+                          <div className="flex gap-0.5">
+                            {QUICK_EMOJIS.map((emoji) => (
+                              <DropdownMenuItem
+                                key={emoji}
+                                onClick={() => toggleReaction(msg, emoji)}
+                                className="h-8 w-8 p-0 flex items-center justify-center text-base cursor-pointer rounded-md"
+                              >
+                                {emoji}
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           render={
