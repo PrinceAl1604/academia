@@ -37,6 +37,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { ChatMarkdown } from "@/components/community/chat-markdown";
 
 /* ─── Types ───────────────────────────────────────────────── */
 
@@ -806,9 +807,9 @@ export default function CommunityPage() {
                 <span className="font-medium text-neutral-900 dark:text-white shrink-0">
                   {msg.user?.name || "User"}:
                 </span>
-                <span className="text-neutral-600 dark:text-neutral-400">
-                  {msg.content}
-                </span>
+                <div className="min-w-0 text-neutral-600 dark:text-neutral-400">
+                  <ChatMarkdown content={msg.content} />
+                </div>
               </div>
             ))}
           </div>
@@ -972,8 +973,8 @@ export default function CommunityPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap break-words">
-                        {msg.content}
+                      <div className="text-sm text-neutral-700 dark:text-neutral-300">
+                        <ChatMarkdown content={msg.content} />
                         {msg.edited_at && (
                           <span
                             className="ml-1.5 text-[10px] text-neutral-400 dark:text-neutral-500"
@@ -984,7 +985,7 @@ export default function CommunityPage() {
                             ({isEn ? "edited" : "modifié"})
                           </span>
                         )}
-                      </p>
+                      </div>
                     )}
                   </div>
 
