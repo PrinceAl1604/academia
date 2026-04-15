@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -9,6 +16,7 @@ import {
   Send,
   Pin,
   Trash2,
+  Pencil,
   MoreVertical,
   Smile,
   ChevronDown,
@@ -48,6 +56,7 @@ interface ChatMessage {
   is_pinned: boolean;
   is_deleted: boolean;
   created_at: string;
+  edited_at: string | null;
   user?: { name: string; role: string | null };
 }
 
@@ -103,6 +112,20 @@ export default function CommunityPage() {
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<ChatMessage[]>([]);
   const [showPinned, setShowPinned] = useState(false);
+
+  /* ─── Edit state ────────────────────────────────────────── */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+
+  /* ─── Pagination state ──────────────────────────────────── */
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  // Captured right before we prepend older messages so useLayoutEffect
+  // can restore the user's visual scroll position after the DOM grows.
+  const prependAnchorRef = useRef<{
+    scrollHeight: number;
+    scrollTop: number;
+  } | null>(null);
 
   /* ─── Refs ──────────────────────────────────────────────── */
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -220,19 +243,85 @@ export default function CommunityPage() {
   /* ─── Load messages for active channel ──────────────────── */
   const loadMessages = useCallback(async (channelId: string) => {
     setLoading(true);
+    // Reset pagination state for the new channel
+    setHasMore(true);
+    setLoadingOlder(false);
+    prependAnchorRef.current = null;
+
+    // Fetch the NEWEST page (descending), then reverse for chronological display.
+    // The old ascending+limit query returned the oldest messages in the channel,
+    // which is wrong once a channel has more than MESSAGES_PER_PAGE rows.
     const { data } = await supabase
       .from("chat_messages")
       .select("*, user:users(name, role)")
       .eq("channel_id", channelId)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(MESSAGES_PER_PAGE);
 
-    const msgs = (data as ChatMessage[]) || [];
+    const msgs = ((data as ChatMessage[]) || []).reverse();
     setMessages(msgs);
     setPinnedMessages(msgs.filter((m) => m.is_pinned && !m.is_deleted));
+    // If we got fewer than a full page, there's nothing older to load
+    if (msgs.length < MESSAGES_PER_PAGE) setHasMore(false);
     setLoading(false);
     setTimeout(() => bottomRef.current?.scrollIntoView(), 50);
   }, []);
+
+  /* ─── Load older messages (prepend) ─────────────────────── */
+  const loadOlderMessages = useCallback(async () => {
+    // Guard: already fetching, exhausted, or empty list (nothing to page back from)
+    if (loadingOlder || !hasMore || messages.length === 0) return;
+
+    const el = chatContainerRef.current;
+    if (!el) return;
+
+    // Save the scroll anchor BEFORE the fetch starts so we can restore it
+    // after React re-renders with the prepended rows.
+    prependAnchorRef.current = {
+      scrollHeight: el.scrollHeight,
+      scrollTop: el.scrollTop,
+    };
+
+    setLoadingOlder(true);
+
+    const oldestMsg = messages[0];
+    const { data } = await supabase
+      .from("chat_messages")
+      .select("*, user:users(name, role)")
+      .eq("channel_id", activeChannelRef.current)
+      .lt("created_at", oldestMsg.created_at)
+      .order("created_at", { ascending: false })
+      .limit(MESSAGES_PER_PAGE);
+
+    const older = ((data as ChatMessage[]) || []).reverse();
+
+    if (older.length < MESSAGES_PER_PAGE) setHasMore(false);
+
+    if (older.length > 0) {
+      setMessages((prev) => [...older, ...prev]);
+      // Merge any newly-discovered pinned messages into the pinned panel
+      const newlyPinned = older.filter((m) => m.is_pinned && !m.is_deleted);
+      if (newlyPinned.length > 0) {
+        setPinnedMessages((prev) => [...newlyPinned, ...prev]);
+      }
+    } else {
+      // No new rows — clear the anchor so useLayoutEffect doesn't run a no-op
+      prependAnchorRef.current = null;
+    }
+
+    setLoadingOlder(false);
+  }, [loadingOlder, hasMore, messages]);
+
+  /* ─── Restore scroll position after prepending older messages ─── */
+  useLayoutEffect(() => {
+    if (!prependAnchorRef.current || !chatContainerRef.current) return;
+    const el = chatContainerRef.current;
+    const { scrollHeight: oldH, scrollTop: oldT } = prependAnchorRef.current;
+    // New content added above → keep the user's viewport anchored to the
+    // same message by compensating for the height difference.
+    el.scrollTop = el.scrollHeight - oldH + oldT;
+    prependAnchorRef.current = null;
+  }, [messages]);
 
   useEffect(() => {
     loadMessages(activeChannelId);
@@ -377,7 +466,15 @@ export default function CommunityPage() {
       el.scrollHeight - el.scrollTop - el.clientHeight < 150;
     isNearBottom.current = atBottom;
     setShowScrollBtn(!atBottom);
-  }, []);
+
+    // Trigger loading older messages when the user scrolls near the top.
+    // 200px threshold: begins the fetch *before* the user hits the edge so
+    // the next batch is usually ready by the time they arrive. Feels smoother
+    // than triggering at 0 (spinner pops in under their thumb).
+    if (el.scrollTop < 200 && !loadingOlder && hasMore) {
+      loadOlderMessages();
+    }
+  }, [loadingOlder, hasMore, loadOlderMessages]);
 
   const scrollToBottom = () =>
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -388,6 +485,9 @@ export default function CommunityPage() {
     setShowPinned(false);
     setShowEmoji(false);
     setInput("");
+    // Abandon any in-progress edit when switching channels
+    setEditingId(null);
+    setEditDraft("");
   };
 
   const handleSend = async () => {
@@ -426,6 +526,41 @@ export default function CommunityPage() {
       .from("chat_messages")
       .update({ is_deleted: true })
       .eq("id", msg.id);
+  };
+
+  const startEdit = (msg: ChatMessage) => {
+    setEditingId(msg.id);
+    setEditDraft(msg.content);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditDraft("");
+  };
+
+  const saveEdit = async (msg: ChatMessage) => {
+    const trimmed = editDraft.trim();
+    // Empty or unchanged → silently cancel; avoids saving a no-op that would
+    // mark a message "(edited)" for no reason.
+    if (!trimmed || trimmed === msg.content) {
+      cancelEdit();
+      return;
+    }
+    await supabase
+      .from("chat_messages")
+      .update({ content: trimmed, edited_at: new Date().toISOString() })
+      .eq("id", msg.id);
+    cancelEdit();
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent, msg: ChatMessage) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      saveEdit(msg);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelEdit();
+    }
   };
 
   /* ─── Helpers ───────────────────────────────────────────── */
@@ -714,7 +849,23 @@ export default function CommunityPage() {
               </p>
             </div>
           ) : (
-            messages.map((msg, i) => {
+            <>
+              {/* Top-of-history indicators */}
+              {loadingOlder && (
+                <div className="flex items-center justify-center py-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
+                </div>
+              )}
+              {!hasMore && !loadingOlder && (
+                <div className="flex items-center justify-center py-3 text-[11px] text-neutral-400 dark:text-neutral-500">
+                  <span className="px-3">
+                    {isEn
+                      ? "Beginning of conversation"
+                      : "Début de la conversation"}
+                  </span>
+                </div>
+              )}
+              {messages.map((msg, i) => {
               const isOwn = msg.user_id === user?.id;
               const isMsgAdmin = msg.user?.role === "admin";
               const showAvatar =
@@ -782,9 +933,57 @@ export default function CommunityPage() {
                           ? "This message was deleted"
                           : "Ce message a été supprimé"}
                       </p>
+                    ) : editingId === msg.id ? (
+                      <div className="flex flex-col gap-1.5 mt-1">
+                        <textarea
+                          autoFocus
+                          value={editDraft}
+                          onChange={(e) => setEditDraft(e.target.value)}
+                          onKeyDown={(e) => handleEditKeyDown(e, msg)}
+                          rows={Math.min(
+                            6,
+                            Math.max(2, editDraft.split("\n").length)
+                          )}
+                          maxLength={1000}
+                          className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-2.5 py-1.5 text-sm text-neutral-700 dark:text-neutral-200 resize-none focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-500/40"
+                        />
+                        <div className="flex items-center gap-2 text-[11px]">
+                          <Button
+                            size="sm"
+                            className="h-7 px-3 text-xs"
+                            onClick={() => saveEdit(msg)}
+                            disabled={!editDraft.trim()}
+                          >
+                            {isEn ? "Save" : "Enregistrer"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-3 text-xs"
+                            onClick={cancelEdit}
+                          >
+                            {isEn ? "Cancel" : "Annuler"}
+                          </Button>
+                          <span className="text-neutral-400 dark:text-neutral-500">
+                            {isEn
+                              ? "Enter to save · Shift+Enter for newline · Esc to cancel"
+                              : "Entrée pour enregistrer · Maj+Entrée pour nouvelle ligne · Échap pour annuler"}
+                          </span>
+                        </div>
+                      </div>
                     ) : (
                       <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap break-words">
                         {msg.content}
+                        {msg.edited_at && (
+                          <span
+                            className="ml-1.5 text-[10px] text-neutral-400 dark:text-neutral-500"
+                            title={new Date(msg.edited_at).toLocaleString(
+                              isEn ? "en-US" : "fr-FR"
+                            )}
+                          >
+                            ({isEn ? "edited" : "modifié"})
+                          </span>
+                        )}
                       </p>
                     )}
                   </div>
@@ -805,31 +1004,36 @@ export default function CommunityPage() {
                           <MoreVertical className="h-3.5 w-3.5" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                          {isAdmin && (
-                            <>
-                              <DropdownMenuItem
-                                className="gap-2 text-xs"
-                                onClick={() => togglePin(msg)}
-                              >
-                                <Pin className="h-3.5 w-3.5" />
-                                {msg.is_pinned
-                                  ? isEn
-                                    ? "Unpin"
-                                    : "Désépingler"
-                                  : isEn
-                                  ? "Pin message"
-                                  : "Épingler"}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="gap-2 text-xs text-red-600"
-                                onClick={() => deleteMessage(msg)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                {isEn ? "Delete" : "Supprimer"}
-                              </DropdownMenuItem>
-                            </>
+                          {/* Edit — only the author can edit (admins don't
+                              edit others' messages; that's a moderation
+                              anti-pattern) */}
+                          {isOwn && (
+                            <DropdownMenuItem
+                              className="gap-2 text-xs"
+                              onClick={() => startEdit(msg)}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                              {isEn ? "Edit" : "Modifier"}
+                            </DropdownMenuItem>
                           )}
-                          {isOwn && !isAdmin && (
+                          {/* Pin — admins only */}
+                          {isAdmin && (
+                            <DropdownMenuItem
+                              className="gap-2 text-xs"
+                              onClick={() => togglePin(msg)}
+                            >
+                              <Pin className="h-3.5 w-3.5" />
+                              {msg.is_pinned
+                                ? isEn
+                                  ? "Unpin"
+                                  : "Désépingler"
+                                : isEn
+                                ? "Pin message"
+                                : "Épingler"}
+                            </DropdownMenuItem>
+                          )}
+                          {/* Delete — admin on any, user on own */}
+                          {(isAdmin || isOwn) && (
                             <DropdownMenuItem
                               className="gap-2 text-xs text-red-600"
                               onClick={() => deleteMessage(msg)}
@@ -844,7 +1048,8 @@ export default function CommunityPage() {
                   )}
                 </div>
               );
-            })
+            })}
+            </>
           )}
           <div ref={bottomRef} />
         </div>
