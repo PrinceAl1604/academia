@@ -151,6 +151,23 @@ export default function CommunityPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
 
+  /* ─── Mention state ─────────────────────────────────────── */
+  // Full roster — loaded once, used as the typeahead source. Filtering
+  // happens client-side: the list is small (tens to low hundreds) and this
+  // avoids a DB round trip for every keystroke.
+  const [mentionableUsers, setMentionableUsers] = useState<
+    Array<{ id: string; name: string; role: string | null }>
+  >([]);
+  // Active typeahead query (the text after `@`). `null` = dropdown closed.
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  // Typeahead selections we made; used on send to resolve display names
+  // back to stable user_ids (avoids server-side name lookup ambiguity).
+  const [pendingMentions, setPendingMentions] = useState<
+    Array<{ name: string; user_id: string }>
+  >([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   /* ─── Pagination state ──────────────────────────────────── */
   const [hasMore, setHasMore] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -530,6 +547,41 @@ export default function CommunityPage() {
     };
   }, [user, userName]);
 
+  /* ─── Mention roster ────────────────────────────────────── */
+  // One fetch per mount. If the platform grows past a few hundred users,
+  // swap this for a server-side ILIKE search triggered by the query.
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("users")
+        .select("id, name, role")
+        .order("name", { ascending: true });
+      setMentionableUsers(
+        (data ?? []) as Array<{ id: string; name: string; role: string | null }>
+      );
+    })();
+  }, [user]);
+
+  /* ─── Typeahead match list (derived) ─────────────────────── */
+  const mentionMatches = useMemo(() => {
+    if (mentionQuery === null) return [];
+    const q = mentionQuery.toLowerCase();
+    return mentionableUsers
+      .filter(
+        (u) =>
+          u.id !== user?.id && // can't mention yourself
+          (q === "" || u.name.toLowerCase().includes(q))
+      )
+      .slice(0, 8);
+  }, [mentionQuery, mentionableUsers, user]);
+
+  // Clamp the highlighted index whenever the filtered list shrinks beneath
+  // the current cursor (otherwise Arrow+Enter could select a stale row).
+  useEffect(() => {
+    if (mentionIndex >= mentionMatches.length) setMentionIndex(0);
+  }, [mentionMatches.length, mentionIndex]);
+
   /* ═══════════════════════════════════════════════════════════ */
   /*  Handlers                                                  */
   /* ═══════════════════════════════════════════════════════════ */
@@ -563,6 +615,70 @@ export default function CommunityPage() {
     // Abandon any in-progress edit when switching channels
     setEditingId(null);
     setEditDraft("");
+    // Drop any pending typeahead state so the next channel starts clean
+    setMentionQuery(null);
+    setPendingMentions([]);
+  };
+
+  /**
+   * Detect whether the caret is inside an active @-mention token.
+   * An @-token opens when `@` is at start-of-line or preceded by whitespace
+   * and closes on whitespace or another `@`. Returns the query string
+   * (text after `@` up to the caret) or null when not in a token.
+   */
+  const detectMentionQuery = (value: string, caret: number): string | null => {
+    const before = value.slice(0, caret);
+    const m = /@([^\s@]*)$/.exec(before);
+    if (!m) return null;
+    // The char directly before `@` must be whitespace or start-of-string —
+    // otherwise `foo@bar` email-like tokens would trigger the picker.
+    const charBeforeAt = before[m.index - 1];
+    if (charBeforeAt !== undefined && !/\s/.test(charBeforeAt)) return null;
+    return m[1];
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+    setInput(value);
+    const caret = e.target.selectionStart ?? value.length;
+    setMentionQuery(detectMentionQuery(value, caret));
+  };
+
+  /**
+   * Replace the active @-query with the selected user's name and record the
+   * resolution in pendingMentions so handleSend can create chat_mentions
+   * rows with the correct user_id (avoids display-name collisions).
+   */
+  const applyMention = (u: { id: string; name: string }) => {
+    const el = inputRef.current;
+    if (!el) return;
+    const caret = el.selectionStart ?? input.length;
+    const before = input.slice(0, caret);
+    const after = input.slice(caret);
+    const m = /@([^\s@]*)$/.exec(before);
+    if (!m) return;
+    const atStart = m.index;
+    const replacement = `@${u.name} `;
+    const nextInput = before.slice(0, atStart) + replacement + after;
+    const nextCaret = atStart + replacement.length;
+
+    setInput(nextInput);
+    setPendingMentions((prev) =>
+      prev.some((p) => p.user_id === u.id)
+        ? prev
+        : [...prev, { name: u.name, user_id: u.id }]
+    );
+    setMentionQuery(null);
+
+    // React re-renders before the caret can be set on the new value, so
+    // defer to rAF. Also refocus in case the user clicked a match (blur'd
+    // the input momentarily).
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(nextCaret, nextCaret);
+    });
   };
 
   const handleSend = async () => {
@@ -571,17 +687,81 @@ export default function CommunityPage() {
     setInput("");
     setSending(true);
     setShowEmoji(false);
+    setMentionQuery(null);
 
-    await supabase.from("chat_messages").insert({
-      user_id: user.id,
-      channel_id: activeChannelId,
-      content,
+    // Keep only typeahead-resolved mentions whose `@Name` token still
+    // appears in the final content. Covers the case where the user inserts
+    // then deletes a mention before sending.
+    const activeMentions = pendingMentions.filter((m) => {
+      const escaped = m.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      // Whole-token match: preceded by start/whitespace, followed by end/
+      // whitespace/punctuation. Prevents `@Alex` from matching `@Alexander`.
+      const re = new RegExp(
+        `(^|\\s)@${escaped}(?=\\s|$|[.,!?;:)])`
+      );
+      return re.test(content);
     });
 
+    const { data: inserted } = await supabase
+      .from("chat_messages")
+      .insert({
+        user_id: user.id,
+        channel_id: activeChannelId,
+        content,
+      })
+      .select("id")
+      .single();
+
+    if (inserted?.id && activeMentions.length > 0) {
+      // Dedupe by user_id: someone mentioned twice in the same message
+      // should only produce one notification row.
+      const seen = new Set<string>();
+      const rows = activeMentions
+        .filter((m) => {
+          if (seen.has(m.user_id)) return false;
+          seen.add(m.user_id);
+          return true;
+        })
+        .map((m) => ({
+          message_id: inserted.id as string,
+          mentioned_user_id: m.user_id,
+          channel_id: activeChannelId,
+        }));
+      // Fire-and-forget: mention rows failing shouldn't block the message
+      // itself, which is already persisted.
+      supabase.from("chat_mentions").insert(rows);
+    }
+
+    setPendingMentions([]);
     setSending(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Typeahead keyboard navigation takes priority over message send
+    if (mentionQuery !== null && mentionMatches.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((i) => (i + 1) % mentionMatches.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex(
+          (i) => (i - 1 + mentionMatches.length) % mentionMatches.length
+        );
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        applyMention(mentionMatches[mentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMentionQuery(null);
+        return;
+      }
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -1243,7 +1423,7 @@ export default function CommunityPage() {
 
         {/* ─── Input Area ─────────────────────────────────────── */}
         {canPost ? (
-          <div className="border-t border-neutral-200 dark:border-neutral-800 px-4 pt-3 pb-2">
+          <div className="relative border-t border-neutral-200 dark:border-neutral-800 px-4 pt-3 pb-2">
             {showEmoji && (
               <div className="flex gap-1 mb-2 flex-wrap">
                 {QUICK_EMOJIS.map((emoji) => (
@@ -1257,6 +1437,55 @@ export default function CommunityPage() {
                 ))}
               </div>
             )}
+
+            {/* Mention typeahead — floats above the input row, anchored to
+                the composer's left gutter. Arrow keys cycle, Enter/Tab
+                inserts, Escape dismisses. */}
+            {mentionQuery !== null && mentionMatches.length > 0 && (
+              <div className="absolute bottom-full left-4 right-4 mb-1 z-10 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+                <div className="px-2 py-1.5 border-b border-neutral-100 dark:border-neutral-800 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                  {isEn ? "Mention someone" : "Mentionner quelqu'un"}
+                </div>
+                {mentionMatches.map((u, i) => (
+                  <button
+                    key={u.id}
+                    onMouseDown={(e) => {
+                      // onMouseDown (not onClick) so we fire before the input
+                      // blur — otherwise the blur closes the dropdown first.
+                      e.preventDefault();
+                      applyMention(u);
+                    }}
+                    onMouseEnter={() => setMentionIndex(i)}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-sm transition-colors",
+                      i === mentionIndex
+                        ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                        : "text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                    )}
+                  >
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback
+                        className={cn(
+                          "text-[10px] font-semibold",
+                          u.role === "admin"
+                            ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
+                            : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                        )}
+                      >
+                        {getInitials(u.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="flex-1 truncate">{u.name}</span>
+                    {u.role === "admin" && (
+                      <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[9px] px-1.5 py-0">
+                        Admin
+                      </Badge>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -1267,11 +1496,14 @@ export default function CommunityPage() {
                 <Smile className="h-4 w-4" />
               </Button>
               <Input
+                ref={inputRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder={
-                  isEn ? "Type a message..." : "Écrire un message..."
+                  isEn
+                    ? "Type a message... (@ to mention)"
+                    : "Écrire un message... (@ pour mentionner)"
                 }
                 className="flex-1 dark:bg-neutral-800 dark:border-neutral-700"
                 maxLength={1000}
