@@ -87,14 +87,14 @@ export function LinkPreview({ url, className }: LinkPreviewProps) {
     return (
       <div
         className={cn(
-          "mt-1.5 flex gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 p-2 max-w-md animate-pulse",
+          "mt-1.5 flex gap-2 rounded-lg border border-border/60 bg-card p-2 max-w-md animate-pulse",
           className
         )}
       >
-        <div className="h-14 w-14 shrink-0 rounded bg-neutral-200 dark:bg-neutral-800" />
+        <div className="h-14 w-14 shrink-0 rounded bg-muted" />
         <div className="flex-1 space-y-1.5">
-          <div className="h-3 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
-          <div className="h-2 w-full rounded bg-neutral-200 dark:bg-neutral-800" />
+          <div className="h-3 w-3/4 rounded bg-muted" />
+          <div className="h-2 w-full rounded bg-muted" />
         </div>
       </div>
     );
@@ -119,7 +119,7 @@ export function LinkPreview({ url, className }: LinkPreviewProps) {
       target="_blank"
       rel="noopener noreferrer nofollow"
       className={cn(
-        "mt-1.5 flex gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40 p-2 max-w-md hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-100/60 dark:hover:bg-neutral-900/70 transition-colors group",
+        "mt-1.5 flex gap-2 rounded-lg border border-border/60 bg-card p-2 max-w-md hover:border-border hover:bg-muted/40 transition-colors group",
         className
       )}
     >
@@ -130,7 +130,7 @@ export function LinkPreview({ url, className }: LinkPreviewProps) {
         <img
           src={preview.image_url!}
           alt=""
-          className="h-14 w-14 shrink-0 rounded object-cover bg-neutral-200 dark:bg-neutral-800"
+          className="h-14 w-14 shrink-0 rounded object-cover bg-muted"
           loading="lazy"
           referrerPolicy="no-referrer"
           onError={() => setImgFailed(true)}
@@ -138,18 +138,18 @@ export function LinkPreview({ url, className }: LinkPreviewProps) {
       )}
       <div className="flex-1 min-w-0 flex flex-col justify-center">
         {preview.site_name && (
-          <div className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500 truncate">
+          <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70 truncate">
             <ExternalLink className="h-2.5 w-2.5 shrink-0" />
             <span className="truncate">{preview.site_name}</span>
           </div>
         )}
         {preview.title && (
-          <p className="text-xs font-semibold text-neutral-900 dark:text-white line-clamp-1 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors">
+          <p className="text-xs font-medium text-foreground line-clamp-1 group-hover:text-primary transition-colors">
             {preview.title}
           </p>
         )}
         {preview.description && (
-          <p className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2">
+          <p className="text-[11px] text-muted-foreground line-clamp-2">
             {preview.description}
           </p>
         )}

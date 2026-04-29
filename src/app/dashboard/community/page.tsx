@@ -1413,20 +1413,20 @@ export default function CommunityPage() {
       {/* ─── Channel Sidebar ────────────────────────────────── */}
       <div
         className={cn(
-          "shrink-0 flex-col border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 transition-[width,opacity] duration-200 overflow-hidden",
+          "shrink-0 flex-col border-r border-border bg-sidebar/40 transition-[width,opacity] duration-200 overflow-hidden",
           showSidebar
             ? "w-56 opacity-100 flex"
             : "w-0 opacity-0 hidden md:flex md:w-0"
         )}
       >
         {/* Sidebar header */}
-        <div className="flex items-center justify-between px-3 py-3 border-b border-neutral-200 dark:border-neutral-800">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-            {t.community?.channels || "Channels"}
+        <div className="flex items-center justify-between px-3 py-3 border-b border-border">
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            / {t.community?.channels || "Channels"}
           </h2>
-          <div className="flex items-center gap-1.5 rounded-full bg-green-50 dark:bg-green-900/20 px-2 py-0.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[10px] font-medium text-green-700 dark:text-green-400">
+          <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="text-[10px] font-medium text-primary">
               {onlineCount}
             </span>
           </div>
@@ -1443,10 +1443,14 @@ export default function CommunityPage() {
                 key={ch.id}
                 onClick={() => switchChannel(ch.id)}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors",
+                  "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-2 text-left transition-colors",
+                  // Same active-state treatment as the dashboard sidebar:
+                  // 2-px primary-green left edge + sidebar-accent fill
+                  isActive &&
+                    "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
                   isActive
-                    ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm"
-                    : "text-neutral-600 dark:text-neutral-400 hover:bg-white/60 dark:hover:bg-neutral-800/40"
+                    ? "bg-sidebar-accent text-foreground"
+                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
                 )}
               >
                 <ChannelIcon
@@ -1455,7 +1459,7 @@ export default function CommunityPage() {
                     "h-4 w-4 shrink-0",
                     ch.type === "announcements"
                       ? "text-amber-500"
-                      : "text-neutral-400 dark:text-neutral-500"
+                      : "text-muted-foreground/70"
                   )}
                 />
                 <span className="flex-1 text-sm font-medium truncate">
@@ -1466,7 +1470,7 @@ export default function CommunityPage() {
                     : ch.name}
                 </span>
                 {unread > 0 && (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white px-1">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground tabular-nums px-1">
                     {unread > 99 ? "99+" : unread}
                   </span>
                 )}
@@ -1478,8 +1482,8 @@ export default function CommunityPage() {
           {courseChannels.length > 0 && (
             <>
               <div className="pt-3 pb-1 px-2.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                  {t.community?.courseChannels || "Courses"}
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+                  / {t.community?.courseChannels || "Courses"}
                 </p>
               </div>
               {courseChannels.map((ch) => {
@@ -1492,23 +1496,23 @@ export default function CommunityPage() {
                     className={cn(
                       "flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors",
                       isActive
-                        ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm"
-                        : "text-neutral-600 dark:text-neutral-400 hover:bg-white/60 dark:hover:bg-neutral-800/40"
+                        ? "bg-sidebar-accent text-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-sidebar-accent/60"
                     )}
                   >
                     <BookOpen
                       className={cn(
                         "h-4 w-4 shrink-0",
                         isActive
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-neutral-400 dark:text-neutral-500"
+                          ? "text-primary"
+                          : "text-muted-foreground/70"
                       )}
                     />
                     <span className="flex-1 text-sm font-medium truncate">
                       {ch.name}
                     </span>
                     {unread > 0 && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white px-1">
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground tabular-nums px-1">
                         {unread > 99 ? "99+" : unread}
                       </span>
                     )}
@@ -1523,13 +1527,13 @@ export default function CommunityPage() {
       {/* ─── Chat Area ──────────────────────────────────────── */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* ─── Chat Header ────────────────────────────────────── */}
-        <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2.5 min-w-0">
             {/* Toggle sidebar */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 shrink-0 text-neutral-400"
+              className="h-8 w-8 shrink-0 text-muted-foreground/70"
               onClick={() => setShowSidebar(!showSidebar)}
             >
               {showSidebar ? (
@@ -1548,11 +1552,11 @@ export default function CommunityPage() {
                     "h-5 w-5 shrink-0",
                     activeChannel.type === "announcements"
                       ? "text-amber-500"
-                      : "text-neutral-500 dark:text-neutral-400"
+                      : "text-muted-foreground"
                   )}
                 />
                 <div className="min-w-0">
-                  <h1 className="text-sm font-bold text-neutral-900 dark:text-white truncate">
+                  <h1 className="text-sm font-bold text-foreground truncate">
                     {activeChannel.type === "general"
                       ? t.community?.general || "General"
                       : activeChannel.type === "announcements"
@@ -1568,7 +1572,7 @@ export default function CommunityPage() {
                     </p>
                   )}
                   {activeChannel.type === "course" && (
-                    <p className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                    <p className="text-[11px] text-muted-foreground/70">
                       {t.community?.courseChat ||
                         (isEn
                           ? "Course discussion"
@@ -1586,7 +1590,7 @@ export default function CommunityPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1.5 text-neutral-500 h-8"
+                className="gap-1.5 text-muted-foreground h-8"
                 onClick={() => setShowPinned(!showPinned)}
               >
                 <Pin className="h-3.5 w-3.5" />
@@ -1614,26 +1618,26 @@ export default function CommunityPage() {
                   className={cn(
                     "h-4 w-4",
                     unreadMentions.length > 0
-                      ? "text-green-600 dark:text-green-400"
-                      : "text-neutral-500"
+                      ? "text-primary"
+                      : "text-muted-foreground"
                   )}
                 />
                 {unreadMentions.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-green-600 px-1 text-[9px] font-bold text-white">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground tabular-nums">
                     {unreadMentions.length > 9 ? "9+" : unreadMentions.length}
                   </span>
                 )}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80 p-0">
-                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 px-3 py-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5">
+                <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <AtSign className="h-3 w-3" />
                     {isEn ? "Mentions" : "Mentions"}
                   </p>
                   {unreadMentions.length > 0 && (
                     <button
                       onClick={markAllMentionsRead}
-                      className="flex items-center gap-1 text-[10px] font-medium text-green-600 dark:text-green-400 hover:underline"
+                      className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
                     >
                       <CheckCheck className="h-3 w-3" />
                       {isEn ? "Mark all read" : "Tout marquer lu"}
@@ -1642,7 +1646,7 @@ export default function CommunityPage() {
                 </div>
 
                 {unreadMentions.length === 0 ? (
-                  <div className="px-3 py-8 text-center text-xs text-neutral-400 dark:text-neutral-500">
+                  <div className="px-3 py-8 text-center text-xs text-muted-foreground/70">
                     <AtSign className="h-6 w-6 mx-auto mb-2 opacity-40" />
                     {isEn ? "No new mentions" : "Aucune nouvelle mention"}
                   </div>
@@ -1668,23 +1672,23 @@ export default function CommunityPage() {
                         <DropdownMenuItem
                           key={mention.id}
                           onClick={() => openMention(mention)}
-                          className="flex flex-col items-start gap-0.5 px-3 py-2 cursor-pointer border-b border-neutral-50 dark:border-neutral-800/60 last:border-b-0"
+                          className="flex flex-col items-start gap-0.5 px-3 py-2 cursor-pointer border-b border-border/40 last:border-b-0"
                         >
                           <div className="flex items-center gap-1.5 w-full text-[11px]">
-                            <span className="font-semibold text-neutral-900 dark:text-white">
+                            <span className="font-semibold text-foreground">
                               {author}
                             </span>
-                            <span className="text-neutral-400 dark:text-neutral-500">
+                            <span className="text-muted-foreground/70">
                               {isEn ? "in" : "dans"}
                             </span>
-                            <span className="font-medium text-neutral-600 dark:text-neutral-400 truncate">
+                            <span className="font-medium text-muted-foreground truncate">
                               #{chName}
                             </span>
-                            <span className="ml-auto shrink-0 text-neutral-400 dark:text-neutral-500">
+                            <span className="ml-auto shrink-0 text-muted-foreground/70">
                               {formatTime(mention.created_at)}
                             </span>
                           </div>
-                          <p className="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-2 break-words">
+                          <p className="text-xs text-foreground/90 line-clamp-2 break-words">
                             {snippet}
                           </p>
                         </DropdownMenuItem>
@@ -1696,9 +1700,9 @@ export default function CommunityPage() {
             </DropdownMenu>
 
             {/* Online indicator (mobile-friendly) */}
-            <div className="flex items-center gap-1.5 rounded-full bg-green-50 dark:bg-green-900/20 px-2.5 py-1">
-              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs font-medium text-green-700 dark:text-green-400">
+            <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1">
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-xs font-medium text-primary">
                 {onlineCount} {isEn ? "online" : "en ligne"}
               </span>
             </div>
@@ -1707,7 +1711,7 @@ export default function CommunityPage() {
 
         {/* ─── Pinned Messages Panel ──────────────────────────── */}
         {showPinned && pinnedMessages.length > 0 && (
-          <div className="border-b border-neutral-200 dark:border-neutral-800 bg-amber-50/50 dark:bg-amber-900/10 p-3 space-y-2">
+          <div className="border-b border-border bg-amber-50/50 dark:bg-amber-900/10 p-3 space-y-2">
             <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
               <Pin className="h-3 w-3" />
               {t.community?.pinnedMessages ||
@@ -1716,12 +1720,12 @@ export default function CommunityPage() {
             {pinnedMessages.map((msg) => (
               <div
                 key={msg.id}
-                className="flex items-start gap-2 rounded-lg bg-white dark:bg-neutral-900 p-2.5 text-sm"
+                className="flex items-start gap-2 rounded-lg bg-card p-2.5 text-sm"
               >
-                <span className="font-medium text-neutral-900 dark:text-white shrink-0">
+                <span className="font-medium text-foreground shrink-0">
                   {msg.user?.name || "User"}:
                 </span>
-                <div className="min-w-0 text-neutral-600 dark:text-neutral-400">
+                <div className="min-w-0 text-muted-foreground">
                   <ChatMarkdown
                     content={msg.content}
                     mentionableNames={mentionNames}
@@ -1741,10 +1745,10 @@ export default function CommunityPage() {
         >
           {loading ? (
             <div className="flex h-full items-center justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/70" />
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-neutral-400 dark:text-neutral-500">
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/70">
               {activeChannel && (
                 <ChannelIcon
                   type={activeChannel.type}
@@ -1772,11 +1776,11 @@ export default function CommunityPage() {
               {/* Top-of-history indicators */}
               {loadingOlder && (
                 <div className="flex items-center justify-center py-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/70" />
                 </div>
               )}
               {!hasMore && !loadingOlder && (
-                <div className="flex items-center justify-center py-3 text-[11px] text-neutral-400 dark:text-neutral-500">
+                <div className="flex items-center justify-center py-3 text-[11px] text-muted-foreground/70">
                   <span className="px-3">
                     {isEn
                       ? "Beginning of conversation"
@@ -1794,7 +1798,7 @@ export default function CommunityPage() {
                 <div
                   key={msg.id}
                   className={cn(
-                    "group flex items-start gap-2.5 px-2 py-1 rounded-lg transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/30",
+                    "group flex items-start gap-2.5 px-2 py-1 rounded-lg transition-colors hover:bg-muted/40",
                     msg.is_pinned &&
                       !msg.is_deleted &&
                       "bg-amber-50/40 dark:bg-amber-900/10"
@@ -1809,7 +1813,7 @@ export default function CommunityPage() {
                             "text-[11px] font-semibold",
                             isMsgAdmin
                               ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                              : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                              : "bg-muted text-foreground/90"
                           )}
                         >
                           {getInitials(msg.user?.name || "")}
@@ -1827,7 +1831,7 @@ export default function CommunityPage() {
                             "text-sm font-semibold",
                             isMsgAdmin
                               ? "text-red-600 dark:text-red-400"
-                              : "text-neutral-900 dark:text-white"
+                              : "text-foreground"
                           )}
                         >
                           {msg.user?.name || "User"}
@@ -1840,14 +1844,14 @@ export default function CommunityPage() {
                         {msg.is_pinned && !msg.is_deleted && (
                           <Pin className="h-3 w-3 text-amber-500" />
                         )}
-                        <span className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                        <span className="text-[11px] text-muted-foreground/70">
                           {formatTime(msg.created_at)}
                         </span>
                       </div>
                     )}
 
                     {msg.is_deleted ? (
-                      <p className="text-sm italic text-neutral-400 dark:text-neutral-500">
+                      <p className="text-sm italic text-muted-foreground/70">
                         {isEn
                           ? "This message was deleted"
                           : "Ce message a été supprimé"}
@@ -1864,7 +1868,7 @@ export default function CommunityPage() {
                             Math.max(2, editDraft.split("\n").length)
                           )}
                           maxLength={1000}
-                          className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-2.5 py-1.5 text-sm text-neutral-700 dark:text-neutral-200 resize-none focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-500/40"
+                          className="w-full rounded-lg border border-input bg-sidebar-accent px-2.5 py-1.5 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
                         />
                         <div className="flex items-center gap-2 text-[11px]">
                           <Button
@@ -1883,7 +1887,7 @@ export default function CommunityPage() {
                           >
                             {isEn ? "Cancel" : "Annuler"}
                           </Button>
-                          <span className="text-neutral-400 dark:text-neutral-500">
+                          <span className="text-muted-foreground/70">
                             {isEn
                               ? "Enter to save · Shift+Enter for newline · Esc to cancel"
                               : "Entrée pour enregistrer · Maj+Entrée pour nouvelle ligne · Échap pour annuler"}
@@ -1891,7 +1895,7 @@ export default function CommunityPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="text-sm text-neutral-700 dark:text-neutral-300">
+                      <div className="text-sm text-foreground/90">
                         <ChatMarkdown
                           content={msg.content}
                           mentionableNames={mentionNames}
@@ -1899,7 +1903,7 @@ export default function CommunityPage() {
                         />
                         {msg.edited_at && (
                           <span
-                            className="ml-1.5 text-[10px] text-neutral-400 dark:text-neutral-500"
+                            className="ml-1.5 text-[10px] text-muted-foreground/70"
                             title={new Date(msg.edited_at).toLocaleString(
                               isEn ? "en-US" : "fr-FR"
                             )}
@@ -1938,7 +1942,7 @@ export default function CommunityPage() {
                         expandedThreads.has(msg.id)) && (
                         <button
                           onClick={() => toggleThread(msg)}
-                          className="mt-1 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                          className="mt-1 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
                           aria-expanded={expandedThreads.has(msg.id)}
                         >
                           <MessageSquare className="h-3 w-3" />
@@ -1951,7 +1955,7 @@ export default function CommunityPage() {
                               ? `${msg.reply_count ?? 0} replies`
                               : `${msg.reply_count ?? 0} réponses`}
                           </span>
-                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
+                          <span className="text-[10px] text-muted-foreground/70">
                             {expandedThreads.has(msg.id)
                               ? isEn
                                 ? "(hide)"
@@ -1969,10 +1973,10 @@ export default function CommunityPage() {
                         layout — the parent row already carries the
                         full avatar/name/time header. */}
                     {expandedThreads.has(msg.id) && (
-                      <div className="mt-1.5 ml-1 border-l-2 border-neutral-200 dark:border-neutral-800 pl-3 space-y-1">
+                      <div className="mt-1.5 ml-1 border-l-2 border-border pl-3 space-y-1">
                         {(threadReplies.get(msg.id) ?? []).length === 0 &&
                         !loadingThreadsRef.current.has(msg.id) ? (
-                          <p className="text-[11px] italic text-neutral-400 dark:text-neutral-500 py-1">
+                          <p className="text-[11px] italic text-muted-foreground/70 py-1">
                             {isEn
                               ? "No replies yet — be the first"
                               : "Aucune réponse — soyez le premier"}
@@ -1984,7 +1988,7 @@ export default function CommunityPage() {
                             return (
                               <div
                                 key={reply.id}
-                                className="group/reply flex items-start gap-2 py-0.5 px-1 rounded hover:bg-neutral-50 dark:hover:bg-neutral-800/30"
+                                className="group/reply flex items-start gap-2 py-0.5 px-1 rounded hover:bg-muted/40"
                               >
                                 <Avatar className="h-6 w-6 mt-0.5">
                                   <AvatarFallback
@@ -1992,7 +1996,7 @@ export default function CommunityPage() {
                                       "text-[9px] font-semibold",
                                       isReplyAdmin
                                         ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                                        : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                                        : "bg-muted text-foreground/90"
                                     )}
                                   >
                                     {getInitials(reply.user?.name || "")}
@@ -2005,7 +2009,7 @@ export default function CommunityPage() {
                                         "text-xs font-semibold",
                                         isReplyAdmin
                                           ? "text-red-600 dark:text-red-400"
-                                          : "text-neutral-900 dark:text-white"
+                                          : "text-foreground"
                                       )}
                                     >
                                       {reply.user?.name || "User"}
@@ -2015,13 +2019,13 @@ export default function CommunityPage() {
                                         Admin
                                       </Badge>
                                     )}
-                                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
+                                    <span className="text-[10px] text-muted-foreground/70">
                                       {formatTime(reply.created_at)}
                                     </span>
                                   </div>
 
                                   {reply.is_deleted ? (
-                                    <p className="text-xs italic text-neutral-400 dark:text-neutral-500">
+                                    <p className="text-xs italic text-muted-foreground/70">
                                       {isEn
                                         ? "This message was deleted"
                                         : "Ce message a été supprimé"}
@@ -2042,7 +2046,7 @@ export default function CommunityPage() {
                                           Math.max(2, editDraft.split("\n").length)
                                         )}
                                         maxLength={1000}
-                                        className="w-full rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-2 py-1 text-xs text-neutral-700 dark:text-neutral-200 resize-none focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-500/40"
+                                        className="w-full rounded-lg border border-input bg-sidebar-accent px-2 py-1 text-xs text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
                                       />
                                       <div className="flex items-center gap-1.5">
                                         <Button
@@ -2064,14 +2068,14 @@ export default function CommunityPage() {
                                       </div>
                                     </div>
                                   ) : (
-                                    <div className="text-xs text-neutral-700 dark:text-neutral-300">
+                                    <div className="text-xs text-foreground/90">
                                       <ChatMarkdown
                                         content={reply.content}
                                         mentionableNames={mentionNames}
                                         currentUserName={userName ?? undefined}
                                       />
                                       {reply.edited_at && (
-                                        <span className="ml-1.5 text-[9px] text-neutral-400 dark:text-neutral-500">
+                                        <span className="ml-1.5 text-[9px] text-muted-foreground/70">
                                           ({isEn ? "edited" : "modifié"})
                                         </span>
                                       )}
@@ -2125,7 +2129,7 @@ export default function CommunityPage() {
                           <div className="relative pt-1">
                             {replyMentionQuery !== null &&
                               replyMentionMatches.length > 0 && (
-                                <div className="absolute bottom-full left-0 mb-1 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg z-20 overflow-hidden">
+                                <div className="absolute bottom-full left-0 mb-1 w-64 max-w-[calc(100vw-2rem)] rounded-lg border border-input bg-card shadow-lg z-20 overflow-hidden">
                                   {replyMentionMatches.map((u, idx) => (
                                     <button
                                       key={u.id}
@@ -2143,8 +2147,8 @@ export default function CommunityPage() {
                                       className={cn(
                                         "w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-colors",
                                         idx === replyMentionIndex
-                                          ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                                          : "text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                                          ? "bg-primary/15 text-primary"
+                                          : "text-foreground/90 hover:bg-muted/40"
                                       )}
                                     >
                                       <AtSign className="h-3 w-3 shrink-0 opacity-60" />
@@ -2162,7 +2166,7 @@ export default function CommunityPage() {
                               )}
 
                             <div className="flex items-center gap-1.5">
-                              <CornerDownRight className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
+                              <CornerDownRight className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
                               <input
                                 ref={replyInputRef}
                                 type="text"
@@ -2176,7 +2180,7 @@ export default function CommunityPage() {
                                 }
                                 maxLength={1000}
                                 disabled={replySending}
-                                className="flex-1 min-w-0 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-2.5 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-500/40"
+                                className="flex-1 min-w-0 rounded-md border border-input bg-sidebar-accent px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
                               />
                               <Button
                                 size="sm"
@@ -2214,8 +2218,8 @@ export default function CommunityPage() {
                                 className={cn(
                                   "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors border",
                                   mine
-                                    ? "bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-700 text-green-700 dark:text-green-400"
-                                    : "bg-neutral-100 dark:bg-neutral-800 border-transparent text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700"
+                                    ? "bg-primary/10 border-primary/40 text-primary"
+                                    : "bg-muted border-transparent text-muted-foreground hover:border-border"
                                 )}
                                 aria-label={
                                   mine
@@ -2351,7 +2355,7 @@ export default function CommunityPage() {
           <div className="relative">
             <button
               onClick={scrollToBottom}
-              className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-neutral-900 dark:bg-white px-3 py-1.5 text-xs font-medium text-white dark:text-neutral-900 shadow-lg hover:opacity-90 transition-opacity"
+              className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-lg hover:opacity-90 transition-opacity"
             >
               <ChevronDown className="h-3.5 w-3.5" />
               {isEn ? "New messages" : "Nouveaux messages"}
@@ -2361,14 +2365,14 @@ export default function CommunityPage() {
 
         {/* ─── Input Area ─────────────────────────────────────── */}
         {canPost ? (
-          <div className="relative border-t border-neutral-200 dark:border-neutral-800 px-4 pt-3 pb-2">
+          <div className="relative border-t border-border px-4 pt-3 pb-2">
             {showEmoji && (
               <div className="flex gap-1 mb-2 flex-wrap">
                 {QUICK_EMOJIS.map((emoji) => (
                   <button
                     key={emoji}
                     onClick={() => setInput((prev) => prev + emoji)}
-                    className="h-9 w-9 rounded-lg text-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                    className="h-9 w-9 rounded-lg text-lg hover:bg-muted transition-colors"
                   >
                     {emoji}
                   </button>
@@ -2380,8 +2384,8 @@ export default function CommunityPage() {
                 the composer's left gutter. Arrow keys cycle, Enter/Tab
                 inserts, Escape dismisses. */}
             {mentionQuery !== null && mentionMatches.length > 0 && (
-              <div className="absolute bottom-full left-4 right-4 mb-1 z-10 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg overflow-hidden max-h-60 overflow-y-auto">
-                <div className="px-2 py-1.5 border-b border-neutral-100 dark:border-neutral-800 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+              <div className="absolute bottom-full left-4 right-4 mb-1 z-10 rounded-lg border border-border bg-card shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+                <div className="px-2 py-1.5 border-b border-border/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                   {isEn ? "Mention someone" : "Mentionner quelqu'un"}
                 </div>
                 {mentionMatches.map((u, i) => (
@@ -2397,8 +2401,8 @@ export default function CommunityPage() {
                     className={cn(
                       "w-full flex items-center gap-2 px-2.5 py-1.5 text-left text-sm transition-colors",
                       i === mentionIndex
-                        ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                        : "text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                        ? "bg-primary/15 text-primary"
+                        : "text-foreground/90 hover:bg-muted/50"
                     )}
                   >
                     <Avatar className="h-6 w-6">
@@ -2407,7 +2411,7 @@ export default function CommunityPage() {
                           "text-[10px] font-semibold",
                           u.role === "admin"
                             ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                            : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
+                            : "bg-muted text-foreground/90"
                         )}
                       >
                         {getInitials(u.name)}
@@ -2428,7 +2432,7 @@ export default function CommunityPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 shrink-0 text-neutral-400"
+                className="h-9 w-9 shrink-0 text-muted-foreground/70"
                 onClick={() => setShowEmoji(!showEmoji)}
               >
                 <Smile className="h-4 w-4" />
@@ -2443,7 +2447,7 @@ export default function CommunityPage() {
                     ? "Type a message... (@ to mention)"
                     : "Écrire un message... (@ pour mentionner)"
                 }
-                className="flex-1 dark:bg-neutral-800 dark:border-neutral-700"
+                className="flex-1"
                 maxLength={1000}
               />
               <Button
@@ -2461,8 +2465,8 @@ export default function CommunityPage() {
             </div>
           </div>
         ) : (
-          <div className="border-t border-neutral-200 dark:border-neutral-800 px-4 py-3">
-            <p className="text-center text-sm text-neutral-400 dark:text-neutral-500">
+          <div className="border-t border-border px-4 py-3">
+            <p className="text-center text-sm text-muted-foreground/70">
               <Megaphone className="inline h-4 w-4 mr-1.5 -mt-0.5" />
               {t.community?.announcementsOnly ||
                 (isEn

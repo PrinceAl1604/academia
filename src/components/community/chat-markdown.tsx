@@ -73,8 +73,8 @@ function renderWithMentions(
         className={cn(
           "rounded px-1 py-0.5 text-xs font-medium whitespace-nowrap",
           mine
-            ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 ring-1 ring-green-400 dark:ring-green-700"
-            : "bg-green-50/80 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+            ? "bg-primary/25 text-primary ring-1 ring-primary/50"
+            : "bg-primary/10 text-primary"
         )}
       >
         @{name}
@@ -183,7 +183,7 @@ export function ChatMarkdown({
               {...props}
               target="_blank"
               rel="noopener noreferrer nofollow"
-              className="text-green-600 dark:text-green-400 underline underline-offset-2 decoration-green-500/40 hover:decoration-green-500 transition-colors"
+              className="text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary transition-colors"
             >
               {mentions(children)}
             </a>
@@ -206,7 +206,7 @@ export function ChatMarkdown({
             }
             return (
               <code
-                className="rounded bg-neutral-100 dark:bg-neutral-800 px-1 py-0.5 text-[0.85em] font-mono text-neutral-800 dark:text-neutral-200"
+                className="rounded bg-muted px-1 py-0.5 text-[0.85em] font-mono text-foreground"
                 {...props}
               >
                 {children}
@@ -216,7 +216,7 @@ export function ChatMarkdown({
           pre: ({ children, ...props }) => (
             <pre
               {...props}
-              className="my-1.5 overflow-x-auto rounded-md bg-neutral-100 dark:bg-neutral-800 p-2.5 text-xs leading-relaxed"
+              className="my-1.5 overflow-x-auto rounded-md bg-muted p-2.5 text-xs leading-relaxed"
             >
               {children}
             </pre>
@@ -239,7 +239,7 @@ export function ChatMarkdown({
           blockquote: ({ children, ...props }) => (
             <blockquote
               {...props}
-              className="my-1 border-l-2 border-neutral-300 dark:border-neutral-600 pl-2.5 italic text-neutral-500 dark:text-neutral-400"
+              className="my-1 border-l-2 border-border pl-2.5 italic text-muted-foreground"
             >
               {mentions(children)}
             </blockquote>
@@ -259,7 +259,7 @@ export function ChatMarkdown({
           strong: ({ children, ...props }) => (
             <strong
               {...props}
-              className="font-semibold text-neutral-900 dark:text-neutral-100"
+              className="font-semibold text-foreground"
             >
               {mentions(children)}
             </strong>
@@ -272,13 +272,13 @@ export function ChatMarkdown({
           del: ({ children, ...props }) => (
             <del
               {...props}
-              className="text-neutral-400 dark:text-neutral-500"
+              className="text-muted-foreground/70"
             >
               {mentions(children)}
             </del>
           ),
           hr: () => (
-            <hr className="my-2 border-neutral-200 dark:border-neutral-700" />
+            <hr className="my-2 border-border" />
           ),
         }}
       >
