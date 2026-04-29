@@ -203,6 +203,7 @@ export const translations = {
 
     // Dashboard
     dashboard: {
+      title: "Dashboard",
       browse: "Browse",
       welcomeBack: "Welcome back",
       continueSubtitle: "Continue where you left off, or explore new courses.",
@@ -787,6 +788,7 @@ export const translations = {
 
     // Dashboard
     dashboard: {
+      title: "Tableau de bord",
       browse: "Explorer",
       welcomeBack: "Bon retour",
       continueSubtitle:

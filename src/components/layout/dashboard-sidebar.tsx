@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
+  Compass,
   BookOpen,
   Settings,
   CreditCard,
@@ -82,7 +83,11 @@ export function DashboardSidebar() {
   const studentNavGroups: NavGroup[] = [
     {
       items: [
-        { label: t.dashboard.browse || "Browse", href: "/", icon: LayoutDashboard },
+        // Dashboard goes first — it's the personalized stats overview the
+        // student lands on after sign-in. Browse (the catalog at `/`) is
+        // discovery, conceptually one step further out.
+        { label: t.dashboard.title || "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { label: t.dashboard.browse || "Browse", href: "/", icon: Compass },
         { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
         { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
       ],
@@ -176,11 +181,17 @@ export function DashboardSidebar() {
             )}
             <div className="space-y-0.5">
               {group.items.map((item) => {
-                const isActive =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname === item.href ||
-                      pathname.startsWith(item.href + "/");
+                // `/` (Browse) and `/dashboard` (Dashboard) are exact-match
+                // only — they're parents of other nav entries (`/dashboard/
+                // courses`, `/dashboard/community`, etc.) and a startsWith
+                // match would highlight both Dashboard AND its child route
+                // simultaneously.
+                const isExactOnly =
+                  item.href === "/" || item.href === "/dashboard";
+                const isActive = isExactOnly
+                  ? pathname === item.href
+                  : pathname === item.href ||
+                    pathname.startsWith(item.href + "/");
                 return (
                   <SidebarItem
                     key={item.href}
