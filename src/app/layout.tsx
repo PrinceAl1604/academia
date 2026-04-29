@@ -1,11 +1,22 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 
 const geist = Geist({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
 });
+
+// Geist Mono powers the new design language's metadata typography —
+// timestamps, prices, durations, counts. Using a true monospace (rather
+// than `tabular-nums` on a proportional face) keeps figure widths perfectly
+// even, which reads as deliberate at small sizes.
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 import { LanguageProvider } from "@/lib/i18n/language-context";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProgressProvider } from "@/lib/progress-context";
@@ -19,6 +30,8 @@ export const metadata: Metadata = {
   description:
     "Access premium courses taught by industry experts. One subscription, unlimited learning.",
   icons: {
+    // The app is dark-only now, but we keep the dual favicon set so the
+    // browser tab adapts to the OS chrome regardless of how it's rendered.
     icon: [
       { url: "/favicon-light.svg", type: "image/svg+xml", media: "(prefers-color-scheme: light)" },
       { url: "/favicon-dark.svg", type: "image/svg+xml", media: "(prefers-color-scheme: dark)" },
@@ -54,8 +67,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geist.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans">
+    // Force dark mode app-wide. Cook-OS-inspired warm-charcoal palette is
+    // defined in globals.css under the combined `:root, .dark` selector.
+    // `color-scheme: dark` (set in globals.css) ensures native form
+    // controls (scrollbars, date pickers, etc.) match the theme without a
+    // per-element override.
+    <html
+      lang="en"
+      className={`dark ${geist.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <LanguageProvider>
           <AuthProvider>
             <ProgressProvider>{children}</ProgressProvider>

@@ -2,6 +2,13 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* ─── Tailwind dark variant ─────────────────────────────────────────────
+   `dark:foo` rules apply when the element is inside a `.dark` ancestor.
+   The root layout adds `class="dark"` to <html>, so this matches every
+   descendant — effectively making `dark:` unconditional. We keep the
+   variant rather than aliasing it to `&` so individual components can
+   still opt out via `:not(.dark)` selectors if a future feature needs a
+   light surface (e.g. an embedded PDF viewer). */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -48,73 +55,81 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
+/* ─── Theme tokens (dark-only, Cook-OS-inspired warm charcoal) ─────────
+   The previous design system shipped both `:root` (light) and `.dark`
+   (dark) variants. The app now ships dark-only; we mirror the same
+   palette on both selectors so semantic-token components render
+   correctly even outside the .dark cascade boundary (SSR streaming
+   edge case). Phase 9 of the redesign will collapse this to a single
+   `:root` block once the legacy class-translation rules below are
+   removed. */
+:root,
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* ── Surfaces — a 4-step warm-charcoal scale.
+        Hue 60 (amber) at low chroma (0.008) gives an "intentional" feel
+        vs. the cold neutrality of pure-grey defaults. Each step ~0.025
+        luminance apart so adjacent surfaces are clearly delineated
+        without needing a border. */
+  --background: oklch(0.145 0.008 60);
+  --foreground: oklch(0.95 0.005 80);
+  --card: oklch(0.18 0.008 60);
+  --card-foreground: oklch(0.95 0.005 80);
+  --popover: oklch(0.20 0.008 60);
+  --popover-foreground: oklch(0.95 0.005 80);
+
+  /* ── Brand accent — forest green, brightened.
+        The original 0.55 luminance read flat on dark surfaces; 0.62
+        keeps WCAG AA on body text and reads as confident, not muddy. */
+  --primary: oklch(0.62 0.14 155);
+  --primary-foreground: oklch(0.98 0.005 80);
+
+  /* ── Secondary surfaces / muted text.
+        Secondary = chip backgrounds, hover-fill, "neutral but not bg".
+        Muted-foreground = de-emphasized labels and timestamps. The
+        0.65 luminance hits the AA contrast cliff at smaller-than-12px
+        sizes; anything finer should bump to foreground. */
+  --secondary: oklch(0.22 0.008 60);
+  --secondary-foreground: oklch(0.95 0.005 80);
+  --muted: oklch(0.22 0.008 60);
+  --muted-foreground: oklch(0.65 0.005 80);
+  --accent: oklch(0.24 0.008 60);
+  --accent-foreground: oklch(0.95 0.005 80);
+
+  /* ── Status — kept warm-saturated so red still reads as red against
+        the warm-charcoal backdrop (cool-red would clash with the hue 60
+        undertone). */
+  --destructive: oklch(0.65 0.22 25);
+
+  /* ── Borders — translucent white instead of an absolute color.
+        At 8% the borders feel "drawn with a pencil" rather than "ruled
+        with ink" — Cook-OS-flavored restraint. Inputs use 12% so they
+        remain visible against bg even with no fill. */
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.62 0.14 155 / 50%);
+
+  /* ── Charts. Lead with brand green; alternate with cool/warm tones
+        that don't fight the dominant accent. */
+  --chart-1: oklch(0.62 0.14 155);
+  --chart-2: oklch(0.55 0.10 200);
+  --chart-3: oklch(0.50 0.12 60);
+  --chart-4: oklch(0.45 0.10 280);
+  --chart-5: oklch(0.40 0.08 30);
+
+  /* Tighter than the previous 0.625; reads as "tool" not "blob". */
+  --radius: 0.5rem;
+
+  /* ── Sidebar — slightly cooler/darker than the main bg so the panel
+        delineates without needing a border, and the active-nav state
+        (using --primary tint) reads clearly. */
+  --sidebar: oklch(0.13 0.008 60);
+  --sidebar-foreground: oklch(0.95 0.005 80);
+  --sidebar-primary: oklch(0.62 0.14 155);
+  --sidebar-primary-foreground: oklch(0.98 0.005 80);
+  --sidebar-accent: oklch(0.22 0.008 60);
+  --sidebar-accent-foreground: oklch(0.95 0.005 80);
+  --sidebar-border: oklch(1 0 0 / 6%);
+  --sidebar-ring: oklch(0.62 0.14 155 / 50%);
 }
 
 @layer base {
@@ -123,112 +138,151 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* A hair of negative tracking pairs better with the warm-charcoal
+       palette than the default 0; reads as more deliberate at body sizes. */
+    letter-spacing: -0.005em;
   }
   html {
     @apply font-sans;
+    /* Tells the browser to render native form chrome (scrollbars, date
+       pickers, autocomplete dropdowns) in dark colors. Without this the
+       scrollbar ends up white-on-charcoal and breaks immersion. */
+    color-scheme: dark;
+  }
+  /* Headlines: tighter tracking, medium weight feels "operator tool" not
+     "blog post". Custom h1/h2 classes can still override per-page. */
+  h1, h2, h3 {
+    letter-spacing: -0.02em;
+  }
+  /* Tabular numerics globally for badges and time elements — counts,
+     durations, prices align vertically. Cook OS does this for stat
+     readouts; it's a subtle but professionally-finished detail. */
+  [data-slot="badge"], time, .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* ─── Dark Mode Overrides ─────────────────────────────────────────────── */
-/* Override hardcoded Tailwind neutral/white colors for dark mode */
-.dark {
-  color-scheme: dark;
-}
+/* ════════════════════════════════════════════════════════════════════
+   Legacy class translation block
+
+   ~80% of pages still use hardcoded Tailwind neutral classes
+   (`bg-white`, `bg-neutral-50`, `border-neutral-200/60`, etc.) instead
+   of the semantic tokens defined above. Phases 2–8 of the redesign
+   will migrate them to `bg-card`, `bg-muted`, `border-border`, etc.
+   Until then, these rules translate the legacy classes to the new
+   warm-charcoal palette so the app reads as a single visual language
+   even before the migration is complete.
+
+   This whole block is removed in Phase 9.
+   ════════════════════════════════════════════════════════════════════ */
 
 /* Backgrounds */
-.dark .bg-white { background-color: oklch(0.16 0 0) !important; }
-.dark .bg-neutral-50\/50, .dark .bg-neutral-50 { background-color: oklch(0.13 0 0) !important; }
-.dark .bg-neutral-100 { background-color: oklch(0.20 0 0) !important; }
-.dark .bg-neutral-200 { background-color: oklch(0.25 0 0) !important; }
-.dark .bg-\[\#faf9f7\] { background-color: oklch(0.12 0 0) !important; }
+.bg-white { background-color: oklch(0.18 0.008 60) !important; }
+.bg-neutral-50\/50, .bg-neutral-50 { background-color: oklch(0.16 0.008 60) !important; }
+.bg-neutral-100 { background-color: oklch(0.22 0.008 60) !important; }
+.bg-neutral-200 { background-color: oklch(0.26 0.008 60) !important; }
+.bg-\[\#faf9f7\] { background-color: oklch(0.145 0.008 60) !important; }
 
-/* Text */
-.dark .text-neutral-900 { color: oklch(0.95 0 0) !important; }
-.dark .text-neutral-800 { color: oklch(0.90 0 0) !important; }
-.dark .text-neutral-700 { color: oklch(0.80 0 0) !important; }
-.dark .text-neutral-600 { color: oklch(0.70 0 0) !important; }
-.dark .text-neutral-500 { color: oklch(0.60 0 0) !important; }
-.dark .text-neutral-400 { color: oklch(0.50 0 0) !important; }
+/* Text — keep the contrast hierarchy but warm it slightly */
+.text-neutral-900 { color: oklch(0.96 0.005 80) !important; }
+.text-neutral-800 { color: oklch(0.92 0.005 80) !important; }
+.text-neutral-700 { color: oklch(0.85 0.005 80) !important; }
+.text-neutral-600 { color: oklch(0.75 0.005 80) !important; }
+.text-neutral-500 { color: oklch(0.65 0.005 80) !important; }
+.text-neutral-400 { color: oklch(0.55 0.005 80) !important; }
 
-/* Borders */
-.dark .border-neutral-200, .dark .border-neutral-200\/60 { border-color: oklch(1 0 0 / 10%) !important; }
-.dark .border-neutral-300 { border-color: oklch(1 0 0 / 15%) !important; }
-.dark .border-b { border-color: oklch(1 0 0 / 10%); }
+/* Borders — translucent white scale */
+.border-neutral-200, .border-neutral-200\/60 { border-color: oklch(1 0 0 / 8%) !important; }
+.border-neutral-300 { border-color: oklch(1 0 0 / 12%) !important; }
 
-/* Specific components */
-.dark .bg-white\/80 { background-color: oklch(0.16 0 0 / 80%) !important; }
-.dark .hover\:bg-neutral-50:hover { background-color: oklch(0.20 0 0) !important; }
-.dark .hover\:bg-neutral-100:hover { background-color: oklch(0.22 0 0) !important; }
-.dark .hover\:bg-neutral-100\/80:hover { background-color: oklch(0.22 0 0 / 80%) !important; }
+/* Translucent header surface (preserve the backdrop-blur effect) */
+.bg-white\/80 { background-color: oklch(0.18 0.008 60 / 80%) !important; }
+.hover\:bg-neutral-50:hover { background-color: oklch(0.22 0.008 60) !important; }
+.hover\:bg-neutral-100:hover { background-color: oklch(0.24 0.008 60) !important; }
+.hover\:bg-neutral-100\/80:hover { background-color: oklch(0.24 0.008 60 / 80%) !important; }
 
-/* Cards */
-.dark .border-neutral-200\/60 { border-color: oklch(1 0 0 / 8%) !important; }
-
-/* Inputs */
-.dark input, .dark textarea, .dark select {
-  background-color: oklch(0.18 0 0) !important;
-  border-color: oklch(1 0 0 / 12%) !important;
-  color: oklch(0.95 0 0) !important;
+/* Inputs — coerce all native form fields to the new dark palette
+   even when their own className overrides try to reset them */
+input, textarea, select {
+  background-color: oklch(0.20 0.008 60) !important;
+  border-color: oklch(1 0 0 / 10%) !important;
+  color: oklch(0.95 0.005 80) !important;
 }
-.dark input::placeholder, .dark textarea::placeholder {
-  color: oklch(0.45 0 0) !important;
+input::placeholder, textarea::placeholder {
+  color: oklch(0.50 0.005 80) !important;
 }
 
-/* Buttons — only override non-forced ones */
-.dark .bg-neutral-800:not([class*="!"]) { background-color: oklch(0.90 0 0) !important; color: oklch(0.12 0 0) !important; }
-.dark .bg-neutral-900:not([data-slot]):not(header):not(.border-neutral-900) { background-color: oklch(0.95 0 0) !important; color: oklch(0.12 0 0) !important; }
-.dark .hover\:bg-neutral-700:hover { background-color: oklch(0.85 0 0) !important; }
+/* Buttons — translate "dark on light" patterns into "primary green".
+   The :not() guards prevent us from hijacking explicit `data-slot`
+   buttons (shadcn primitives) or header backgrounds that are already
+   semantic. */
+.bg-neutral-800:not([class*="!"]) {
+  background-color: oklch(0.62 0.14 155) !important;
+  color: oklch(0.98 0.005 80) !important;
+}
+.bg-neutral-900:not([data-slot]):not(header):not(.border-neutral-900) {
+  background-color: oklch(0.62 0.14 155) !important;
+  color: oklch(0.98 0.005 80) !important;
+}
+.hover\:bg-neutral-700:hover { background-color: oklch(0.58 0.14 155) !important; }
 
-/* Preserve explicitly forced white buttons in dark areas */
-.dark .\!bg-white { background-color: white !important; color: oklch(0.12 0 0) !important; }
-.dark .hover\:\!bg-neutral-200:hover { background-color: oklch(0.90 0 0) !important; }
+/* Preserve explicitly forced white buttons (used on dark hero overlays
+   where the contrast must survive a colored background) */
+.\!bg-white { background-color: white !important; color: oklch(0.12 0 0) !important; }
+.hover\:\!bg-neutral-200:hover { background-color: oklch(0.90 0 0) !important; }
 
-/* Category pills */
-.dark .border-neutral-900.bg-neutral-900 { background-color: oklch(0.95 0 0) !important; color: oklch(0.12 0 0) !important; border-color: oklch(0.95 0 0) !important; }
-
-/* Badges */
-.dark .bg-green-100 { background-color: oklch(0.30 0.08 155) !important; }
-.dark .bg-blue-100 { background-color: oklch(0.30 0.08 250) !important; }
-.dark .bg-amber-100 { background-color: oklch(0.35 0.08 80) !important; }
-.dark .bg-red-100 { background-color: oklch(0.30 0.08 25) !important; }
-.dark .bg-purple-50 { background-color: oklch(0.25 0.06 300) !important; }
-.dark .bg-blue-50 { background-color: oklch(0.22 0.06 250) !important; }
-.dark .bg-green-50 { background-color: oklch(0.22 0.06 155) !important; }
-.dark .bg-amber-50 { background-color: oklch(0.25 0.06 80) !important; }
-
-/* Separator */
-.dark [data-slot="separator"] { background-color: oklch(1 0 0 / 10%) !important; }
-
-/* Scrollarea */
-.dark .divide-y > * + * { border-color: oklch(1 0 0 / 8%); }
-
-/* Popover / Dropdown */
-.dark [data-slot="popover-content"], .dark [data-slot="dropdown-menu-content"] {
-  background-color: oklch(0.18 0 0) !important;
-  border-color: oklch(1 0 0 / 12%) !important;
+/* Category pills (used on filter rows in courses) */
+.border-neutral-900.bg-neutral-900 {
+  background-color: oklch(0.62 0.14 155) !important;
+  color: oklch(0.98 0.005 80) !important;
+  border-color: oklch(0.62 0.14 155) !important;
 }
 
-/* Dialog */
-.dark [data-slot="dialog-content"] {
-  background-color: oklch(0.18 0 0) !important;
-  border-color: oklch(1 0 0 / 12%) !important;
+/* Status chip backgrounds — saturated enough to read at small sizes.
+   The 0.30-luminance band keeps them visible on the 0.18 card surface
+   without dominating. */
+.bg-green-100 { background-color: oklch(0.30 0.10 155) !important; }
+.bg-blue-100 { background-color: oklch(0.30 0.08 250) !important; }
+.bg-amber-100 { background-color: oklch(0.32 0.10 80) !important; }
+.bg-red-100 { background-color: oklch(0.30 0.10 25) !important; }
+.bg-purple-50 { background-color: oklch(0.25 0.06 300) !important; }
+.bg-blue-50 { background-color: oklch(0.22 0.06 250) !important; }
+.bg-green-50 { background-color: oklch(0.22 0.08 155) !important; }
+.bg-amber-50 { background-color: oklch(0.25 0.08 80) !important; }
+
+/* Separator + scroll divider lines */
+[data-slot="separator"] { background-color: oklch(1 0 0 / 8%) !important; }
+.divide-y > * + * { border-color: oklch(1 0 0 / 6%); }
+
+/* Floating surfaces — popover / dropdown / dialog all share one elevated
+   surface tone (0.20) so they stack visually if multiple are open */
+[data-slot="popover-content"], [data-slot="dropdown-menu-content"] {
+  background-color: oklch(0.20 0.008 60) !important;
+  border-color: oklch(1 0 0 / 10%) !important;
+}
+[data-slot="dialog-content"] {
+  background-color: oklch(0.20 0.008 60) !important;
+  border-color: oklch(1 0 0 / 10%) !important;
 }
 
-/* Accordion */
-.dark [data-slot="accordion-trigger"]:hover { background-color: oklch(0.20 0 0) !important; }
+/* Accordion hover — same as the ambient muted surface */
+[data-slot="accordion-trigger"]:hover { background-color: oklch(0.22 0.008 60) !important; }
 
-/* Course card gradients in dark mode */
-.dark .from-orange-100 { --tw-gradient-from: oklch(0.30 0.06 50) !important; }
-.dark .from-blue-100 { --tw-gradient-from: oklch(0.28 0.06 250) !important; }
-.dark .from-emerald-100 { --tw-gradient-from: oklch(0.28 0.06 165) !important; }
-.dark .from-pink-100 { --tw-gradient-from: oklch(0.28 0.06 340) !important; }
-.dark .from-amber-100 { --tw-gradient-from: oklch(0.30 0.06 80) !important; }
-.dark .from-sky-100 { --tw-gradient-from: oklch(0.28 0.06 230) !important; }
+/* Course-card colored gradient washes (used on category covers). The
+   Tailwind classes used by those components target *-100 starting tones;
+   we remap to muted dark equivalents so the colorful hierarchy survives
+   the dark-mode flip. */
+.from-orange-100 { --tw-gradient-from: oklch(0.30 0.06 50) !important; }
+.from-blue-100 { --tw-gradient-from: oklch(0.28 0.06 250) !important; }
+.from-emerald-100 { --tw-gradient-from: oklch(0.28 0.08 165) !important; }
+.from-pink-100 { --tw-gradient-from: oklch(0.28 0.06 340) !important; }
+.from-amber-100 { --tw-gradient-from: oklch(0.30 0.08 80) !important; }
+.from-sky-100 { --tw-gradient-from: oklch(0.28 0.06 230) !important; }
 
-/* Switch */
-.dark [data-slot="switch"] { background-color: oklch(0.25 0 0); }
+/* Switch track when off */
+[data-slot="switch"] { background-color: oklch(0.25 0.008 60); }
 
-/* Hide scrollbar for carousels */
+/* Hide scrollbars on horizontal carousels (preserved from previous theme) */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
