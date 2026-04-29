@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CourseCard } from "./course-card";
 import { CourseRow } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 interface CourseCarouselProps {
   title: string;
@@ -12,6 +13,19 @@ interface CourseCarouselProps {
   locked?: (course: CourseRow) => boolean;
 }
 
+/**
+ * CourseCarousel — Cook-OS-flavored refresh.
+ *
+ * Section header now has a mono-uppercase preheader matching the
+ * broader page typography ("/ Section name") then a tight headline.
+ * The subtitle is mono + tabular-nums so figure counts align nicely
+ * across consecutive rails.
+ *
+ * Scroll buttons migrated to the shadcn `Button` primitive (icon-sm
+ * variant) so they pick up the same hover/focus treatments as
+ * everything else in the design system. Previously they were
+ * custom-rolled with hardcoded neutrals.
+ */
 export function CourseCarousel({
   title,
   subtitle,
@@ -46,30 +60,41 @@ export function CourseCarousel({
   };
 
   return (
-    <section className="mb-10" role="region" aria-label={title}>
+    <section className="mb-12" role="region" aria-label={title}>
       {/* Header */}
-      <div className="flex items-end justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-bold text-neutral-900">{title}</h2>
-          <p className="mt-0.5 text-sm text-neutral-500">{subtitle}</p>
+      <div className="flex items-end justify-between mb-5">
+        <div className="space-y-0.5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            / {title}
+          </p>
+          <h2 className="text-lg font-medium tracking-tight text-foreground">
+            {title}
+          </h2>
+          <p className="font-mono text-[11px] text-muted-foreground tabular-nums">
+            {subtitle}
+          </p>
         </div>
         <div className="flex items-center gap-1">
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={() => scroll("left")}
             disabled={!canScrollLeft}
             aria-label="Scroll left"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="text-muted-foreground"
           >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={() => scroll("right")}
             disabled={!canScrollRight}
             aria-label="Scroll right"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="text-muted-foreground"
           >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 

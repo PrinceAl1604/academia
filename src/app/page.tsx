@@ -8,7 +8,21 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { CourseCarousel } from "@/components/shared/course-carousel";
 import { getCourses, getCategories, type CourseRow, type CategoryRow } from "@/lib/api";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
+/**
+ * Home / browse — Cook-OS-flavored refresh.
+ *
+ * Hero block carries a mono-uppercase preheader + a tight
+ * `text-3xl sm:text-4xl` headline (was just text-3xl bold). Category
+ * filter pills migrated from custom-rolled buttons with hardcoded
+ * `border-neutral-900 bg-neutral-900` to a uniform pill style using
+ * semantic tokens — active pill fills with `bg-primary`, inactive
+ * uses `bg-card` with subtle border.
+ *
+ * Empty-state copy gets a calmer treatment (less center-stage, more
+ * "no results yet" tone).
+ */
 export default function HomePage() {
   const { isPro } = useAuth();
   const { t } = useLanguage();
@@ -20,13 +34,11 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const isEn = t.nav.signIn === "Sign In";
 
-  // Sync search query from URL params (e.g. from topbar search)
   useEffect(() => {
     const q = searchParams.get("q");
     if (q) setSearchQuery(q);
   }, [searchParams]);
 
-  // Fetch courses and categories from Supabase
   useEffect(() => {
     async function load() {
       const [coursesData, categoriesData] = await Promise.all([
@@ -48,12 +60,10 @@ export default function HomePage() {
   const filteredCourses = useMemo(() => {
     let result = courses;
 
-    // Filter by category
     if (selectedCategory !== "All") {
       result = result.filter((c) => c.category?.name === selectedCategory);
     }
 
-    // Filter by search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(
@@ -77,7 +87,6 @@ export default function HomePage() {
         grouped[cat] = catCourses;
       }
     }
-    // Include uncategorized courses
     const uncategorized = filteredCourses.filter((c) => !c.category?.name);
     if (uncategorized.length > 0) {
       const label = t.nav.signIn === "Sign In" ? "Other" : "Autres";
@@ -93,90 +102,97 @@ export default function HomePage() {
     return levels.length === 1 ? levels[0] : "Mixed";
   };
 
+  const allCategories = ["All", ...categoryNames];
+
   return (
     <SidebarLayout>
-        <main className="px-4 py-6 lg:px-8 lg:py-8">
-          {/* Page header */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
-              {t.nav.courses}
-            </h1>
-          </div>
+      <main className="px-4 py-8 lg:px-8 lg:py-12 max-w-6xl mx-auto">
+        {/* ── Hero ──────────────────────────────────────────── */}
+        <header className="mb-8 space-y-2">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            / Catalog
+          </p>
+          <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground">
+            {t.nav.courses}
+          </h1>
+        </header>
 
-          {/* Category filter pills */}
-          <div className="mb-8 flex flex-wrap gap-2" role="group" aria-label={isEn ? "Filter by category" : "Filtrer par catégorie"}>
-            <button
-              onClick={() => setSelectedCategory("All")}
-              aria-pressed={selectedCategory === "All"}
-              className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                selectedCategory === "All"
-                  ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900"
-                  : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-              }`}
-            >
-              {t.catalog.all}
-            </button>
-            {categoryNames.map((cat) => (
+        {/* ── Category filter pills ─────────────────────────── */}
+        <div
+          className="mb-10 flex flex-wrap gap-1.5"
+          role="group"
+          aria-label={isEn ? "Filter by category" : "Filtrer par catégorie"}
+        >
+          {allCategories.map((cat) => {
+            const isActive = selectedCategory === cat;
+            const label = cat === "All" ? t.catalog.all : cat;
+            return (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                aria-pressed={selectedCategory === cat}
-                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                  selectedCategory === cat
-                    ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-neutral-900"
-                    : "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                }`}
+                aria-pressed={isActive}
+                className={cn(
+                  "rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors border",
+                  isActive
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground"
+                )}
               >
-                {cat}
+                {label}
               </button>
-            ))}
+            );
+          })}
+        </div>
+
+        {/* ── Loading state ─────────────────────────────────── */}
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
+        )}
 
-          {/* Loading state */}
-          {loading && (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
-            </div>
+        {/* ── Course carousels ──────────────────────────────── */}
+        {!loading &&
+          Object.entries(coursesByCategory).map(
+            ([category, categoryCourses]) => (
+              <CourseCarousel
+                key={category}
+                title={category}
+                subtitle={`${categoryCourses.length} ${
+                  categoryCourses.length === 1
+                    ? t.catalog.course
+                    : t.catalog.courses
+                } · ${getCategoryLevel(categoryCourses)}`}
+                courses={categoryCourses}
+                locked={isLocked}
+              />
+            )
           )}
 
-          {/* Course carousels by category */}
-          {!loading &&
-            Object.entries(coursesByCategory).map(
-              ([category, categoryCourses]) => (
-                <CourseCarousel
-                  key={category}
-                  title={category}
-                  subtitle={`${categoryCourses.length} ${
-                    categoryCourses.length === 1
-                      ? t.catalog.course
-                      : t.catalog.courses
-                  } · ${getCategoryLevel(categoryCourses)}`}
-                  courses={categoryCourses}
-                  locked={isLocked}
-                />
-              )
+        {/* ── Empty state ───────────────────────────────────── */}
+        {!loading && filteredCourses.length === 0 && (
+          <div className="py-20 text-center space-y-3">
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              / No results
+            </p>
+            <p className="text-foreground text-base max-w-md mx-auto">
+              {searchQuery
+                ? (isEn
+                  ? `Nothing matches "${searchQuery}".`
+                  : `Aucun cours pour "${searchQuery}".`)
+                : t.catalog.noCourses}
+            </p>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+              >
+                {isEn ? "Clear search" : "Effacer la recherche"}
+              </button>
             )}
-
-          {!loading && filteredCourses.length === 0 && (
-            <div className="py-20 text-center">
-              <p className="text-neutral-500 dark:text-neutral-400">
-                {searchQuery
-                  ? (isEn
-                    ? `No courses found for "${searchQuery}"`
-                    : `Aucun cours trouvé pour "${searchQuery}"`)
-                  : t.catalog.noCourses}
-              </p>
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="mt-3 text-sm text-neutral-500 underline hover:text-neutral-700 dark:hover:text-neutral-300"
-                >
-                  {isEn ? "Clear search" : "Effacer la recherche"}
-                </button>
-              )}
-            </div>
-          )}
-        </main>
+          </div>
+        )}
+      </main>
     </SidebarLayout>
   );
 }
