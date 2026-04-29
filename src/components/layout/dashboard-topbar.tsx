@@ -21,8 +21,6 @@ import {
   MessageSquare,
   UserPlus,
   BookPlus,
-  Moon,
-  Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
@@ -40,10 +38,20 @@ interface Notification {
   time: string;
 }
 
+/**
+ * Dashboard topbar — Cook-OS-flavored refresh.
+ *
+ * Migrated from hardcoded `bg-white dark:bg-neutral-950` etc. to
+ * semantic `bg-background border-border` tokens.
+ *
+ * The dark-mode toggle has been removed entirely. The app is force-dark
+ * via `<html class="dark">` in the root layout; allowing a toggle here
+ * could remove that class and break the entire theme. The Sun / Moon
+ * icons and `toggleDarkMode` handler are gone with it.
+ */
 export function DashboardTopbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const pathname = usePathname();
@@ -114,173 +122,155 @@ export function DashboardTopbar() {
     setUnreadCount(0);
   };
 
-  // Load + toggle dark mode
-  useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "dark") {
-      setDarkMode(true);
-      document.documentElement.classList.add("dark");
-    }
-  }, []);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle("dark");
-    localStorage.setItem("theme", !darkMode ? "dark" : "light");
-  };
-
   return (
     <>
-    <ExpiryBanner />
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-white/80 dark:bg-neutral-950/80 px-4 backdrop-blur-md lg:px-8">
-      {/* Mobile menu — visible below lg */}
-      <Sheet>
-        <SheetTrigger
-          className="lg:hidden"
-          render={<Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Open navigation menu" />}
-        >
-          <Menu className="h-5 w-5" />
-        </SheetTrigger>
-        <SheetContent side="left" className="w-[85vw] max-w-72">
-          <div className="flex items-center pb-6 pt-4">
-            <Logo className="h-5" />
-          </div>
-          <nav className="flex flex-col gap-1">
-            {mobileNav.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-neutral-100 text-neutral-900"
-                      : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900"
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+      <ExpiryBanner />
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur-md lg:px-8">
+        {/* Mobile menu — visible below lg */}
+        <Sheet>
+          <SheetTrigger
+            className="lg:hidden"
+            render={<Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Open navigation menu" />}
+          >
+            <Menu className="h-5 w-5" />
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[85vw] max-w-72 bg-sidebar text-sidebar-foreground p-4">
+            <div className="flex items-center pb-6 pt-2">
+              <Logo className="h-5" />
+            </div>
+            <nav className="flex flex-col gap-0.5">
+              {mobileNav.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                      isActive &&
+                        "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
 
-          {/* Mobile-only: language, dark mode, auth */}
-          <div className="mt-6 border-t pt-6 space-y-4">
-            <div className="flex items-center justify-between px-3">
-              <LanguageToggle />
-              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleDarkMode} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}>
-                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {/* Mobile-only: language + auth */}
+            <div className="mt-6 border-t border-sidebar-border pt-6 space-y-4">
+              <div className="flex items-center justify-between px-3">
+                <LanguageToggle />
+              </div>
+              {!isAuthenticated && (
+                <div className="flex flex-col gap-2 px-3">
+                  <Button variant="outline" className="w-full h-10" render={<Link href="/sign-in" />}>
+                    {t.nav.signIn}
+                  </Button>
+                  <Button className="w-full h-10" render={<Link href="/sign-up" />}>
+                    {t.dashboard.signUp}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Search */}
+        <div className="flex-1">
+          {isSearchOpen ? (
+            <div className="w-full max-w-md">
+              <Input
+                placeholder={t.nav.searchCourses}
+                className="h-9"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearch}
+                onBlur={() => { if (!searchQuery) setIsSearchOpen(false); }}
+              />
+            </div>
+          ) : (
+            <Button
+              variant="ghost"
+              className="gap-2 text-muted-foreground hover:text-foreground"
+              onClick={() => setIsSearchOpen(true)}
+              aria-label={t.nav.searchCourses}
+            >
+              <Search className="h-4 w-4" />
+              <span className="hidden sm:inline">{t.nav.searchCourses}</span>
+            </Button>
+          )}
+        </div>
+
+        {/* Desktop-only actions: language toggle */}
+        <div className="hidden lg:flex items-center gap-2">
+          <LanguageToggle />
+        </div>
+
+        {/* Always-visible actions: notifications + profile (or auth buttons on desktop) */}
+        <div className="flex items-center gap-2">
+          {isAuthenticated ? (
+            <>
+              {/* Notification Popover */}
+              <Popover onOpenChange={(open) => { if (open) markNotificationsRead(); }}>
+                <PopoverTrigger render={<Button variant="ghost" size="icon" className="relative h-9 w-9" aria-label="Notifications" />}>
+                  <Bell className="h-4 w-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+                  )}
+                </PopoverTrigger>
+                <PopoverContent className="w-[calc(100vw-1rem)] sm:w-80 p-0" align="end" sideOffset={8}>
+                  <div className="border-b border-border/60 px-4 py-3">
+                    <p className="text-sm font-semibold text-foreground">
+                      Notifications
+                    </p>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto divide-y divide-border/40">
+                    {notifications.length === 0 ? (
+                      <p className="p-4 text-sm text-muted-foreground text-center">
+                        {t.nav.signIn === "Sign In" ? "No notifications" : "Aucune notification"}
+                      </p>
+                    ) : (
+                      notifications.map((n) => (
+                        <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0 mt-0.5">
+                            {n.type === "new_student" ? (
+                              <UserPlus className="h-4 w-4 text-blue-400" />
+                            ) : (
+                              <BookPlus className="h-4 w-4 text-primary" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-foreground">{n.message}</p>
+                            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                              {n.time}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </>
+          ) : (
+            /* Desktop-only sign-in/sign-up — mobile uses the hamburger sheet */
+            <div className="hidden lg:flex items-center gap-2">
+              <Button variant="ghost" className="h-9 text-sm" render={<Link href="/sign-in" />}>
+                {t.nav.signIn}
+              </Button>
+              <Button className="h-9 text-sm" render={<Link href="/sign-up" />}>
+                {t.dashboard.signUp}
               </Button>
             </div>
-            {!isAuthenticated && (
-              <div className="flex flex-col gap-2 px-3">
-                <Button variant="outline" className="w-full h-10" render={<Link href="/sign-in" />}>
-                  {t.nav.signIn}
-                </Button>
-                <Button className="w-full h-10" render={<Link href="/sign-up" />}>
-                  {t.dashboard.signUp}
-                </Button>
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Search */}
-      <div className="flex-1">
-        {isSearchOpen ? (
-          <div className="w-full max-w-md">
-            <Input
-              placeholder={t.nav.searchCourses}
-              className="h-9"
-              autoFocus
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearch}
-              onBlur={() => { if (!searchQuery) setIsSearchOpen(false); }}
-            />
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            className="gap-2 text-neutral-500"
-            onClick={() => setIsSearchOpen(true)}
-            aria-label={t.nav.searchCourses}
-          >
-            <Search className="h-4 w-4" />
-            <span className="hidden sm:inline">{t.nav.searchCourses}</span>
-          </Button>
-        )}
-      </div>
-
-      {/* Desktop-only actions: language + dark mode */}
-      <div className="hidden lg:flex items-center gap-2">
-        <LanguageToggle />
-        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleDarkMode} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}>
-          {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
-      </div>
-
-      {/* Always-visible actions: notifications + profile (or auth buttons on desktop) */}
-      <div className="flex items-center gap-2">
-        {isAuthenticated ? (
-          <>
-            {/* Notification Popover */}
-            <Popover onOpenChange={(open) => { if (open) markNotificationsRead(); }}>
-              <PopoverTrigger render={<Button variant="ghost" size="icon" className="relative h-9 w-9" aria-label="Notifications" />}>
-                <Bell className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-                )}
-              </PopoverTrigger>
-              <PopoverContent className="w-[calc(100vw-1rem)] sm:w-80 p-0" align="end" sideOffset={8}>
-                <div className="border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">
-                    {t.nav.signIn === "Sign In" ? "Notifications" : "Notifications"}
-                  </p>
-                </div>
-                <div className="max-h-64 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {notifications.length === 0 ? (
-                    <p className="p-4 text-sm text-neutral-500 dark:text-neutral-400 text-center">
-                      {t.nav.signIn === "Sign In" ? "No notifications" : "Aucune notification"}
-                    </p>
-                  ) : (
-                    notifications.map((n) => (
-                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 shrink-0 mt-0.5">
-                          {n.type === "new_student" ? (
-                            <UserPlus className="h-4 w-4 text-blue-500" />
-                          ) : (
-                            <BookPlus className="h-4 w-4 text-green-500" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-neutral-700 dark:text-neutral-300">{n.message}</p>
-                          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">{n.time}</p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-
-          </>
-        ) : (
-          /* Desktop-only sign-in/sign-up — mobile uses the hamburger sheet */
-          <div className="hidden lg:flex items-center gap-2">
-            <Button variant="ghost" className="h-9 text-sm" render={<Link href="/sign-in" />}>
-              {t.nav.signIn}
-            </Button>
-            <Button className="h-9 text-sm" render={<Link href="/sign-up" />}>
-              {t.dashboard.signUp}
-            </Button>
-          </div>
-        )}
-      </div>
-    </header>
+          )}
+        </div>
+      </header>
     </>
   );
 }
