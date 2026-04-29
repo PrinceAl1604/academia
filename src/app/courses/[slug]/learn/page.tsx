@@ -30,6 +30,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useProgress } from "@/lib/progress-context";
 import { Logo } from "@/components/shared/logo";
+import { cn } from "@/lib/utils";
 
 function getYouTubeId(url: string): string | null {
   const match = url.match(
@@ -55,6 +56,26 @@ async function fetchSecureLesson(
   }
 }
 
+/**
+ * Lesson player — Cook-OS-flavored refresh.
+ *
+ * Migrated from hardcoded `bg-white dark:bg-neutral-950 / bg-neutral-50 /
+ * border-neutral-200 dark:border-neutral-800` patterns to semantic tokens.
+ *
+ * Active-lesson treatment: 2-px primary-green left edge + bg-muted fill.
+ * Matches the sidebar nav active-state pattern from Phase 3 — same
+ * "operator console" indicator across the whole app.
+ *
+ * Progress ring on the topbar uses --primary green (was raw `text-green-500`)
+ * so brand-color changes propagate automatically.
+ *
+ * The video player area itself keeps `bg-black` — videos play best on
+ * a true-black surface and that's a functional choice, not a theme one.
+ *
+ * Mobile + desktop sidebars share the same chapter/lesson rendering
+ * (CurriculumSidebar component). The previous version duplicated ~120
+ * lines between the two render paths.
+ */
 export default function CoursePlayerPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -110,7 +131,6 @@ export default function CoursePlayerPage() {
     load();
   }, [slug, user, lessonParam]);
 
-  // ─── Fetch video URL from secure API when lesson changes ────
   useEffect(() => {
     if (!activeLesson) {
       setSecureVideoUrl(null);
@@ -124,7 +144,6 @@ export default function CoursePlayerPage() {
         setSecureVideoUrl(result.youtube_url);
         setLessonLocked(result.locked);
       } else {
-        // Fallback: use client-side data (for free lessons)
         setSecureVideoUrl(activeLesson.youtube_url);
         setLessonLocked(false);
       }
@@ -134,30 +153,30 @@ export default function CoursePlayerPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white dark:bg-neutral-950">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (!course) {
     return (
-      <div className="flex h-screen items-center justify-center bg-white dark:bg-neutral-950">
-        <p className="text-neutral-500">Course not found</p>
+      <div className="flex h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">Course not found</p>
       </div>
     );
   }
 
-  // Course-level lock (client-side, for the overall UI)
-  // The actual video URL is gated server-side via secureVideoUrl
   const isLocked = !isPro && !course.is_free;
 
   if (!isAuthenticated) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-white dark:bg-neutral-950 p-8 text-center">
-        <Lock className="h-12 w-12 text-neutral-300 dark:text-neutral-600" />
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-white">{t.auth.signIn}</h1>
-        <p className="max-w-md text-neutral-500 dark:text-neutral-400">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background p-8 text-center">
+        <Lock className="h-10 w-10 text-muted-foreground/60" />
+        <h1 className="text-xl font-medium tracking-tight text-foreground">
+          {t.auth.signIn}
+        </h1>
+        <p className="max-w-md text-muted-foreground">
           {isEn ? "Sign in to start learning" : "Connectez-vous pour commencer"}
         </p>
         <Button className="mt-2 gap-2" render={<Link href="/sign-in" />}>
@@ -169,12 +188,12 @@ export default function CoursePlayerPage() {
 
   if (isLocked) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-white dark:bg-neutral-950 p-8 text-center">
-        <Lock className="h-12 w-12 text-neutral-300 dark:text-neutral-600" />
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-white">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background p-8 text-center">
+        <Lock className="h-10 w-10 text-muted-foreground/60" />
+        <h1 className="text-xl font-medium tracking-tight text-foreground">
           {isEn ? "Pro membership required" : "Abonnement Pro requis"}
         </h1>
-        <p className="max-w-md text-neutral-500 dark:text-neutral-400">
+        <p className="max-w-md text-muted-foreground">
           {isEn ? "Subscribe to unlock all courses." : "Abonnez-vous pour débloquer tous les cours."}
         </p>
         <Button className="mt-2 gap-2" render={<Link href="/dashboard/subscription" />}>
@@ -189,7 +208,6 @@ export default function CoursePlayerPage() {
   const completedCount = allLessons.filter((l) => completedLessons.has(l.id)).length;
   const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
-  // Use the server-verified video URL, not the client-side one
   const youtubeId = secureVideoUrl
     ? getYouTubeId(secureVideoUrl)
     : null;
@@ -232,17 +250,18 @@ export default function CoursePlayerPage() {
   );
 
   return (
-    <div className="flex h-screen flex-col bg-white dark:bg-neutral-950">
-      {/* ─── Top Bar ─────────────────────────────────────────── */}
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-4 bg-white dark:bg-neutral-950">
+    <div className="flex h-screen flex-col bg-background">
+      {/* ── Top Bar ───────────────────────────────────────── */}
+      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-background px-4">
         <div className="flex items-center gap-3">
           <Link
             href={`/courses/${slug}`}
-            className="flex items-center gap-2 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={t.nav.courses}
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div className="h-4 w-px bg-neutral-200 dark:bg-neutral-800" />
+          <div className="h-4 w-px bg-border" />
           <Logo className="h-4" />
         </div>
 
@@ -251,39 +270,52 @@ export default function CoursePlayerPage() {
           <div className="hidden items-center gap-2.5 sm:flex">
             <div className="relative h-7 w-7">
               <svg className="h-7 w-7 -rotate-90" viewBox="0 0 28 28">
-                <circle cx="14" cy="14" r="12" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-200 dark:text-neutral-800" />
-                <circle cx="14" cy="14" r="12" fill="none" stroke="currentColor" strokeWidth="2"
-                  strokeDasharray={`${(progress / 100) * 75.4} 75.4`} strokeLinecap="round"
-                  className="text-green-500"
+                <circle
+                  cx="14" cy="14" r="12" fill="none"
+                  stroke="currentColor" strokeWidth="2"
+                  className="text-muted"
+                />
+                <circle
+                  cx="14" cy="14" r="12" fill="none"
+                  stroke="currentColor" strokeWidth="2"
+                  strokeDasharray={`${(progress / 100) * 75.4} 75.4`}
+                  strokeLinecap="round"
+                  className="text-primary"
                 />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-neutral-700 dark:text-neutral-300">
+              <span className="absolute inset-0 flex items-center justify-center font-mono text-[9px] font-medium text-foreground tabular-nums">
                 {progress}%
               </span>
             </div>
-            <span className="text-xs text-neutral-500">
+            <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
               {completedCount}/{totalLessons}
             </span>
           </div>
 
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white transition-colors"
+            className="gap-1.5"
           >
             <BookOpen className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">
               {isEn ? "Contents" : "Contenu"}
             </span>
-          </button>
+          </Button>
         </div>
       </header>
 
-      {/* ─── Main Content ────────────────────────────────────── */}
+      {/* ── Main Content ───────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* ─── Video + Lesson Info ─────────────────────────── */}
+        {/* ── Video + Lesson Info ──────────────────────── */}
         <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Video Player — always dark bg for the video */}
-          <div className="relative w-full bg-black" style={{ aspectRatio: "16/9", maxHeight: "calc(100vh - 12rem)" }}>
+          {/* Video Player — always pure black, video looks best on
+              true-black background */}
+          <div
+            className="relative w-full bg-black"
+            style={{ aspectRatio: "16/9", maxHeight: "calc(100vh - 12rem)" }}
+          >
             {lessonLocked ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 backdrop-blur">
@@ -294,7 +326,7 @@ export default function CoursePlayerPage() {
                 </p>
                 <Link
                   href="/dashboard/subscription"
-                  className="mt-1 rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-neutral-200 transition-colors"
+                  className="mt-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   {isEn ? "Upgrade to Pro" : "Passer au Pro"}
                 </Link>
@@ -319,15 +351,15 @@ export default function CoursePlayerPage() {
             )}
           </div>
 
-          {/* ─── Lesson Action Bar ──────────────────────────── */}
-          <div className="flex shrink-0 flex-col gap-2 border-t border-neutral-200 dark:border-neutral-800 px-3 py-3 bg-white dark:bg-neutral-950 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          {/* ── Action bar ──────────────────────────────── */}
+          <div className="flex shrink-0 flex-col gap-2 border-t border-border bg-background px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-0.5">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-0.5">
                 {activeChapter
-                  ? `${isEn ? "Chapter" : "Chapitre"} ${course.modules.indexOf(activeChapter) + 1}`
+                  ? `Chapter ${course.modules.indexOf(activeChapter) + 1}`
                   : ""}
               </p>
-              <h2 className="truncate text-sm font-medium text-neutral-900 dark:text-white">
+              <h2 className="truncate text-sm font-medium tracking-tight text-foreground">
                 {activeLesson?.title}
               </h2>
             </div>
@@ -336,7 +368,6 @@ export default function CoursePlayerPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-xs sm:text-sm text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
                 disabled={allLessons.findIndex((l) => l.id === activeLesson?.id) === 0}
                 onClick={() => {
                   const idx = allLessons.findIndex((l) => l.id === activeLesson?.id);
@@ -349,12 +380,14 @@ export default function CoursePlayerPage() {
               {activeLesson && completedLessons.has(activeLesson.id) ? (
                 <Button
                   size="sm"
-                  className="h-8 gap-1.5 text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white"
+                  className="gap-1.5"
                   onClick={() => {
                     const idx = allLessons.findIndex((l) => l.id === activeLesson?.id);
                     if (idx < allLessons.length - 1) selectLesson(allLessons[idx + 1]);
                   }}
-                  disabled={allLessons.findIndex((l) => l.id === activeLesson?.id) === allLessons.length - 1}
+                  disabled={
+                    allLessons.findIndex((l) => l.id === activeLesson?.id) === allLessons.length - 1
+                  }
                 >
                   <Check className="h-3.5 w-3.5" />
                   {isEn ? "Next" : "Suivant"}
@@ -362,30 +395,32 @@ export default function CoursePlayerPage() {
               ) : (
                 <Button
                   size="sm"
-                  className="h-8 gap-1.5 text-xs sm:text-sm"
+                  className="gap-1.5"
                   onClick={handleMarkComplete}
                 >
                   <Check className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{isEn ? "Complete & Next" : "Terminer & Suivant"}</span>
+                  <span className="hidden sm:inline">
+                    {isEn ? "Complete & Next" : "Terminer & Suivant"}
+                  </span>
                   <span className="sm:hidden">{isEn ? "Done" : "Fait"}</span>
                 </Button>
               )}
             </div>
           </div>
 
-          {/* ─── Lesson Description ─────────────────────────── */}
-          <div className="flex-1 overflow-y-auto border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
+          {/* ── Lesson description ─────────────────────── */}
+          <div className="flex-1 overflow-y-auto border-t border-border bg-card/40">
             <div className="mx-auto max-w-3xl px-5 py-6">
               {activeLesson?.content ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none text-neutral-600 dark:text-neutral-300">
+                <div className="prose prose-sm dark:prose-invert max-w-none text-foreground">
                   <p>{activeLesson.content}</p>
                 </div>
               ) : activeLesson?.description ? (
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {activeLesson.description}
                 </p>
               ) : (
-                <p className="text-sm text-neutral-400 dark:text-neutral-600 italic">
+                <p className="text-sm text-muted-foreground/70 italic">
                   {isEn ? "No description for this lesson." : "Aucune description pour cette leçon."}
                 </p>
               )}
@@ -393,7 +428,7 @@ export default function CoursePlayerPage() {
           </div>
         </div>
 
-        {/* ─── Mobile Sidebar Overlay (below lg) ────────────── */}
+        {/* ── Mobile sidebar overlay (below lg) ────────── */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 z-50 lg:hidden"
@@ -402,260 +437,215 @@ export default function CoursePlayerPage() {
             aria-label={isEn ? "Course Content" : "Contenu du cours"}
             onKeyDown={(e) => { if (e.key === "Escape") setSidebarOpen(false); }}
           >
-            <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-            <aside className="absolute right-0 top-0 flex h-full w-[85vw] max-w-80 flex-col bg-neutral-50 dark:bg-neutral-900 shadow-xl">
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
-                    {isEn ? "Course Content" : "Contenu du cours"}
-                  </h3>
-                  <p className="mt-0.5 text-xs text-neutral-500">
-                    {completedCount}/{totalLessons} {isEn ? "completed" : "terminées"}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  aria-label={isEn ? "Close course content" : "Fermer le contenu"}
-                  className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Progress */}
-              <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-800">
-                <Progress value={progress} className="h-1" />
-              </div>
-
-              {/* Chapters */}
-              <ScrollArea className="flex-1">
-                {course.modules.map((module, idx) => {
-                  const isActiveChapterMobile = module.lessons.some((l) => l.id === activeLesson?.id);
-                  const chapterCompletedMobile = module.lessons.every((l) => completedLessons.has(l.id));
-                  const chapterProgressMobile = module.lessons.filter((l) => completedLessons.has(l.id)).length;
-
-                  return (
-                    <div key={module.id}>
-                      <button
-                        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
-                          isActiveChapterMobile
-                            ? "bg-neutral-100 dark:bg-neutral-800/50"
-                            : "hover:bg-neutral-100 dark:hover:bg-neutral-800/30"
-                        }`}
-                        onClick={() => toggleModule(module.id)}
-                        aria-expanded={expandedModules.includes(module.id)}
-                      >
-                        {expandedModules.includes(module.id) ? (
-                          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                        ) : (
-                          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                            {isEn ? "Chapter" : "Chapitre"} {idx + 1}
-                          </p>
-                          <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
-                            {module.title}
-                          </p>
-                        </div>
-                        <span className="text-[10px] text-neutral-400 dark:text-neutral-600 shrink-0">
-                          {chapterCompletedMobile ? (
-                            <Check className="h-3.5 w-3.5 text-green-500" />
-                          ) : (
-                            `${chapterProgressMobile}/${module.lessons.length}`
-                          )}
-                        </span>
-                      </button>
-
-                      {expandedModules.includes(module.id) && (
-                        <div className="pb-1">
-                          {module.lessons.map((lesson) => {
-                            const isCompleted = completedLessons.has(lesson.id);
-                            const isActive = lesson.id === activeLesson?.id;
-
-                            return (
-                              <button
-                                key={lesson.id}
-                                className={`flex w-full items-center gap-3 px-4 py-2.5 pl-10 text-left transition-colors ${
-                                  isActive
-                                    ? "bg-neutral-200/70 dark:bg-neutral-800 border-l-2 border-neutral-900 dark:border-white"
-                                    : "hover:bg-neutral-100 dark:hover:bg-neutral-800/40 border-l-2 border-transparent"
-                                }`}
-                                onClick={() => selectLesson(lesson)}
-                              >
-                                <span className="shrink-0">
-                                  {isCompleted ? (
-                                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-500/20">
-                                      <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-                                    </div>
-                                  ) : isActive ? (
-                                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 dark:bg-white/10">
-                                      <Play className="h-3 w-3 text-white" fill="currentColor" />
-                                    </div>
-                                  ) : (
-                                    <div className="flex h-5 w-5 items-center justify-center rounded-full border border-neutral-300 dark:border-neutral-700">
-                                      <span className="h-1.5 w-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600" />
-                                    </div>
-                                  )}
-                                </span>
-                                <span
-                                  className={`flex-1 text-sm truncate ${
-                                    isActive
-                                      ? "font-medium text-neutral-900 dark:text-white"
-                                      : isCompleted
-                                        ? "text-neutral-400 dark:text-neutral-500 line-through"
-                                        : "text-neutral-600 dark:text-neutral-400"
-                                  }`}
-                                >
-                                  {lesson.title}
-                                </span>
-                                {lesson.duration_minutes > 0 && (
-                                  <span className="shrink-0 text-[10px] text-neutral-400 dark:text-neutral-600">
-                                    {lesson.duration_minutes}m
-                                  </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </ScrollArea>
+            <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
+            <aside className="absolute right-0 top-0 flex h-full w-[85vw] max-w-80 flex-col bg-card shadow-2xl shadow-black/50">
+              <CurriculumSidebar
+                course={course}
+                activeLesson={activeLesson}
+                completedLessons={completedLessons}
+                expandedModules={expandedModules}
+                completedCount={completedCount}
+                totalLessons={totalLessons}
+                progress={progress}
+                isEn={isEn}
+                onClose={() => setSidebarOpen(false)}
+                onToggleModule={toggleModule}
+                onSelectLesson={selectLesson}
+              />
             </aside>
           </div>
         )}
 
-        {/* ─── Desktop Right Sidebar ────────────────────────────── */}
+        {/* ── Desktop sidebar (lg+) ───────────────────── */}
         {sidebarOpen && (
-          <aside className="hidden w-80 shrink-0 flex-col border-l border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 lg:flex">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
-              <div>
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
-                  {isEn ? "Course Content" : "Contenu du cours"}
-                </h3>
-                <p className="mt-0.5 text-xs text-neutral-500">
-                  {completedCount}/{totalLessons} {isEn ? "completed" : "terminées"}
-                </p>
-              </div>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                aria-label={isEn ? "Close course content" : "Fermer le contenu"}
-                className="rounded-md p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Progress */}
-            <div className="px-4 py-2 border-b border-neutral-200 dark:border-neutral-800">
-              <Progress value={progress} className="h-1" />
-            </div>
-
-            {/* Chapters */}
-            <ScrollArea className="flex-1">
-              {course.modules.map((module, idx) => {
-                const isActiveChapterItem = module.lessons.some((l) => l.id === activeLesson?.id);
-                const chapterCompleted = module.lessons.every((l) => completedLessons.has(l.id));
-                const chapterProgress = module.lessons.filter((l) => completedLessons.has(l.id)).length;
-
-                return (
-                  <div key={module.id}>
-                    <button
-                      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
-                        isActiveChapterItem
-                          ? "bg-neutral-100 dark:bg-neutral-800/50"
-                          : "hover:bg-neutral-100 dark:hover:bg-neutral-800/30"
-                      }`}
-                      onClick={() => toggleModule(module.id)}
-                      aria-expanded={expandedModules.includes(module.id)}
-                    >
-                      {expandedModules.includes(module.id) ? (
-                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                      ) : (
-                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                          {isEn ? "Chapter" : "Chapitre"} {idx + 1}
-                        </p>
-                        <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">
-                          {module.title}
-                        </p>
-                      </div>
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-600 shrink-0">
-                        {chapterCompleted ? (
-                          <Check className="h-3.5 w-3.5 text-green-500" />
-                        ) : (
-                          `${chapterProgress}/${module.lessons.length}`
-                        )}
-                      </span>
-                    </button>
-
-                    {expandedModules.includes(module.id) && (
-                      <div className="pb-1">
-                        {module.lessons.map((lesson) => {
-                          const isCompleted = completedLessons.has(lesson.id);
-                          const isActive = lesson.id === activeLesson?.id;
-
-                          return (
-                            <button
-                              key={lesson.id}
-                              className={`flex w-full items-center gap-3 px-4 py-2.5 pl-10 text-left transition-colors ${
-                                isActive
-                                  ? "bg-neutral-200/70 dark:bg-neutral-800 border-l-2 border-neutral-900 dark:border-white"
-                                  : "hover:bg-neutral-100 dark:hover:bg-neutral-800/40 border-l-2 border-transparent"
-                              }`}
-                              onClick={() => selectLesson(lesson)}
-                            >
-                              <span className="shrink-0">
-                                {isCompleted ? (
-                                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-500/20">
-                                    <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
-                                  </div>
-                                ) : isActive ? (
-                                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 dark:bg-white/10">
-                                    <Play className="h-3 w-3 text-white" fill="currentColor" />
-                                  </div>
-                                ) : (
-                                  <div className="flex h-5 w-5 items-center justify-center rounded-full border border-neutral-300 dark:border-neutral-700">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600" />
-                                  </div>
-                                )}
-                              </span>
-
-                              <span
-                                className={`flex-1 text-sm truncate ${
-                                  isActive
-                                    ? "font-medium text-neutral-900 dark:text-white"
-                                    : isCompleted
-                                      ? "text-neutral-400 dark:text-neutral-500 line-through"
-                                      : "text-neutral-600 dark:text-neutral-400"
-                                }`}
-                              >
-                                {lesson.title}
-                              </span>
-
-                              {lesson.duration_minutes > 0 && (
-                                <span className="shrink-0 text-[10px] text-neutral-400 dark:text-neutral-600">
-                                  {lesson.duration_minutes}m
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </ScrollArea>
+          <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-card lg:flex">
+            <CurriculumSidebar
+              course={course}
+              activeLesson={activeLesson}
+              completedLessons={completedLessons}
+              expandedModules={expandedModules}
+              completedCount={completedCount}
+              totalLessons={totalLessons}
+              progress={progress}
+              isEn={isEn}
+              onClose={() => setSidebarOpen(false)}
+              onToggleModule={toggleModule}
+              onSelectLesson={selectLesson}
+            />
           </aside>
         )}
       </div>
     </div>
+  );
+}
+
+/* ─── Curriculum Sidebar ───────────────────────────────────────
+   Shared between the mobile overlay and the desktop right rail.
+   The previous version duplicated ~120 lines between the two render
+   paths; this consolidates them. The only difference between mobile
+   and desktop was the close-button size, which we keep uniform now. */
+function CurriculumSidebar({
+  course,
+  activeLesson,
+  completedLessons,
+  expandedModules,
+  completedCount,
+  totalLessons,
+  progress,
+  isEn,
+  onClose,
+  onToggleModule,
+  onSelectLesson,
+}: {
+  course: CourseRow & { modules: ModuleRow[] };
+  activeLesson: LessonRow | null;
+  completedLessons: Set<string>;
+  expandedModules: string[];
+  completedCount: number;
+  totalLessons: number;
+  progress: number;
+  isEn: boolean;
+  onClose: () => void;
+  onToggleModule: (id: string) => void;
+  onSelectLesson: (l: LessonRow) => void;
+}) {
+  return (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            / Curriculum
+          </p>
+          <h3 className="text-sm font-medium tracking-tight text-foreground">
+            {isEn ? "Course Content" : "Contenu du cours"}
+          </h3>
+          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground tabular-nums">
+            {completedCount}/{totalLessons} {isEn ? "completed" : "terminées"}
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClose}
+          aria-label={isEn ? "Close course content" : "Fermer le contenu"}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Progress */}
+      <div className="px-4 py-2 border-b border-border">
+        <Progress value={progress} className="h-1" />
+      </div>
+
+      {/* Chapters */}
+      <ScrollArea className="flex-1">
+        {course.modules.map((module, idx) => {
+          const isActiveChapter = module.lessons.some((l) => l.id === activeLesson?.id);
+          const chapterCompleted = module.lessons.every((l) => completedLessons.has(l.id));
+          const chapterProgress = module.lessons.filter((l) => completedLessons.has(l.id)).length;
+          const isExpanded = expandedModules.includes(module.id);
+
+          return (
+            <div key={module.id}>
+              <button
+                className={cn(
+                  "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors",
+                  isActiveChapter
+                    ? "bg-muted/50"
+                    : "hover:bg-muted/30"
+                )}
+                onClick={() => onToggleModule(module.id)}
+                aria-expanded={isExpanded}
+              >
+                {isExpanded ? (
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Chapter {String(idx + 1).padStart(2, "0")}
+                  </p>
+                  <p className="text-sm font-medium text-foreground truncate tracking-tight">
+                    {module.title}
+                  </p>
+                </div>
+                <span className="shrink-0">
+                  {chapterCompleted ? (
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                  ) : (
+                    <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
+                      {chapterProgress}/{module.lessons.length}
+                    </span>
+                  )}
+                </span>
+              </button>
+
+              {isExpanded && (
+                <div className="pb-1">
+                  {module.lessons.map((lesson) => {
+                    const isCompleted = completedLessons.has(lesson.id);
+                    const isActive = lesson.id === activeLesson?.id;
+
+                    return (
+                      <button
+                        key={lesson.id}
+                        className={cn(
+                          "group/lesson relative flex w-full items-center gap-3 px-4 py-2.5 pl-10 text-left transition-colors",
+                          // Active gets the same 2-px primary-green left
+                          // edge as the dashboard sidebar — single
+                          // active-state pattern across the whole app.
+                          isActive &&
+                            "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
+                          isActive
+                            ? "bg-muted/60"
+                            : "hover:bg-muted/30"
+                        )}
+                        onClick={() => onSelectLesson(lesson)}
+                      >
+                        <span className="shrink-0">
+                          {isCompleted ? (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
+                              <Check className="h-3 w-3 text-primary" />
+                            </div>
+                          ) : isActive ? (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                              <Play className="h-2.5 w-2.5 text-primary-foreground" fill="currentColor" />
+                            </div>
+                          ) : (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border">
+                              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                            </div>
+                          )}
+                        </span>
+                        <span
+                          className={cn(
+                            "flex-1 text-sm truncate",
+                            isActive
+                              ? "font-medium text-foreground"
+                              : isCompleted
+                                ? "text-muted-foreground line-through"
+                                : "text-muted-foreground"
+                          )}
+                        >
+                          {lesson.title}
+                        </span>
+                        {lesson.duration_minutes > 0 && (
+                          <span className="shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">
+                            {lesson.duration_minutes}m
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </ScrollArea>
+    </>
   );
 }

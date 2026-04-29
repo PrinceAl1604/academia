@@ -8,7 +8,6 @@ import { SidebarLayout } from "@/components/layout/sidebar-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
   BookOpen,
@@ -16,16 +15,17 @@ import {
   Play,
   Star,
   Users,
-  CheckCircle2,
   Lock,
   Loader2,
   GraduationCap,
   Infinity,
+  ChevronDown,
 } from "lucide-react";
 import { getCourseBySlug, type CourseRow, type ModuleRow } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { MembershipPopover } from "@/components/shared/upgrade-popover";
+import { cn } from "@/lib/utils";
 
 function extractYouTubeId(url: string): string | null {
   const match = url.match(
@@ -38,6 +38,27 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+/**
+ * Course detail — Cook-OS-flavored refresh.
+ *
+ * Hero rebuilt:
+ *   • Page lives on `bg-background`; the hero is `bg-card` (one
+ *     luminance step up) — preserves the "elevated hero" feel without
+ *     hardcoded `bg-neutral-900`. The override block would have
+ *     hijacked that to bg-primary green.
+ *   • Title goes from `text-2xl/3xl/4xl font-bold` to
+ *     `text-3xl/4xl/5xl font-medium tracking-tight` — bigger,
+ *     calmer, more "documentation".
+ *   • Stats row uses mono-tabular for the figures.
+ *   • CTA migrates from `!bg-white !text-neutral-900` (inverted on
+ *     dark hero) to the standard primary-green default Button. The
+ *     inversion was a hack against the hardcoded dark band; with
+ *     bg-card the brand green reads cleanly without overrides.
+ *
+ * "What's included" cards drop the redundant hover styling and use
+ * mono-tabular figures. Curriculum chapter cards migrate to bg-card +
+ * border-border/60 with the same lesson-row treatment.
+ */
 export default function CourseDetailPage({ params }: PageProps) {
   const { slug } = use(params);
   const { isPro, isAuthenticated } = useAuth();
@@ -58,7 +79,7 @@ export default function CourseDetailPage({ params }: PageProps) {
     return (
       <SidebarLayout>
         <div className="flex items-center justify-center py-32">
-          <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </SidebarLayout>
     );
@@ -73,7 +94,6 @@ export default function CourseDetailPage({ params }: PageProps) {
   const durationHours = course.duration_hours ?? 0;
   const totalChapters = course.modules.length;
 
-  // Find first video for preview
   const firstVideo = course.modules
     .flatMap((m) => m.lessons)
     .find((l) => l.youtube_url);
@@ -83,249 +103,280 @@ export default function CourseDetailPage({ params }: PageProps) {
 
   return (
     <SidebarLayout>
-        <main className="pb-16">
-          {/* ─── Hero Section ──────────────────────────────────── */}
-          <div className="relative bg-neutral-900 dark:bg-neutral-900">
-            {/* Background gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-neutral-900 via-neutral-900/95 to-neutral-900" />
+      <main className="pb-16">
+        {/* ── Hero ──────────────────────────────────────────── */}
+        <div className="relative bg-card border-b border-border/60">
+          <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-10 lg:py-14">
+            {/* Back */}
+            <Link
+              href="/"
+              className="mb-8 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {t.nav.courses}
+            </Link>
 
-            <div className="relative mx-auto max-w-5xl px-4 sm:px-6 py-8 lg:py-12">
-              {/* Back */}
-              <Link
-                href="/"
-                className="mb-6 inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-white transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                {t.nav.courses}
-              </Link>
-
-              <div className="grid gap-8 lg:grid-cols-5">
-                {/* Left — Course info */}
-                <div className="lg:col-span-3">
-                  {/* Category + Level badges */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <Badge className="bg-white/10 text-white border-0 backdrop-blur">
-                      {course.category?.name ?? "General"}
+            <div className="grid gap-8 lg:grid-cols-5">
+              {/* Left — Course info */}
+              <div className="lg:col-span-3 space-y-6">
+                {/* Category + Level + Free badges */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Badge variant="mono">{course.category?.name ?? "General"}</Badge>
+                  <Badge variant="mono">{course.level}</Badge>
+                  {course.is_free && (
+                    <Badge variant="primary">
+                      {t.courseDetail.free}
                     </Badge>
-                    <Badge className="bg-white/5 text-neutral-300 border-0">
-                      {course.level}
-                    </Badge>
-                    {course.is_free && (
-                      <Badge className="bg-green-500/20 text-green-300 border-0">
-                        {t.courseDetail.free}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Title */}
-                  <h1 className="text-2xl font-bold text-white sm:text-3xl lg:text-4xl leading-tight">
-                    {course.title}
-                  </h1>
-
-                  {/* Description */}
-                  {course.description && (
-                    <p className="mt-4 text-neutral-300 leading-relaxed max-w-xl">
-                      {course.description}
-                    </p>
-                  )}
-
-                  {/* Stats */}
-                  <div className="mt-6 flex flex-wrap items-center gap-4 text-sm">
-                    {course.rating > 0 && (
-                      <span className="flex items-center gap-1.5 text-amber-400">
-                        <Star className="h-4 w-4 fill-current" />
-                        <span className="font-semibold">{course.rating}</span>
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1.5 text-neutral-400">
-                      <Users className="h-4 w-4" />
-                      {course.students_count.toLocaleString()} {t.courseDetail.students}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-neutral-400">
-                      <Clock className="h-4 w-4" />
-                      {durationHours}h
-                    </span>
-                    <span className="flex items-center gap-1.5 text-neutral-400">
-                      <BookOpen className="h-4 w-4" />
-                      {totalChapters} {t.courseDetail.chapters} · {totalLessons} {t.courseDetail.lessons}
-                    </span>
-                  </div>
-
-                  {/* Instructor */}
-                  {course.instructor && (
-                    <div className="mt-6 flex items-center gap-3">
-                      <Avatar className="h-10 w-10 border-2 border-white/10">
-                        <AvatarFallback className="bg-white/10 text-sm font-medium text-white">
-                          {course.instructor.name.split(" ").map((n) => n[0]).join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-semibold text-white">
-                          {course.instructor.name}
-                        </p>
-                        {course.instructor.title && (
-                          <p className="text-xs text-neutral-400">
-                            {course.instructor.title}
-                          </p>
-                        )}
-                      </div>
-                    </div>
                   )}
                 </div>
 
-                {/* Right — Video Preview + CTA */}
-                <div className="lg:col-span-2">
-                  <div className="rounded-xl overflow-hidden border border-white/10 bg-neutral-800/50 backdrop-blur">
-                    {/* Course preview image */}
-                    {(() => {
-                      const imgSrc = course.cover_url
-                        || (previewVideoId ? `https://img.youtube.com/vi/${previewVideoId}/maxresdefault.jpg` : null);
+                {/* Title */}
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-foreground leading-[1.1]">
+                  {course.title}
+                </h1>
 
-                      return imgSrc ? (
-                        <div className="aspect-video relative group cursor-pointer">
-                          <Image
-                            src={imgSrc}
-                            alt={course.title}
-                            fill
-                            sizes="(max-width: 1024px) 100vw, 40vw"
-                            className="object-cover"
-                            priority
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg group-hover:scale-110 transition-transform">
-                              <Play className="h-6 w-6 text-neutral-900 ml-0.5" fill="currentColor" />
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="aspect-video flex items-center justify-center bg-gradient-to-br from-neutral-700 to-neutral-800">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur">
-                            <Play className="h-6 w-6 text-white" fill="currentColor" />
-                          </div>
-                        </div>
-                      );
-                    })()}
+                {/* Description */}
+                {course.description && (
+                  <p className="text-muted-foreground leading-relaxed text-base max-w-xl">
+                    {course.description}
+                  </p>
+                )}
 
-                    {/* CTA area */}
-                    <div className="p-5 space-y-3">
-                      {isLocked ? (
-                        <MembershipPopover>
-                          <Button className="h-11 w-full gap-2 text-sm !bg-white !text-neutral-900 hover:!bg-neutral-200">
-                            <Lock className="h-4 w-4" />
-                            {t.courseDetail.getMembership}
-                          </Button>
-                        </MembershipPopover>
-                      ) : !isAuthenticated ? (
-                        <Button
-                          className="h-11 w-full text-sm !bg-white !text-neutral-900 hover:!bg-neutral-200"
-                          render={<Link href="/sign-in" />}
-                        >
-                          {t.courseDetail.startLearning}
-                        </Button>
-                      ) : (
-                        <Button
-                          className="h-11 w-full text-sm !bg-white !text-neutral-900 hover:!bg-neutral-200"
-                          render={<Link href={`/courses/${course.slug}/learn`} />}
-                        >
-                          {t.courseDetail.startLearning}
-                        </Button>
-                      )}
+                {/* Stats */}
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm pt-2">
+                  {course.rating > 0 && (
+                    <span className="flex items-center gap-1.5 text-amber-400">
+                      <Star className="h-3.5 w-3.5 fill-current" />
+                      <span className="font-mono font-medium tabular-nums">
+                        {course.rating}
+                      </span>
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="font-mono tabular-nums">
+                      {course.students_count.toLocaleString()}
+                    </span>
+                    <span>{t.courseDetail.students}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span className="font-mono tabular-nums">{durationHours}h</span>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <BookOpen className="h-3.5 w-3.5" />
+                    <span className="font-mono tabular-nums">{totalChapters}</span>
+                    <span>{t.courseDetail.chapters}</span>
+                    <span className="text-muted-foreground/60">·</span>
+                    <span className="font-mono tabular-nums">{totalLessons}</span>
+                    <span>{t.courseDetail.lessons}</span>
+                  </span>
+                </div>
 
-                      <p className="text-center text-xs text-neutral-500">
-                        {isLocked
-                          ? t.courseDetail.proRequired
-                          : t.courseDetail.includedInSub}
+                {/* Instructor */}
+                {course.instructor && (
+                  <div className="flex items-center gap-3 pt-2">
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback className="bg-muted text-xs font-medium text-foreground">
+                        {course.instructor.name.split(" ").map((n) => n[0]).join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {course.instructor.name}
                       </p>
+                      {course.instructor.title && (
+                        <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                          {course.instructor.title}
+                        </p>
+                      )}
                     </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right — Video preview + CTA */}
+              <div className="lg:col-span-2">
+                <div className="rounded-xl overflow-hidden border border-border/60 bg-popover">
+                  {(() => {
+                    const imgSrc = course.cover_url
+                      || (previewVideoId ? `https://img.youtube.com/vi/${previewVideoId}/maxresdefault.jpg` : null);
+
+                    return imgSrc ? (
+                      <div className="aspect-video relative group cursor-pointer">
+                        <Image
+                          src={imgSrc}
+                          alt={course.title}
+                          fill
+                          sizes="(max-width: 1024px) 100vw, 40vw"
+                          className="object-cover"
+                          priority
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 group-hover:bg-black/30 transition-colors">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg group-hover:scale-105 transition-transform">
+                            <Play className="h-6 w-6 text-primary-foreground ml-0.5" fill="currentColor" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="aspect-video flex items-center justify-center bg-gradient-to-br from-muted to-muted/40">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary">
+                          <Play className="h-6 w-6 text-primary-foreground ml-0.5" fill="currentColor" />
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* CTA */}
+                  <div className="p-5 space-y-3 border-t border-border/60">
+                    {isLocked ? (
+                      <MembershipPopover>
+                        <Button className="h-11 w-full gap-2 text-sm">
+                          <Lock className="h-4 w-4" />
+                          {t.courseDetail.getMembership}
+                        </Button>
+                      </MembershipPopover>
+                    ) : !isAuthenticated ? (
+                      <Button
+                        className="h-11 w-full text-sm"
+                        render={<Link href="/sign-in" />}
+                      >
+                        {t.courseDetail.startLearning}
+                      </Button>
+                    ) : (
+                      <Button
+                        className="h-11 w-full text-sm"
+                        render={<Link href={`/courses/${course.slug}/learn`} />}
+                      >
+                        {t.courseDetail.startLearning}
+                      </Button>
+                    )}
+
+                    <p className="text-center font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                      {isLocked
+                        ? t.courseDetail.proRequired
+                        : t.courseDetail.includedInSub}
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ─── Course Content ────────────────────────────────── */}
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
-            {/* What's included — horizontal cards */}
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-10">
-              <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <Clock className="h-5 w-5 text-neutral-400 shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">{durationHours}h</p>
-                  <p className="text-xs text-neutral-500">{t.courseDetail.ofContent}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <GraduationCap className="h-5 w-5 text-neutral-400 shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">{totalLessons}</p>
-                  <p className="text-xs text-neutral-500">{t.courseDetail.lessons}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-                <Infinity className="h-5 w-5 text-neutral-400 shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">{t.courseDetail.lifetime}</p>
-                  <p className="text-xs text-neutral-500">{t.courseDetail.accessLabel}</p>
-                </div>
-              </div>
+        {/* ── Course content ────────────────────────────────── */}
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 space-y-12">
+          {/* What's included */}
+          <section>
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-4">
+              / Includes
+            </p>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+              <IncludeCard
+                icon={<Clock className="h-4 w-4" />}
+                value={`${durationHours}h`}
+                label={t.courseDetail.ofContent}
+              />
+              <IncludeCard
+                icon={<GraduationCap className="h-4 w-4" />}
+                value={String(totalLessons)}
+                label={t.courseDetail.lessons}
+              />
+              <IncludeCard
+                icon={<Infinity className="h-4 w-4" />}
+                value={t.courseDetail.lifetime}
+                label={t.courseDetail.accessLabel}
+              />
             </div>
+          </section>
 
-            {/* Curriculum */}
+          {/* Curriculum */}
+          <section className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-neutral-900 dark:text-white">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                / Curriculum
+              </p>
+              <h2 className="text-xl font-medium tracking-tight text-foreground">
                 {t.courseDetail.curriculum}
               </h2>
-              <p className="mt-1 text-sm text-neutral-500">
+              <p className="mt-1 font-mono text-[11px] text-muted-foreground tabular-nums">
                 {totalChapters} {t.courseDetail.chapters} · {totalLessons} {t.courseDetail.lessons} · {durationHours}h
               </p>
-
-              {course.modules.length > 0 ? (
-                <div className="mt-6 space-y-3">
-                  {course.modules.map((module, idx) => (
-                    <ChapterCard
-                      key={module.id}
-                      module={module}
-                      index={idx}
-                      courseSlug={course.slug}
-                      isLocked={isLocked}
-                      isAuthenticated={isAuthenticated}
-                      t={t}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-6 text-sm text-neutral-400 italic">
-                  {t.courseDetail.curriculumSoon}
-                </p>
-              )}
             </div>
 
-            {/* Tags */}
-            {course.tags && course.tags.length > 0 && (
-              <div className="mt-12">
-                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">
-                  {t.courseDetail.skillsYoullLearn}
-                </h3>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {course.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-1 text-xs text-neutral-600 dark:text-neutral-300"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+            {course.modules.length > 0 ? (
+              <div className="space-y-2">
+                {course.modules.map((module, idx) => (
+                  <ChapterCard
+                    key={module.id}
+                    module={module}
+                    index={idx}
+                    courseSlug={course.slug}
+                    isLocked={isLocked}
+                    isAuthenticated={isAuthenticated}
+                    t={t}
+                  />
+                ))}
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">
+                {t.courseDetail.curriculumSoon}
+              </p>
             )}
-          </div>
-        </main>
+          </section>
+
+          {/* Tags */}
+          {course.tags && course.tags.length > 0 && (
+            <section>
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-3">
+                / Skills
+              </p>
+              <h3 className="text-base font-medium tracking-tight text-foreground mb-3">
+                {t.courseDetail.skillsYoullLearn}
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {course.tags.map((tag) => (
+                  <Badge key={tag} variant="outline">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      </main>
     </SidebarLayout>
   );
 }
 
-/* ─── Chapter Card Component ───────────────────────────────────── */
+/* ─── "What's included" Card ─────────────────────────────── */
+function IncludeCard({
+  icon,
+  value,
+  label,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4">
+      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted text-muted-foreground shrink-0">
+        {icon}
+      </div>
+      <div>
+        <p className="font-mono text-base font-medium text-foreground tabular-nums tracking-tight">
+          {value}
+        </p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-0.5">
+          {label}
+        </p>
+      </div>
+    </div>
+  );
+}
 
+/* ─── Chapter Card ────────────────────────────────────────── */
 function ChapterCard({
   module,
   index,
@@ -343,39 +394,41 @@ function ChapterCard({
 }) {
   const [expanded, setExpanded] = useState(index === 0);
 
+  // Mono-tabular index ("01", "02", ...) for figure parity in the
+  // chapter header.
+  const indexLabel = String(index + 1).padStart(2, "0");
+
   return (
-    <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-hidden">
+    <div className="rounded-xl border border-border/60 bg-card overflow-hidden transition-colors">
       {/* Chapter header */}
       <button
-        className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+        className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-muted/40 transition-colors"
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800 text-sm font-bold text-neutral-600 dark:text-neutral-300 shrink-0">
-          {index + 1}
+        <span className="font-mono text-sm font-medium text-muted-foreground tabular-nums shrink-0">
+          {indexLabel}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
+          <p className="text-sm font-medium text-foreground truncate tracking-tight">
             {module.title}
           </p>
-          <p className="text-xs text-neutral-500 mt-0.5">
+          <p className="font-mono text-[11px] text-muted-foreground tabular-nums mt-0.5">
             {module.lessons.length} {t.courseDetail.lessons}
             {module.description && ` · ${module.description}`}
           </p>
         </div>
-        <svg
-          className={`h-5 w-5 text-neutral-400 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
+            expanded && "rotate-180"
+          )}
+        />
       </button>
 
       {/* Lessons */}
       {expanded && (
-        <div className="border-t border-neutral-100 dark:border-neutral-800">
+        <div className="border-t border-border/60">
           {module.lessons.map((lesson, lIdx) => {
             const canPlay = !isLocked || lesson.is_free;
             const lessonLink =
@@ -386,51 +439,51 @@ function ChapterCard({
             return (
               <div key={lesson.id}>
                 {lIdx > 0 && (
-                  <div className="mx-5 border-t border-neutral-50 dark:border-neutral-800/50" />
+                  <div className="mx-5 border-t border-border/40" />
                 )}
                 {lessonLink ? (
                   <Link
                     href={lessonLink}
-                    className="flex items-center gap-4 px-5 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors group"
+                    className="flex items-center gap-4 px-5 py-3 hover:bg-muted/40 transition-colors group"
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 group-hover:bg-neutral-200 dark:group-hover:bg-neutral-700 transition-colors shrink-0">
-                      <Play className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted group-hover:bg-muted/70 transition-colors shrink-0">
+                      <Play className="h-3 w-3 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-neutral-700 dark:text-neutral-300 group-hover:text-neutral-900 dark:group-hover:text-white transition-colors truncate">
+                      <p className="text-sm text-foreground group-hover:text-foreground transition-colors truncate">
                         {lesson.title}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {lesson.is_free && (
-                        <span className="rounded-full bg-green-50 dark:bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">
+                        <Badge variant="outline" className="text-[10px] h-4">
                           {t.courseDetail.free}
-                        </span>
+                        </Badge>
                       )}
                       {lesson.duration_minutes > 0 && (
-                        <span className="text-xs text-neutral-400">
-                          {lesson.duration_minutes}min
+                        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+                          {lesson.duration_minutes}m
                         </span>
                       )}
                     </div>
                   </Link>
                 ) : (
-                  <div className="flex items-center gap-4 px-5 py-3.5 opacity-50">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 shrink-0">
-                      <Lock className="h-3.5 w-3.5 text-neutral-400" />
+                  <div className="flex items-center gap-4 px-5 py-3 opacity-50">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted shrink-0">
+                      <Lock className="h-3 w-3 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-neutral-500 truncate">
+                      <p className="text-sm text-muted-foreground truncate">
                         {lesson.title}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {lesson.duration_minutes > 0 && (
-                        <span className="text-xs text-neutral-400">
-                          {lesson.duration_minutes}min
+                        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+                          {lesson.duration_minutes}m
                         </span>
                       )}
-                      <Lock className="h-3 w-3 text-neutral-300" />
+                      <Lock className="h-3 w-3 text-muted-foreground/60" />
                     </div>
                   </div>
                 )}

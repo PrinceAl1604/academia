@@ -20,6 +20,15 @@ interface EnrolledCourse {
   level: string;
 }
 
+/**
+ * My Courses — Cook-OS-flavored refresh.
+ *
+ * Same hero pattern as the rest of Phase 4: mono "/ My Courses"
+ * preheader + tight headline + mono-tabular subtitle. Course cards
+ * use the same outlined-mono category chip and mono-tabular metadata
+ * row as the home/dashboard surfaces, so My Courses reads as part of
+ * one design family rather than a sub-page with its own tone.
+ */
 export default function MyCoursesPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -64,48 +73,56 @@ export default function MyCoursesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900">{t.myCourses.title}</h1>
-        <p className="mt-1 text-neutral-500">
+    <div className="px-4 py-8 lg:px-8 lg:py-12 max-w-6xl mx-auto space-y-8">
+      <header className="space-y-2">
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          / My Courses
+        </p>
+        <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground">
+          {t.myCourses.title}
+        </h1>
+        <p className="font-mono text-[11px] text-muted-foreground tabular-nums">
           {t.myCourses.enrolledIn} {courses.length} {t.myCourses.coursesLabel}
         </p>
-      </div>
+      </header>
 
       {courses.length === 0 ? (
-        <Card className="p-8 text-center">
-          <BookOpen className="mx-auto h-10 w-10 text-neutral-300" />
-          <p className="mt-3 text-neutral-500">
+        <Card className="p-12 text-center border-dashed">
+          <BookOpen className="mx-auto h-8 w-8 text-muted-foreground/60" />
+          <p className="mt-3 text-sm text-muted-foreground">
             {t.nav.signIn === "Sign In"
               ? "You haven't started any courses yet."
               : "Vous n'avez pas encore commencé de cours."}
           </p>
-          <Button variant="outline" className="mt-4 gap-2" render={<Link href="/" />}>
+          <Button variant="outline" className="mt-5 gap-2" render={<Link href="/" />}>
+            <BookOpen className="h-4 w-4" />
             {t.dashboard.browse}
           </Button>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => (
-            <Card key={course.id} className="overflow-hidden">
-              <div className="aspect-video bg-gradient-to-br from-neutral-100 to-neutral-200">
+            <Card key={course.id} className="overflow-hidden hover:border-border transition-colors">
+              <div className="aspect-video bg-gradient-to-br from-muted to-muted/40 -mx-px -mt-px">
                 <div className="flex h-full items-center justify-center">
-                  <BookOpen className="h-8 w-8 text-neutral-300" />
+                  <BookOpen className="h-7 w-7 text-muted-foreground/40" />
                 </div>
               </div>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary" className="text-xs">{course.category_name}</Badge>
-                  <Badge variant="secondary" className="text-xs">{course.level}</Badge>
+              <div className="px-4">
+                <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                  <Badge variant="mono">{course.category_name || "General"}</Badge>
+                  <Badge variant="mono">{course.level}</Badge>
                 </div>
-                <h3 className="font-semibold text-neutral-900 line-clamp-1">{course.title}</h3>
-                <p className="mt-1 text-xs text-neutral-500">
+                <h3 className="font-medium text-foreground line-clamp-1 tracking-tight">
+                  {course.title}
+                </h3>
+                <p className="mt-1 font-mono text-[11px] text-muted-foreground tabular-nums">
                   {course.total_lessons} {t.courseDetail.lessons} · {course.duration_hours}h
                 </p>
                 <Button
