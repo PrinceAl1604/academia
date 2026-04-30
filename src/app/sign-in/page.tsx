@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { FullLogo } from "@/components/shared/full-logo";
 import { LanguageToggle } from "@/components/shared/language-toggle";
+import { Illustration } from "@/components/shared/illustration";
 
 function SignInForm() {
   const router = useRouter();
@@ -59,9 +60,10 @@ function SignInForm() {
         <LanguageToggle />
       </div>
 
-      {/* Sign In Form */}
-      <div className="flex flex-1 items-center justify-center px-4 pb-12 sm:pb-20">
-        <div className="w-full max-w-sm space-y-6">
+      {/* Sign In Form (left) + Illustration (right, lg+) */}
+      <div className="flex-1 grid lg:grid-cols-2 px-4 pb-12 sm:pb-20">
+        <div className="flex items-center justify-center">
+          <div className="w-full max-w-sm space-y-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t.auth.signIn}</h1>
 
           <form onSubmit={handleEmailSignIn} className="space-y-4">
@@ -120,6 +122,13 @@ function SignInForm() {
               {t.auth.resetPassword}
             </Link>
           </div>
+          </div>
+        </div>
+
+        {/* Illustration column — desktop only. The auth-illustration is
+            the only "hero moment" on this otherwise utilitarian page. */}
+        <div className="hidden lg:flex items-center justify-center px-8">
+          <Illustration name="auth-illustration" alt="" size="xl" />
         </div>
       </div>
 

@@ -24,6 +24,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
+import { Illustration } from "@/components/shared/illustration";
 
 /* ─── Types ────────────────────────────────────────────────── */
 interface OnboardingData {
@@ -183,8 +184,14 @@ export default function OnboardingPage() {
           {/* ─── Step 1: Personalize ─────────────────────── */}
           {step === 0 && (
             <div className="space-y-8">
+              {/* Hero illustration — sets the tone for the whole flow.
+                  Centered, lg size (360px) — bigger than empty-state
+                  illustrations because this is a moment, not a fallback. */}
+              <div className="flex justify-center">
+                <Illustration name="welcome-onboarding" alt="" size="lg" priority />
+              </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-3xl font-medium tracking-tight text-foreground">
                   {t.onboarding.personalizeTitle}
                 </h1>
               </div>

@@ -11,6 +11,7 @@ import {
   Play,
   Loader2,
 } from "lucide-react";
+import { Illustration } from "@/components/shared/illustration";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
@@ -136,8 +137,10 @@ export default function DashboardPage() {
 
         {enrolledCourses.length === 0 ? (
           <Card className="p-12 text-center border-dashed">
-            <BookOpen className="mx-auto h-8 w-8 text-muted-foreground/60" />
-            <p className="mt-3 text-sm text-muted-foreground">
+            <div className="mx-auto flex justify-center">
+              <Illustration name="no-courses" alt="" size="md" />
+            </div>
+            <p className="mt-4 text-sm text-muted-foreground">
               {t.dashboard.noCourses}
             </p>
             <Button variant="outline" className="mt-5 gap-2" render={<Link href="/" />}>

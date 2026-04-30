@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Play, Loader2 } from "lucide-react";
+import { Illustration } from "@/components/shared/illustration";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
@@ -94,8 +95,10 @@ export default function MyCoursesPage() {
 
       {courses.length === 0 ? (
         <Card className="p-12 text-center border-dashed">
-          <BookOpen className="mx-auto h-8 w-8 text-muted-foreground/60" />
-          <p className="mt-3 text-sm text-muted-foreground">
+          <div className="mx-auto flex justify-center">
+            <Illustration name="no-courses" alt="" size="md" />
+          </div>
+          <p className="mt-4 text-sm text-muted-foreground">
             {t.nav.signIn === "Sign In"
               ? "You haven't started any courses yet."
               : "Vous n'avez pas encore commencé de cours."}

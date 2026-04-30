@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { FullLogo } from "@/components/shared/full-logo";
 import { LanguageToggle } from "@/components/shared/language-toggle";
+import { Illustration } from "@/components/shared/illustration";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -99,8 +100,9 @@ export default function SignUpPage() {
         <LanguageToggle />
       </div>
 
-      <div className="flex flex-1 items-center justify-center px-4 pb-12 sm:pb-20">
-        <div className="w-full max-w-sm space-y-6">
+      <div className="flex-1 grid lg:grid-cols-2 px-4 pb-12 sm:pb-20">
+        <div className="flex items-center justify-center">
+          <div className="w-full max-w-sm space-y-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t.auth.signUp}</h1>
 
           <form onSubmit={handleEmailSignUp} className="space-y-4">
@@ -143,6 +145,12 @@ export default function SignUpPage() {
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t.auth.createAccount}
             </Button>
           </form>
+          </div>
+        </div>
+
+        {/* Illustration column — desktop only */}
+        <div className="hidden lg:flex items-center justify-center px-8">
+          <Illustration name="auth-illustration" alt="" size="xl" />
         </div>
       </div>
 
