@@ -14,8 +14,6 @@ import {
   BookOpen,
   Lightbulb,
   MoreHorizontal,
-  Sun,
-  Moon,
   Check,
   ArrowRight,
   ArrowLeft,
@@ -30,7 +28,6 @@ import { Illustration } from "@/components/shared/illustration";
 interface OnboardingData {
   name: string;
   language: "en" | "fr";
-  theme: "light" | "dark";
   userType: string;
   interests: string[];
   referralCode: string;
@@ -66,7 +63,6 @@ export default function OnboardingPage() {
   const [data, setData] = useState<OnboardingData>({
     name: userName || "",
     language: (language as "en" | "fr") || "en",
-    theme: "light",
     userType: "",
     interests: [],
     referralCode: "",
@@ -85,18 +81,10 @@ export default function OnboardingPage() {
     getCategories().then(setCategories);
   }, []);
 
-  // Detect current theme
-  useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    if (isDark) setData((d) => ({ ...d, theme: "dark" }));
-  }, []);
-
   /* ─── Handlers ─────────────────────────────────────────── */
-  const setTheme = (theme: "light" | "dark") => {
-    setData((d) => ({ ...d, theme }));
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  };
+  // Theme picker was removed — the app is force-dark via Phase 1's
+  // <html class="dark"> in layout.tsx. Allowing a runtime toggle here
+  // would strip that class and visually break the entire UI.
 
   const toggleInterest = (id: string) => {
     setData((d) => ({
@@ -134,7 +122,8 @@ export default function OnboardingPage() {
     // Update language context
     setLanguage(data.language);
 
-    // Save to Supabase
+    // Save to Supabase. theme_preference column is intentionally omitted
+    // — the app is force-dark, so the field is no longer collected.
     await supabase
       .from("users")
       .update({
@@ -142,7 +131,6 @@ export default function OnboardingPage() {
         has_onboarded: true,
         user_type: data.userType || null,
         interests: data.interests.length > 0 ? data.interests : null,
-        theme_preference: data.theme,
       })
       .eq("id", user.id);
 
@@ -239,39 +227,6 @@ export default function OnboardingPage() {
                     )}
                   >
                     Français
-                  </button>
-                </div>
-              </div>
-
-              {/* Theme */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground/90">
-                  {t.onboarding.chooseTheme}
-                </label>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setTheme("light")}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
-                      data.theme === "light"
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border text-muted-foreground hover:border-border"
-                    )}
-                  >
-                    <Sun className="h-4 w-4" />
-                    {t.onboarding.light}
-                  </button>
-                  <button
-                    onClick={() => setTheme("dark")}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
-                      data.theme === "dark"
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border text-muted-foreground hover:border-border"
-                    )}
-                  >
-                    <Moon className="h-4 w-4" />
-                    {t.onboarding.dark}
                   </button>
                 </div>
               </div>
@@ -467,12 +422,6 @@ export default function OnboardingPage() {
                   <span className="text-muted-foreground">{t.onboarding.languageLabel}</span>
                   <span className="font-medium text-foreground">
                     {data.language === "en" ? "English" : "Français"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">{t.onboarding.themeLabel}</span>
-                  <span className="font-medium text-foreground">
-                    {data.theme === "light" ? t.onboarding.light : t.onboarding.dark}
                   </span>
                 </div>
               </div>
