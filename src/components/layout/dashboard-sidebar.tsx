@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Compass,
   BookOpen,
-  Settings,
   CreditCard,
   Shield,
   BarChart3,
@@ -121,14 +120,15 @@ export function DashboardSidebar() {
     },
   ];
 
+  // Settings was removed from both nav groups — it's now accessible
+  // via the topbar's UserMenu dropdown (avatar → Settings). Keeping
+  // it here too would duplicate the entry point and confuse the
+  // hierarchy (where IS settings? two places).
   const studentAccountNav: NavItem[] = [
     { label: t.subscription.title || "Subscription", href: "/dashboard/subscription", icon: CreditCard },
-    { label: t.settings.title || "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
-  const adminAccountNav: NavItem[] = [
-    { label: t.settings.title || "Settings", href: "/admin/settings", icon: Settings },
-  ];
+  const adminAccountNav: NavItem[] = [];
 
   const navGroups = isAdmin ? adminNavGroups : studentNavGroups;
   const accountItems = isAdmin ? adminAccountNav : studentAccountNav;
@@ -171,13 +171,15 @@ export function DashboardSidebar() {
             )}
             <div className="space-y-0.5">
               {group.items.map((item) => {
-                // `/` (Browse) and `/dashboard` (Dashboard) are exact-match
-                // only — they're parents of other nav entries (`/dashboard/
-                // courses`, `/dashboard/community`, etc.) and a startsWith
-                // match would highlight both Dashboard AND its child route
-                // simultaneously.
+                // `/`, `/dashboard`, and `/admin` are parent routes of
+                // other nav entries — they need exact-match only. A
+                // startsWith match on `/admin` would highlight BOTH
+                // "Tableau de bord admin" AND the active sub-page
+                // (Analytique, Étudiants, etc.) simultaneously.
                 const isExactOnly =
-                  item.href === "/" || item.href === "/dashboard";
+                  item.href === "/" ||
+                  item.href === "/dashboard" ||
+                  item.href === "/admin";
                 const isActive = isExactOnly
                   ? pathname === item.href
                   : pathname === item.href ||
@@ -221,30 +223,36 @@ export function DashboardSidebar() {
           </div>
         )}
 
-        {/* ─── Account Section ─────────────────────────────── */}
-        <div className="mt-6">
-          {!collapsed && (
-            <p className="mb-1.5 px-2.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-              {isAdmin ? "Admin" : t.sidebar.account}
-            </p>
-          )}
-          {collapsed && <div className="mb-1.5 mx-2.5 h-px bg-sidebar-border" />}
-          <div className="space-y-0.5">
-            {accountItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <SidebarItem
-                  key={item.href}
-                  href={item.href}
-                  icon={item.icon}
-                  label={item.label}
-                  isActive={isActive}
-                  collapsed={collapsed}
-                />
-              );
-            })}
+        {/* ─── Account Section ────────────────────────────────
+             Only rendered when there are items to show. With Settings
+             moved to the topbar UserMenu, the admin nav has no account
+             items at all — rendering an empty group with just a label
+             would look broken. Students still have Subscription. */}
+        {accountItems.length > 0 && (
+          <div className="mt-6">
+            {!collapsed && (
+              <p className="mb-1.5 px-2.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                {isAdmin ? "Admin" : t.sidebar.account}
+              </p>
+            )}
+            {collapsed && <div className="mb-1.5 mx-2.5 h-px bg-sidebar-border" />}
+            <div className="space-y-0.5">
+              {accountItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <SidebarItem
+                    key={item.href}
+                    href={item.href}
+                    icon={item.icon}
+                    label={item.label}
+                    isActive={isActive}
+                    collapsed={collapsed}
+                  />
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* User profile + sign-out moved to the topbar UserMenu.
