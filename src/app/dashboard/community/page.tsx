@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   useState,
   useEffect,
   useLayoutEffect,
@@ -1379,6 +1380,43 @@ export default function CommunityPage() {
   };
 
   /* ─── Helpers ───────────────────────────────────────────── */
+  /**
+   * Two timestamps fall on the same calendar day — used to decide
+   * whether to render a date-divider between consecutive messages.
+   */
+  const sameDay = (a: string, b: string) => {
+    const da = new Date(a);
+    const db = new Date(b);
+    return (
+      da.getFullYear() === db.getFullYear() &&
+      da.getMonth() === db.getMonth() &&
+      da.getDate() === db.getDate()
+    );
+  };
+
+  /**
+   * Friendly label for the date-divider pill: "Today", "Yesterday",
+   * or the full weekday + date for older messages. ClickUp pattern.
+   */
+  const formatDateDivider = (dateStr: string): string => {
+    const d = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dStart = new Date(d);
+    dStart.setHours(0, 0, 0, 0);
+    const diffDays = Math.round(
+      (today.getTime() - dStart.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (diffDays === 0) return isEn ? "Today" : "Aujourd'hui";
+    if (diffDays === 1) return isEn ? "Yesterday" : "Hier";
+    return d.toLocaleDateString(isEn ? "en-US" : "fr-FR", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: today.getFullYear() === d.getFullYear() ? undefined : "numeric",
+    });
+  };
+
   const formatTime = (dateStr: string) => {
     const d = new Date(dateStr);
     const now = new Date();
@@ -1435,18 +1473,23 @@ export default function CommunityPage() {
 
         {/* Channel list */}
         <nav className="flex-1 overflow-y-auto py-2 px-1.5 space-y-0.5">
-          {/* Core channels (General, Announcements) */}
+          {/* Core channels (General, Announcements).
+              ClickUp-style: `#` glyph prefix for all channel rows
+              instead of type-specific icons. Replaces the previous
+              ChannelIcon + Megaphone mix with one consistent
+              hash prefix. Announcements channels get an amber tint on
+              the `#` to signal "admin-broadcast" — channel-type
+              differentiation by color, not by glyph. */}
           {coreChannels.map((ch) => {
             const isActive = ch.id === activeChannelId;
             const unread = unreadCounts.get(ch.id) || 0;
+            const isAnnouncements = ch.type === "announcements";
             return (
               <button
                 key={ch.id}
                 onClick={() => switchChannel(ch.id)}
                 className={cn(
                   "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-2 text-left transition-colors",
-                  // Same active-state treatment as the dashboard sidebar:
-                  // 2-px primary-green left edge + sidebar-accent fill
                   isActive &&
                     "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
                   isActive
@@ -1454,19 +1497,21 @@ export default function CommunityPage() {
                     : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
                 )}
               >
-                <ChannelIcon
-                  type={ch.type}
+                <span
                   className={cn(
-                    "h-4 w-4 shrink-0",
-                    ch.type === "announcements"
+                    "shrink-0 font-mono text-sm leading-none",
+                    isAnnouncements
                       ? "text-amber-500"
-                      : "text-muted-foreground/70"
+                      : "text-muted-foreground/60"
                   )}
-                />
+                  aria-hidden
+                >
+                  #
+                </span>
                 <span className="flex-1 text-sm font-medium truncate">
                   {ch.type === "general"
                     ? t.community?.general || "General"
-                    : ch.type === "announcements"
+                    : isAnnouncements
                     ? t.community?.announcements || "Announcements"
                     : ch.name}
                 </span>
@@ -1495,20 +1540,20 @@ export default function CommunityPage() {
                     key={ch.id}
                     onClick={() => switchChannel(ch.id)}
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors",
+                      "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-2 text-left transition-colors",
+                      isActive &&
+                        "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
                       isActive
-                        ? "bg-sidebar-accent text-foreground shadow-sm"
-                        : "text-muted-foreground hover:bg-sidebar-accent/60"
+                        ? "bg-sidebar-accent text-foreground"
+                        : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
                     )}
                   >
-                    <BookOpen
-                      className={cn(
-                        "h-4 w-4 shrink-0",
-                        isActive
-                          ? "text-primary"
-                          : "text-muted-foreground/70"
-                      )}
-                    />
+                    <span
+                      className="shrink-0 font-mono text-sm leading-none text-muted-foreground/60"
+                      aria-hidden
+                    >
+                      #
+                    </span>
                     <span className="flex-1 text-sm font-medium truncate">
                       {ch.name}
                     </span>
@@ -1544,20 +1589,25 @@ export default function CommunityPage() {
               )}
             </Button>
 
-            {/* Channel info */}
+            {/* Channel info — ClickUp-style: `#` glyph (matching the
+                sidebar) + bigger channel name as the page anchor. The
+                title was previously text-sm font-bold which read as
+                "secondary text" rather than "page title." */}
             {activeChannel && (
               <div className="flex items-center gap-2 min-w-0">
-                <ChannelIcon
-                  type={activeChannel.type}
+                <span
                   className={cn(
-                    "h-5 w-5 shrink-0",
+                    "shrink-0 font-mono text-lg leading-none",
                     activeChannel.type === "announcements"
                       ? "text-amber-500"
-                      : "text-muted-foreground"
+                      : "text-muted-foreground/60"
                   )}
-                />
+                  aria-hidden
+                >
+                  #
+                </span>
                 <div className="min-w-0">
-                  <h1 className="text-sm font-bold text-foreground truncate">
+                  <h1 className="text-base font-semibold tracking-tight text-foreground truncate">
                     {activeChannel.type === "general"
                       ? t.community?.general || "General"
                       : activeChannel.type === "announcements"
@@ -1789,12 +1839,30 @@ export default function CommunityPage() {
               {messages.map((msg, i) => {
               const isOwn = msg.user_id === user?.id;
               const isMsgAdmin = msg.user?.role === "admin";
+              const prevMsg = i > 0 ? messages[i - 1] : null;
+              const showDateDivider =
+                !prevMsg || !sameDay(prevMsg.created_at, msg.created_at);
+              // Avatar gutter shows ONLY for the first message in a
+              // sender-cluster on the same day. After a date divider
+              // the cluster naturally restarts.
               const showAvatar =
-                i === 0 || messages[i - 1].user_id !== msg.user_id;
+                showDateDivider ||
+                !prevMsg ||
+                prevMsg.user_id !== msg.user_id;
 
               return (
+                <Fragment key={msg.id}>
+                  {/* Date divider — ClickUp-style floating pill. Marks
+                      day boundaries between message clusters so threads
+                      that span multiple days don't blur together. */}
+                  {showDateDivider && (
+                    <div className="flex justify-center py-3">
+                      <span className="rounded-full border border-border/60 bg-card px-3 py-1 font-mono text-[11px] font-medium text-muted-foreground tabular-nums">
+                        {formatDateDivider(msg.created_at)}
+                      </span>
+                    </div>
+                  )}
                 <div
-                  key={msg.id}
                   className={cn(
                     "group flex items-start gap-2.5 px-2 py-1 rounded-lg transition-colors hover:bg-muted/40",
                     msg.is_pinned &&
@@ -2341,6 +2409,7 @@ export default function CommunityPage() {
                     </div>
                   )}
                 </div>
+                </Fragment>
               );
             })}
             </>
