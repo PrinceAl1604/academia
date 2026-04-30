@@ -11,19 +11,35 @@ interface IllustrationProps {
   /**
    * Render size. unDraw illustrations are flat SVGs that scale crisply,
    * but they're designed to read at 200px+. Anything smaller looks thin.
+   *  - xs:  96 (card thumbnails — only valid with `fit`)
    *  - sm: 160 (empty-state in cards)
    *  - md: 240 (default — empty states, dashboard moments)
    *  - lg: 360 (hero, auth side panels)
    *  - xl: 480 (full-bleed onboarding moments)
    */
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   /** Extra classes — typically just margin tweaks. */
   className?: string;
   /** Set true on above-the-fold illustrations for priority loading. */
   priority?: boolean;
+  /**
+   * Render the illustration inside a fixed-size square box, fitted via
+   * `object-contain`. Use this when cards or grid items need a consistent
+   * illustration footprint regardless of each SVG's natural aspect ratio.
+   *
+   * Default (false): illustration renders at its natural aspect ratio
+   * constrained to the size's width — fine for empty states and hero
+   * moments where each illustration has its own dedicated space.
+   *
+   * `fit` (true): illustration is centered and scaled to fit a perfect
+   * square — required for grid-of-cards layouts (admin dashboard,
+   * future "tool launcher" surfaces) so all cards look uniform.
+   */
+  fit?: boolean;
 }
 
 const SIZES: Record<NonNullable<IllustrationProps["size"]>, number> = {
+  xs: 96,
   sm: 160,
   md: 240,
   lg: 360,
@@ -62,16 +78,41 @@ export function Illustration({
   size = "md",
   className,
   priority = false,
+  fit = false,
 }: IllustrationProps) {
   const dim = SIZES[size];
+
+  // Fit mode: SVG sits inside a strict square box and is contained
+  // (never cropped, never stretched). Used by card grids where every
+  // illustration must occupy the same footprint.
+  if (fit) {
+    return (
+      <div
+        className={cn("relative shrink-0", className)}
+        style={{ width: dim, height: dim }}
+        aria-hidden={alt === "" ? true : undefined}
+      >
+        <Image
+          src={`/illustrations/${name}.svg`}
+          alt={alt}
+          fill
+          className="object-contain opacity-90"
+          priority={priority}
+          sizes={`${dim}px`}
+        />
+      </div>
+    );
+  }
+
+  // Default mode: illustration renders at its natural aspect ratio
+  // constrained to the size's width. Best for empty states and heroes
+  // where each illustration has its own dedicated layout space.
   return (
     <Image
       src={`/illustrations/${name}.svg`}
       alt={alt}
       width={dim}
       height={dim}
-      // Inline style sets max-width/height; Next/Image otherwise fixes the
-      // aspect to 1:1 which clips wide unDraw illustrations.
       style={{ maxWidth: dim, height: "auto" }}
       className={cn("opacity-90", className)}
       priority={priority}

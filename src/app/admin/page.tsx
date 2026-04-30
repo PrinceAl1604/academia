@@ -169,24 +169,31 @@ export default function AdminDashboardPage() {
         </p>
       </header>
 
-      {/* ── Six illustrated entry cards ─────────────────────── */}
+      {/* ── Six illustrated entry cards ───────────────────────
+           Refactoring UI move: each card uses the same outer
+           aspect ratio (5/6 — slightly taller than square, gives
+           the label its own row) AND a fixed-size illustration box
+           (xs = 96px) regardless of the SVG's natural aspect ratio.
+           Result: the system holds even when illustrations have
+           wildly different intrinsic dimensions. */}
       <section>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {entryCards.map((card) => (
             <Link
               key={card.href}
               href={card.href}
-              className="group flex aspect-square flex-col items-center justify-between rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-border hover:-translate-y-0.5"
+              className="group flex aspect-[5/6] flex-col items-center justify-end rounded-2xl border border-border/60 bg-card p-5 transition-all hover:border-border hover:-translate-y-0.5"
             >
-              <div className="flex flex-1 w-full items-center justify-center pt-1">
+              <div className="flex flex-1 items-center justify-center w-full">
                 <Illustration
                   name={card.illustration}
                   alt=""
-                  size="sm"
-                  className="opacity-90 group-hover:opacity-100 transition-opacity"
+                  size="xs"
+                  fit
+                  className="group-hover:opacity-100 transition-opacity"
                 />
               </div>
-              <p className="mt-2 text-sm font-medium text-center text-foreground tracking-tight">
+              <p className="text-sm font-medium text-center text-foreground tracking-tight leading-tight">
                 {card.label}
               </p>
             </Link>
