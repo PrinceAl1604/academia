@@ -11,7 +11,16 @@ import {
   Search,
 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { Illustration } from "@/components/shared/illustration";
 
+/**
+ * Help page — refreshed hero with help-support illustration.
+ *
+ * Same hero pattern as the rest of the app: mono "/ Section" preheader
+ * + tight headline. Illustration tucks into the hero on sm+ (similar
+ * treatment to /dashboard/subscription) — small enough to not compete
+ * with the search bar, present enough to set the support-page tone.
+ */
 export default function HelpPage() {
   const { t } = useLanguage();
 
@@ -22,13 +31,25 @@ export default function HelpPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{t.help.title}</h1>
-        <p className="mt-1 text-muted-foreground">
-          {t.help.subtitle}
+    <div className="mx-auto max-w-2xl space-y-8 px-4 sm:px-0 py-8">
+      <header className="space-y-2">
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          / Help
         </p>
-      </div>
+        <div className="flex items-end justify-between gap-6">
+          <div className="space-y-2 flex-1">
+            <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground">
+              {t.help.title}
+            </h1>
+            <p className="text-muted-foreground text-base max-w-prose">
+              {t.help.subtitle}
+            </p>
+          </div>
+          <div className="hidden sm:block shrink-0">
+            <Illustration name="help-support" alt="" size="md" priority />
+          </div>
+        </div>
+      </header>
 
       {/* Search */}
       <div className="relative">

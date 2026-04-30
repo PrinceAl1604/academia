@@ -46,6 +46,7 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { ChatMarkdown } from "@/components/community/chat-markdown";
+import { Illustration } from "@/components/shared/illustration";
 import {
   LinkPreview,
   extractFirstUrl,
@@ -1749,12 +1750,9 @@ export default function CommunityPage() {
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground/70">
-              {activeChannel && (
-                <ChannelIcon
-                  type={activeChannel.type}
-                  className="h-12 w-12 mb-3 opacity-30"
-                />
-              )}
+              <div className="mb-4">
+                <Illustration name="chat-empty" alt="" size="md" />
+              </div>
               <p className="text-sm font-medium">
                 {t.community?.noMessages ||
                   (isEn ? "No messages yet" : "Aucun message")}

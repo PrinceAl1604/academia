@@ -17,8 +17,6 @@ import {
   Check,
   ArrowRight,
   ArrowLeft,
-  Sparkles,
-  Gift,
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
@@ -310,8 +308,11 @@ export default function OnboardingPage() {
           {/* ─── Step 4: Referral Code ──────────────────── */}
           {step === 3 && (
             <div className="space-y-8">
+              <div className="flex justify-center">
+                <Illustration name="referral" alt="" size="md" priority />
+              </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-3xl font-medium tracking-tight text-foreground">
                   {t.onboarding.referralTitle}
                 </h1>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -320,12 +321,9 @@ export default function OnboardingPage() {
               </div>
 
               <div className="mx-auto max-w-sm space-y-4">
-                {/* Icon */}
-                <div className="flex justify-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50">
-                    <Gift className="h-8 w-8 text-amber-600" />
-                  </div>
-                </div>
+                {/* The amber gift-icon-in-circle was redundant with the
+                    referral illustration above; removed for cleaner
+                    visual hierarchy. */}
 
                 {/* Code input */}
                 <div className="space-y-2">
@@ -387,12 +385,12 @@ export default function OnboardingPage() {
           {/* ─── Step 5: All Set ─────────────────────────── */}
           {step === 4 && (
             <div className="space-y-8 text-center">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-                <Sparkles className="h-10 w-10 text-foreground/90" />
+              <div className="flex justify-center">
+                <Illustration name="onboarding-complete" alt="" size="md" priority />
               </div>
 
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-3xl font-medium tracking-tight text-foreground">
                   {t.onboarding.allSet}
                 </h1>
                 <p className="mt-2 text-muted-foreground">
