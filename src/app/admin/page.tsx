@@ -98,7 +98,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/70" />
       </div>
     );
   }
@@ -108,13 +108,13 @@ export default function AdminDashboardPage() {
       label: t.admin.totalStudents,
       value: stats?.totalStudents ?? 0,
       icon: Users,
-      color: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+      color: "bg-blue-50 text-blue-600",
     },
     {
       label: t.admin.proSubscribers,
       value: stats?.proStudents ?? 0,
       icon: Crown,
-      color: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
+      color: "bg-amber-50 text-amber-600 dark:bg-amber-500/10",
     },
     {
       label: t.admin.totalCourses,
@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
       label: t.admin.newSignups30d,
       value: stats?.recentSignups ?? 0,
       icon: TrendingUp,
-      color: "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400",
+      color: "bg-green-50 text-green-600",
     },
   ];
 
@@ -137,7 +137,7 @@ export default function AdminDashboardPage() {
       description: t.admin.createNewCourse,
       href: "/admin/courses/new",
       icon: Plus,
-      color: "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400",
+      color: "bg-blue-50 text-blue-600",
     },
     {
       label: t.admin.manageCourses,
@@ -151,7 +151,7 @@ export default function AdminDashboardPage() {
       description: t.admin.detailedAnalytics,
       href: "/admin/analytics",
       icon: BarChart3,
-      color: "bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400",
+      color: "bg-green-50 text-green-600",
     },
   ];
 
@@ -159,10 +159,10 @@ export default function AdminDashboardPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-foreground">
           {t.admin.dashboard}
         </h1>
-        <p className="mt-1 text-neutral-500">{t.admin.overview}</p>
+        <p className="mt-1 text-muted-foreground">{t.admin.overview}</p>
       </div>
 
       {/* Stat Cards */}
@@ -176,8 +176,8 @@ export default function AdminDashboardPage() {
                 <stat.icon className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-neutral-500">{stat.label}</p>
-                <p className="text-2xl font-bold text-neutral-900 dark:text-white">
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+                <p className="text-2xl font-bold text-foreground">
                   {typeof stat.value === "number"
                     ? stat.value.toLocaleString()
                     : stat.value}
@@ -190,7 +190,7 @@ export default function AdminDashboardPage() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900 dark:text-white">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">
           {t.admin.quickActions}
         </h2>
         <div className="grid gap-4 sm:grid-cols-3">
@@ -206,8 +206,8 @@ export default function AdminDashboardPage() {
                   <action.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-medium text-neutral-900 dark:text-white">{action.label}</p>
-                  <p className="mt-0.5 text-sm text-neutral-500">
+                  <p className="font-medium text-foreground">{action.label}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
                     {action.description}
                   </p>
                 </div>
@@ -229,7 +229,7 @@ export default function AdminDashboardPage() {
       {referrals.length > 0 && (
         <div>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               {isEn ? "Recent Referrals" : "Parrainages récents"}
             </h2>
             <Button
@@ -244,7 +244,7 @@ export default function AdminDashboardPage() {
           </div>
           <Card>
             <CardContent className="p-0">
-              <div className="divide-y dark:divide-neutral-800">
+              <div className="divide-y divide-border/60">
                 {referrals.slice(0, 5).map((ref) => {
                   const referrerName = ref.referrer?.name || ref.referrer?.email?.split("@")[0] || "?";
                   const referredName = ref.referred?.name || ref.referred?.email?.split("@")[0] || "?";
@@ -256,30 +256,30 @@ export default function AdminDashboardPage() {
 
                   return (
                     <div key={ref.id} className="flex items-center gap-3 px-4 py-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20">
-                        <Gift className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-50">
+                        <Gift className="h-4 w-4 text-amber-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-neutral-900 dark:text-white">
+                        <p className="text-sm text-foreground">
                           <span className="font-medium">{referredName}</span>
-                          <span className="text-neutral-500">
+                          <span className="text-muted-foreground">
                             {isEn ? " signed up via " : " inscrit via "}
                           </span>
                           <span className="font-medium">{referrerName}</span>
                         </p>
-                        <p className="text-xs text-neutral-400">{ref.referred?.email}</p>
+                        <p className="text-xs text-muted-foreground/70">{ref.referred?.email}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Badge className={
                           ref.status === "rewarded"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                            ? "bg-primary/15 text-green-700 dark:bg-green-900/30"
+                            : "bg-amber-100 text-amber-700"
                         }>
                           {ref.status === "rewarded"
                             ? (isEn ? "Rewarded" : "Récompensé")
                             : (isEn ? "Pending" : "En attente")}
                         </Badge>
-                        <span className="text-xs text-neutral-400">{date}</span>
+                        <span className="text-xs text-muted-foreground/70">{date}</span>
                       </div>
                     </div>
                   );

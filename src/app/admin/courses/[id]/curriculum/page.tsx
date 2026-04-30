@@ -198,7 +198,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/70" />
       </div>
     );
   }
@@ -211,15 +211,15 @@ export default function CurriculumEditorPage({ params }: PageProps) {
       <div className="flex items-center gap-4">
         <Link
           href={`/admin/courses/${courseId}/edit`}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-neutral-50"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border hover:bg-muted/40"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">
+          <h1 className="text-2xl font-bold text-foreground">
             Curriculum Editor
           </h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-muted-foreground">
             {courseTitle} · {modules.length} chapters · {totalLessons} lessons
           </p>
         </div>
@@ -234,7 +234,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
               <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4">
                 <button
                   onClick={() => toggleModule(module.id)}
-                  className="text-neutral-400 hover:text-neutral-700 shrink-0"
+                  className="text-muted-foreground/70 hover:text-foreground/90 shrink-0"
                 >
                   {expandedModules.has(module.id) ? (
                     <ChevronDown className="h-4 w-4" />
@@ -242,8 +242,8 @@ export default function CurriculumEditorPage({ params }: PageProps) {
                     <ChevronRight className="h-4 w-4" />
                   )}
                 </button>
-                <GripVertical className="h-4 w-4 text-neutral-300 hidden sm:block shrink-0" />
-                <span className="flex h-6 w-6 items-center justify-center rounded bg-neutral-100 text-xs font-semibold text-neutral-600 shrink-0">
+                <GripVertical className="h-4 w-4 text-muted-foreground/70 hidden sm:block shrink-0" />
+                <span className="flex h-6 w-6 items-center justify-center rounded bg-muted text-xs font-semibold text-muted-foreground shrink-0">
                   {moduleIdx + 1}
                 </span>
                 <Input
@@ -297,7 +297,7 @@ export default function CurriculumEditorPage({ params }: PageProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="gap-1.5 text-neutral-500"
+                      className="gap-1.5 text-muted-foreground"
                       onClick={() => handleAddLesson(module.id)}
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -340,13 +340,13 @@ export default function CurriculumEditorPage({ params }: PageProps) {
       <div className="flex justify-between">
         <Link
           href={`/admin/courses/${courseId}/edit`}
-          className="text-sm text-neutral-500 hover:text-neutral-900"
+          className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Back to course settings
         </Link>
         <Link
           href="/admin/courses"
-          className="text-sm text-neutral-500 hover:text-neutral-900"
+          className="text-sm text-muted-foreground hover:text-foreground"
         >
           All courses →
         </Link>
@@ -379,11 +379,11 @@ function LessonEditor({
   };
 
   return (
-    <div className="space-y-2 px-4 py-3 hover:bg-neutral-50/50">
+    <div className="space-y-2 px-4 py-3 hover:bg-muted/30">
       {/* Row 1: Title + Type + Free + Delete */}
       <div className="flex flex-wrap items-center gap-2">
-        <GripVertical className="h-3.5 w-3.5 text-neutral-200 shrink-0" />
-        <span className="text-xs font-medium text-neutral-400 w-5 shrink-0">
+        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+        <span className="text-xs font-medium text-muted-foreground/70 w-5 shrink-0">
           {index + 1}
         </span>
         <Input
@@ -409,7 +409,7 @@ function LessonEditor({
           </SelectContent>
         </Select>
         <div className="flex items-center gap-1.5 shrink-0">
-          <Label className="text-xs text-neutral-400">Free</Label>
+          <Label className="text-xs text-muted-foreground/70">Free</Label>
           <Switch
             checked={lesson.is_free}
             onCheckedChange={(checked) => onUpdate({ is_free: checked })}
@@ -433,7 +433,7 @@ function LessonEditor({
             <div className="relative flex-1">
               <Youtube className="absolute left-2.5 top-2 h-3.5 w-3.5 text-red-400" />
               <textarea
-                className="w-full rounded-md border border-neutral-200 bg-white py-1.5 pl-8 pr-3 text-xs font-mono placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 resize-none"
+                className="w-full rounded-md border border-border bg-card py-1.5 pl-8 pr-3 text-xs font-mono placeholder:text-muted-foreground/70 focus:border-input focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                 placeholder='Paste embed code — <iframe src="https://www.youtube.com/embed/...">'
                 value={youtubeUrl}
                 onChange={(e) => setYoutubeUrl(e.target.value)}
@@ -456,7 +456,7 @@ function LessonEditor({
                   onUpdate({ duration_minutes: parseInt(duration) || 0 })
                 }
               />
-              <span className="text-xs text-neutral-400">min</span>
+              <span className="text-xs text-muted-foreground/70">min</span>
             </div>
           </div>
           {/* Live preview */}

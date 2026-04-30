@@ -77,10 +77,10 @@ export default function AdminSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-foreground">
           {t.settings.title}
         </h1>
-        <p className="mt-1 text-neutral-500 dark:text-neutral-400">
+        <p className="mt-1 text-muted-foreground">
           {isEn ? "Manage your account and platform settings" : "Gérez votre compte et les paramètres de la plateforme"}
         </p>
       </div>
@@ -95,8 +95,8 @@ export default function AdminSettingsPage() {
               className={cn(
                 "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 activeTab === tab.id
-                  ? "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white"
-                  : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800/50 dark:hover:text-white"
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:bg-muted/40 hover:text-foreground dark:text-muted-foreground/70"
               )}
             >
               <tab.icon className="h-4 w-4" />
@@ -114,8 +114,8 @@ export default function AdminSettingsPage() {
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition-colors",
                 activeTab === tab.id
-                  ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                  : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                  ? "bg-foreground text-background"
+                  : "bg-muted text-muted-foreground dark:text-muted-foreground/70"
               )}
             >
               <tab.icon className="h-3 w-3" />
@@ -128,40 +128,40 @@ export default function AdminSettingsPage() {
         <div className="flex-1 w-full max-w-2xl">
           {/* ─── Profile ─────────────────────────────────────────── */}
           {activeTab === "profile" && (
-            <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-foreground">
                 {isEn ? "Admin Profile" : "Profil administrateur"}
               </h3>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="text-sm text-muted-foreground">
                 {isEn ? "Your personal information" : "Vos informations personnelles"}
               </p>
-              <Separator className="my-4 dark:bg-neutral-800" />
+              <Separator className="my-4" />
 
               <div className="flex items-center gap-4 mb-6">
                 <Avatar className="h-16 w-16">
-                  <AvatarFallback className="bg-neutral-200 dark:bg-neutral-700 text-lg font-semibold dark:text-neutral-300">
+                  <AvatarFallback className="bg-muted text-lg font-semibold dark:text-muted-foreground/70">
                     {(userName || "A").split(" ").map((n) => n[0]).join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold text-neutral-900 dark:text-white">{userName || "Admin"}</p>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">{user?.email}</p>
+                  <p className="font-semibold text-foreground">{userName || "Admin"}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="dark:text-neutral-300">{isEn ? "Full Name" : "Nom complet"}</Label>
+                  <Label className="dark:text-muted-foreground/70">{isEn ? "Full Name" : "Nom complet"}</Label>
                   <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="dark:bg-neutral-800 dark:border-neutral-700"
+                    className="dark:bg-muted"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="dark:text-neutral-300">{isEn ? "Email" : "Email"}</Label>
-                  <Input value={user?.email || ""} disabled className="opacity-60 dark:bg-neutral-800 dark:border-neutral-700" />
-                  <p className="text-xs text-neutral-400">{isEn ? "Email cannot be changed" : "L'email ne peut pas être modifié"}</p>
+                  <Label className="dark:text-muted-foreground/70">{isEn ? "Email" : "Email"}</Label>
+                  <Input value={user?.email || ""} disabled className="opacity-60" />
+                  <p className="text-xs text-muted-foreground/70">{isEn ? "Email cannot be changed" : "L'email ne peut pas être modifié"}</p>
                 </div>
 
                 <div className="flex items-center gap-3 justify-end pt-2">
@@ -180,22 +180,22 @@ export default function AdminSettingsPage() {
 
           {/* ─── Appearance ───────────────────────────────────────── */}
           {activeTab === "appearance" && (
-            <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-foreground">
                 {isEn ? "Appearance" : "Apparence"}
               </h3>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="text-sm text-muted-foreground">
                 {isEn ? "Customize the look and feel" : "Personnalisez l'apparence"}
               </p>
-              <Separator className="my-4 dark:bg-neutral-800" />
+              <Separator className="my-4" />
 
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {darkMode ? <Moon className="h-5 w-5 text-neutral-400" /> : <Sun className="h-5 w-5 text-amber-500" />}
+                    {darkMode ? <Moon className="h-5 w-5 text-muted-foreground/70" /> : <Sun className="h-5 w-5 text-amber-500" />}
                     <div>
-                      <Label className="dark:text-neutral-300">{isEn ? "Dark Mode" : "Mode sombre"}</Label>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      <Label className="dark:text-muted-foreground/70">{isEn ? "Dark Mode" : "Mode sombre"}</Label>
+                      <p className="text-sm text-muted-foreground">
                         {isEn ? "Switch between light and dark theme" : "Basculer entre le thème clair et sombre"}
                       </p>
                     </div>
@@ -203,12 +203,12 @@ export default function AdminSettingsPage() {
                   <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
                 </div>
 
-                <Separator className="dark:bg-neutral-800" />
+                <Separator className="dark:bg-muted" />
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="dark:text-neutral-300">{isEn ? "Language" : "Langue"}</Label>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <Label className="dark:text-muted-foreground/70">{isEn ? "Language" : "Langue"}</Label>
+                    <p className="text-sm text-muted-foreground">
                       {isEn ? "Choose your preferred language" : "Choisissez votre langue préférée"}
                     </p>
                   </div>
@@ -218,8 +218,8 @@ export default function AdminSettingsPage() {
                       className={cn(
                         "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                         language === "fr"
-                          ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                          : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                          ? "bg-foreground text-background"
+                          : "bg-muted text-muted-foreground dark:text-muted-foreground/70"
                       )}
                     >
                       🇫🇷 Français
@@ -229,8 +229,8 @@ export default function AdminSettingsPage() {
                       className={cn(
                         "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                         language === "en"
-                          ? "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900"
-                          : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400"
+                          ? "bg-foreground text-background"
+                          : "bg-muted text-muted-foreground dark:text-muted-foreground/70"
                       )}
                     >
                       🇬🇧 English
@@ -243,20 +243,20 @@ export default function AdminSettingsPage() {
 
           {/* ─── Notifications ────────────────────────────────────── */}
           {activeTab === "notifications" && (
-            <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-foreground">
                 Notifications
               </h3>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="text-sm text-muted-foreground">
                 {isEn ? "Manage your notification preferences" : "Gérez vos préférences de notification"}
               </p>
-              <Separator className="my-4 dark:bg-neutral-800" />
+              <Separator className="my-4" />
 
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="dark:text-neutral-300">{isEn ? "New Student Signup" : "Nouvel étudiant inscrit"}</Label>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <Label className="dark:text-muted-foreground/70">{isEn ? "New Student Signup" : "Nouvel étudiant inscrit"}</Label>
+                    <p className="text-sm text-muted-foreground">
                       {isEn ? "Get notified when a new student signs up" : "Soyez notifié quand un nouvel étudiant s'inscrit"}
                     </p>
                   </div>
@@ -264,8 +264,8 @@ export default function AdminSettingsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="dark:text-neutral-300">{isEn ? "New Pro Subscription" : "Nouvel abonnement Pro"}</Label>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <Label className="dark:text-muted-foreground/70">{isEn ? "New Pro Subscription" : "Nouvel abonnement Pro"}</Label>
+                    <p className="text-sm text-muted-foreground">
                       {isEn ? "Get notified when a student activates Pro" : "Soyez notifié quand un étudiant active Pro"}
                     </p>
                   </div>
@@ -273,8 +273,8 @@ export default function AdminSettingsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="dark:text-neutral-300">{isEn ? "Course Completion" : "Cours terminé"}</Label>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <Label className="dark:text-muted-foreground/70">{isEn ? "Course Completion" : "Cours terminé"}</Label>
+                    <p className="text-sm text-muted-foreground">
                       {isEn ? "Get notified when a student completes a course" : "Soyez notifié quand un étudiant termine un cours"}
                     </p>
                   </div>
@@ -282,8 +282,8 @@ export default function AdminSettingsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="dark:text-neutral-300">{isEn ? "Weekly Report" : "Rapport hebdomadaire"}</Label>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <Label className="dark:text-muted-foreground/70">{isEn ? "Weekly Report" : "Rapport hebdomadaire"}</Label>
+                    <p className="text-sm text-muted-foreground">
                       {isEn ? "Receive a weekly summary of platform activity" : "Recevez un résumé hebdomadaire de l'activité"}
                     </p>
                   </div>
@@ -295,43 +295,43 @@ export default function AdminSettingsPage() {
 
           {/* ─── Platform ─────────────────────────────────────────── */}
           {activeTab === "platform" && (
-            <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold text-foreground">
                 {isEn ? "Platform Settings" : "Paramètres de la plateforme"}
               </h3>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              <p className="text-sm text-muted-foreground">
                 {isEn ? "Configure your platform" : "Configurez votre plateforme"}
               </p>
-              <Separator className="my-4 dark:bg-neutral-800" />
+              <Separator className="my-4" />
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="dark:text-neutral-300">{isEn ? "Platform Name" : "Nom de la plateforme"}</Label>
-                  <Input defaultValue="Brightroots" className="dark:bg-neutral-800 dark:border-neutral-700" />
+                  <Label className="dark:text-muted-foreground/70">{isEn ? "Platform Name" : "Nom de la plateforme"}</Label>
+                  <Input defaultValue="Brightroots" className="dark:bg-muted" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="dark:text-neutral-300">{isEn ? "Platform URL" : "URL de la plateforme"}</Label>
-                  <Input defaultValue="https://academia-vert-phi.vercel.app" disabled className="opacity-60 dark:bg-neutral-800 dark:border-neutral-700" />
+                  <Label className="dark:text-muted-foreground/70">{isEn ? "Platform URL" : "URL de la plateforme"}</Label>
+                  <Input defaultValue="https://academia-vert-phi.vercel.app" disabled className="opacity-60" />
                 </div>
 
-                <Separator className="dark:bg-neutral-800" />
+                <Separator className="dark:bg-muted" />
 
                 <div className="space-y-2">
-                  <Label className="dark:text-neutral-300">{isEn ? "Chariow Checkout URL" : "URL de paiement Chariow"}</Label>
-                  <Input defaultValue="https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout" disabled className="opacity-60 dark:bg-neutral-800 dark:border-neutral-700" />
-                  <p className="text-xs text-neutral-400">{isEn ? "Configured in environment variables" : "Configuré dans les variables d'environnement"}</p>
+                  <Label className="dark:text-muted-foreground/70">{isEn ? "Chariow Checkout URL" : "URL de paiement Chariow"}</Label>
+                  <Input defaultValue="https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout" disabled className="opacity-60" />
+                  <p className="text-xs text-muted-foreground/70">{isEn ? "Configured in environment variables" : "Configuré dans les variables d'environnement"}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label className="dark:text-neutral-300">{isEn ? "Subscription Price" : "Prix de l'abonnement"}</Label>
-                  <Input defaultValue="15,000 FCFA / month (~$27 USD)" disabled className="opacity-60 dark:bg-neutral-800 dark:border-neutral-700" />
+                  <Label className="dark:text-muted-foreground/70">{isEn ? "Subscription Price" : "Prix de l'abonnement"}</Label>
+                  <Input defaultValue="15,000 FCFA / month (~$27 USD)" disabled className="opacity-60" />
                 </div>
 
-                <Separator className="dark:bg-neutral-800" />
+                <Separator className="dark:bg-muted" />
 
                 <div className="space-y-2">
-                  <Label className="dark:text-neutral-300">{isEn ? "Email Service" : "Service email"}</Label>
-                  <Input defaultValue="Resend" disabled className="opacity-60 dark:bg-neutral-800 dark:border-neutral-700" />
-                  <p className="text-xs text-neutral-400">{isEn ? "Configure custom domain in Resend dashboard" : "Configurez un domaine dans le dashboard Resend"}</p>
+                  <Label className="dark:text-muted-foreground/70">{isEn ? "Email Service" : "Service email"}</Label>
+                  <Input defaultValue="Resend" disabled className="opacity-60" />
+                  <p className="text-xs text-muted-foreground/70">{isEn ? "Configure custom domain in Resend dashboard" : "Configurez un domaine dans le dashboard Resend"}</p>
                 </div>
               </div>
             </Card>
@@ -340,25 +340,25 @@ export default function AdminSettingsPage() {
           {/* ─── Security ─────────────────────────────────────────── */}
           {activeTab === "security" && (
             <div className="space-y-6">
-              <Card className="p-6 dark:bg-neutral-900 dark:border-neutral-800">
+              <Card className="p-6">
                 <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-neutral-500" />
-                  <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold text-foreground">
                     {isEn ? "Change Password" : "Changer le mot de passe"}
                   </h3>
                 </div>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {isEn ? "Update your password to keep your account secure" : "Mettez à jour votre mot de passe"}
                 </p>
-                <Separator className="my-4 dark:bg-neutral-800" />
+                <Separator className="my-4" />
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="dark:text-neutral-300">{isEn ? "New Password" : "Nouveau mot de passe"}</Label>
-                    <Input type="password" placeholder="••••••••" className="dark:bg-neutral-800 dark:border-neutral-700" />
+                    <Label className="dark:text-muted-foreground/70">{isEn ? "New Password" : "Nouveau mot de passe"}</Label>
+                    <Input type="password" placeholder="••••••••" className="dark:bg-muted" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="dark:text-neutral-300">{isEn ? "Confirm Password" : "Confirmer le mot de passe"}</Label>
-                    <Input type="password" placeholder="••••••••" className="dark:bg-neutral-800 dark:border-neutral-700" />
+                    <Label className="dark:text-muted-foreground/70">{isEn ? "Confirm Password" : "Confirmer le mot de passe"}</Label>
+                    <Input type="password" placeholder="••••••••" className="dark:bg-muted" />
                   </div>
                   <Button>{isEn ? "Update Password" : "Mettre à jour"}</Button>
                 </div>

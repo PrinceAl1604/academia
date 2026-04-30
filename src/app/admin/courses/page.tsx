@@ -60,7 +60,7 @@ export default function AdminCoursesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/70" />
       </div>
     );
   }
@@ -70,10 +70,10 @@ export default function AdminCoursesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {t.admin.manageCourses}
           </h1>
-          <p className="mt-1 text-neutral-500">
+          <p className="mt-1 text-muted-foreground">
             {courses.length} {t.admin.courses}
           </p>
         </div>
@@ -88,7 +88,7 @@ export default function AdminCoursesPage() {
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
         <Input
           placeholder={t.admin.searchCourses}
           value={search}
@@ -101,7 +101,7 @@ export default function AdminCoursesPage() {
       <div className="space-y-3">
         {filteredCourses.length === 0 ? (
           <Card>
-            <CardContent className="py-8 text-center text-neutral-500">
+            <CardContent className="py-8 text-center text-muted-foreground">
               {t.admin.noResults}
             </CardContent>
           </Card>
@@ -111,13 +111,13 @@ export default function AdminCoursesPage() {
               <CardContent className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-neutral-900 truncate">
+                    <h3 className="font-medium text-foreground truncate">
                       {course.title}
                     </h3>
                     {course.is_published ? (
                       <Badge
                         variant="secondary"
-                        className="shrink-0 bg-green-100 text-green-700"
+                        className="shrink-0 bg-primary/15 text-green-700"
                       >
                         <Eye className="mr-1 h-3 w-3" />
                         {t.admin.published}
@@ -125,7 +125,7 @@ export default function AdminCoursesPage() {
                     ) : (
                       <Badge
                         variant="secondary"
-                        className="shrink-0 bg-neutral-100 text-neutral-500"
+                        className="shrink-0 bg-muted text-muted-foreground"
                       >
                         <EyeOff className="mr-1 h-3 w-3" />
                         Draft
@@ -140,7 +140,7 @@ export default function AdminCoursesPage() {
                       </Badge>
                     )}
                   </div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-neutral-500">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                     <span>{course.category?.name ?? "No category"}</span>
                     <span>{course.level}</span>
                     <span className="flex items-center gap-1">
