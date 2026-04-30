@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, BookOpen, Loader2, Crown } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { Illustration } from "@/components/shared/illustration";
 
 export default function PaymentSuccessPage() {
   const { isPro } = useAuth();
@@ -30,12 +31,12 @@ export default function PaymentSuccessPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <div className="w-full max-w-md text-center space-y-6">
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/15">
-          <CheckCircle className="h-10 w-10 text-primary" />
+        <div className="flex justify-center">
+          <Illustration name="payment-success" alt="" size="lg" priority />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">
+          <h1 className="text-3xl font-medium tracking-tight text-foreground">
             {isPro ? t.payment.yourePro : t.payment.successTitle}
           </h1>
           <p className="text-lg text-muted-foreground">

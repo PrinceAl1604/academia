@@ -309,8 +309,11 @@ export default function OnboardingPage() {
           {/* ─── Step 3: Interests ───────────────────────── */}
           {step === 2 && (
             <div className="space-y-8">
+              <div className="flex justify-center">
+                <Illustration name="interests" alt="" size="md" priority />
+              </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-3xl font-medium tracking-tight text-foreground">
                   {t.onboarding.topicsInterest}
                 </h1>
                 <p className="mt-2 text-sm text-muted-foreground">

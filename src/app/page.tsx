@@ -9,6 +9,7 @@ import { CourseCarousel } from "@/components/shared/course-carousel";
 import { getCourses, getCategories, type CourseRow, type CategoryRow } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Illustration } from "@/components/shared/illustration";
 
 /**
  * Home / browse — Cook-OS-flavored refresh.
@@ -171,7 +172,10 @@ export default function HomePage() {
 
         {/* ── Empty state ───────────────────────────────────── */}
         {!loading && filteredCourses.length === 0 && (
-          <div className="py-20 text-center space-y-3">
+          <div className="py-20 text-center space-y-4">
+            <div className="flex justify-center">
+              <Illustration name="no-results" alt="" size="md" />
+            </div>
             <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               / No results
             </p>

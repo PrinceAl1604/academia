@@ -1,9 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Illustration } from "@/components/shared/illustration";
 
+/**
+ * Root error boundary — shown when a route throws an unhandled error.
+ *
+ * Hero illustration replaces the previous AlertTriangle-in-a-circle.
+ * The illustration carries the "something's wrong" mood without the
+ * intensity of a saturated red icon, which read as more alarming than
+ * the situation usually warrants (most errors are transient).
+ */
 export default function GlobalError({
   error,
   reset,
@@ -17,10 +26,8 @@ export default function GlobalError({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10">
-        <AlertTriangle className="h-7 w-7 text-red-500" />
-      </div>
-      <h2 className="text-xl font-semibold text-foreground">
+      <Illustration name="error" alt="" size="md" priority />
+      <h2 className="text-xl font-medium tracking-tight text-foreground">
         Something went wrong
       </h2>
       <p className="max-w-md text-sm text-muted-foreground">

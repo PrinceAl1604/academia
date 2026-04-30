@@ -20,6 +20,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { SUBSCRIPTION_PRICE, SUBSCRIPTION_CURRENCY } from "@/lib/licence";
+import { Illustration } from "@/components/shared/illustration";
 
 
 export default function SubscriptionPage() {
@@ -183,11 +184,29 @@ function SubscriptionContent() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 sm:px-0">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{t.subscription.title}</h1>
-        <p className="mt-1 text-muted-foreground">{t.subscription.subtitle}</p>
-      </div>
+    <div className="mx-auto max-w-2xl space-y-8 px-4 sm:px-0 py-8">
+      <header className="space-y-2">
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          / Subscription
+        </p>
+        <div className="flex items-end justify-between gap-6">
+          <div className="space-y-2 flex-1">
+            <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground">
+              {t.subscription.title}
+            </h1>
+            <p className="text-muted-foreground text-base max-w-prose">
+              {t.subscription.subtitle}
+            </p>
+          </div>
+          {/* Illustration tucked into the hero — small enough not to
+              compete with the headline, present enough to set the
+              billing-page tone. Hidden on mobile to preserve the
+              concise "title + subtitle" rhythm on narrow viewports. */}
+          <div className="hidden sm:block shrink-0">
+            <Illustration name="subscription" alt="" size="md" priority />
+          </div>
+        </div>
+      </header>
 
       {isPro ? (
         /* ─── Active Pro Plan ─────────────────────────────────────── */
