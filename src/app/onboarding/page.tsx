@@ -441,25 +441,33 @@ export default function OnboardingPage() {
             )}
           </div>
 
-          {/* Progress dots */}
+          {/* Progress dots — active uses --primary so the brand color
+              is present on every onboarding step (was bg-foreground
+              inverted white, which read as "selection" rather than
+              "progress"). */}
           <div className="flex gap-1.5">
             {Array.from({ length: totalSteps }).map((_, i) => (
               <div
                 key={i}
                 className={cn(
                   "h-2 rounded-full transition-all duration-300",
-                  i === step ? "w-6 bg-foreground" : "w-2 bg-muted"
+                  i === step ? "w-6 bg-primary" : "w-2 bg-muted"
                 )}
               />
             ))}
           </div>
 
-          {/* Next / Finish */}
+          {/* Next / Finish — promoted from h-10 inverted-foreground to
+              h-12 bg-primary. Brings the touch target into WCAG
+              compliance (was 40px, recommended 44px+) and makes the
+              brand green visually present on every onboarding screen.
+              The Suivant CTA is the most-clicked element of the flow;
+              it deserves to be the most prominent. */}
           {step < totalSteps - 1 ? (
             <button
               onClick={() => setStep(step + 1)}
               disabled={!canProceed()}
-              className="flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex h-12 items-center gap-2 rounded-xl bg-primary px-6 text-base font-medium text-primary-foreground transition-opacity hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {t.onboarding.next}
               <ArrowRight className="h-4 w-4" />
@@ -468,7 +476,7 @@ export default function OnboardingPage() {
             <button
               onClick={handleFinish}
               disabled={saving}
-              className="flex items-center gap-2 rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="flex h-12 items-center gap-2 rounded-xl bg-primary px-6 text-base font-medium text-primary-foreground transition-opacity hover:bg-primary/90 disabled:opacity-60"
             >
               {saving
                 ? t.onboarding.saving
