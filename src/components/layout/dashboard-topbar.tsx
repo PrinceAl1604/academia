@@ -428,7 +428,14 @@ export function DashboardTopbar() {
                       for Free) — already correct per visual hierarchy
                       principle (paying customer doesn't need a loud CTA) */}
                 {!isAdmin && (
-                  <div className="mx-2 mb-1 rounded-lg border border-border/60 bg-muted/40 px-4 py-3">
+                  // Card surface: bg-accent (oklch 0.20) sits ONE STEP
+                  // ABOVE bg-popover (0.19) on the luminance scale, so
+                  // the card reads as elevated against the dropdown.
+                  // Previous bg-muted/40 was actually darker than the
+                  // popover after the recent token bumps — recessed
+                  // instead of elevated. Border bumped to full
+                  // opacity for crisper edge definition.
+                  <div className="mx-2 mb-1 rounded-lg border border-border bg-accent px-4 py-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
