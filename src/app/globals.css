@@ -54,78 +54,79 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ─── Theme tokens (dark-only, Cook-OS-inspired warm charcoal) ─────────
-   The app ships dark-only. We mirror the same palette on `:root` and
-   `.dark` so semantic-token components render correctly even outside
-   the .dark cascade boundary (SSR streaming edge case). Adding a
-   light-mode option later means filling in just the `:root` block
-   with light values; the `.dark` block stays as the dark palette. */
+/* ─── Theme tokens (dark-only, ElevenLabs-style neutral dark) ──────────
+   The app ships dark-only. Palette is true-neutral (zero chroma) —
+   inspired by the ElevenLabs / Vercel / Linear dashboard aesthetic
+   where the dark is "near-black" without an amber or blue undertone,
+   letting the brand accent (forest green) carry the only color signal.
+
+   We mirror the same palette on `:root` and `.dark` so semantic-token
+   components render correctly even outside the .dark cascade boundary
+   (SSR streaming edge case). Adding a light-mode option later means
+   filling in just the `:root` block with light values; the `.dark`
+   block stays as the dark palette. */
 :root,
 .dark {
-  /* ── Surfaces — a 4-step warm-charcoal scale.
-        Hue 60 (amber) at low chroma (0.008) gives an "intentional" feel
-        vs. the cold neutrality of pure-grey defaults. Each step ~0.025
-        luminance apart so adjacent surfaces are clearly delineated
-        without needing a border. */
-  --background: oklch(0.145 0.008 60);
-  --foreground: oklch(0.95 0.005 80);
-  --card: oklch(0.18 0.008 60);
-  --card-foreground: oklch(0.95 0.005 80);
-  --popover: oklch(0.20 0.008 60);
-  --popover-foreground: oklch(0.95 0.005 80);
+  /* ── Surfaces — neutral near-black scale.
+        Zero chroma keeps it true neutral; each step ~0.03 luminance
+        apart for clear surface delineation without needing borders.
+        The 0.11 page-bg sits just above true black; the 0.14 card
+        is deliberately subtle — separation comes from a touch of
+        edge, not a bright fill. */
+  --background: oklch(0.11 0 0);
+  --foreground: oklch(0.96 0 0);
+  --card: oklch(0.14 0 0);
+  --card-foreground: oklch(0.96 0 0);
+  --popover: oklch(0.16 0 0);
+  --popover-foreground: oklch(0.96 0 0);
 
-  /* ── Brand accent — forest green, brightened.
-        The original 0.55 luminance read flat on dark surfaces; 0.62
-        keeps WCAG AA on body text and reads as confident, not muddy. */
+  /* ── Brand accent — forest green, brightened. Untouched from before;
+        this is brand identity, not a theme decision. */
   --primary: oklch(0.62 0.14 155);
-  --primary-foreground: oklch(0.98 0.005 80);
+  --primary-foreground: oklch(0.98 0 0);
 
-  /* ── Secondary surfaces / muted text.
-        Secondary = chip backgrounds, hover-fill, "neutral but not bg".
-        Muted-foreground = de-emphasized labels and timestamps. The
-        0.65 luminance hits the AA contrast cliff at smaller-than-12px
-        sizes; anything finer should bump to foreground. */
-  --secondary: oklch(0.22 0.008 60);
-  --secondary-foreground: oklch(0.95 0.005 80);
-  --muted: oklch(0.22 0.008 60);
-  --muted-foreground: oklch(0.65 0.005 80);
-  --accent: oklch(0.24 0.008 60);
-  --accent-foreground: oklch(0.95 0.005 80);
+  /* ── Secondary surfaces / muted text. Hover-fills and chip
+        backgrounds. Muted-foreground 0.65 hits AA contrast against
+        the 0.11 bg for body text; sub-12px sizes should bump to
+        foreground. */
+  --secondary: oklch(0.18 0 0);
+  --secondary-foreground: oklch(0.96 0 0);
+  --muted: oklch(0.18 0 0);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.20 0 0);
+  --accent-foreground: oklch(0.96 0 0);
 
-  /* ── Status — kept warm-saturated so red still reads as red against
-        the warm-charcoal backdrop (cool-red would clash with the hue 60
-        undertone). */
+  /* Cool-saturated red against neutral bg — no longer needs the
+     warm-tilt the previous palette had. */
   --destructive: oklch(0.65 0.22 25);
 
-  /* ── Borders — translucent white instead of an absolute color.
-        At 8% the borders feel "drawn with a pencil" rather than "ruled
-        with ink" — Cook-OS-flavored restraint. Inputs use 12% so they
-        remain visible against bg even with no fill. */
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
+  /* ── Borders — translucent white. 6% reads as "drawn with a pencil";
+        inputs use 10% to remain visible without a fill. */
+  --border: oklch(1 0 0 / 6%);
+  --input: oklch(1 0 0 / 10%);
   --ring: oklch(0.62 0.14 155 / 50%);
 
-  /* ── Charts. Lead with brand green; alternate with cool/warm tones
-        that don't fight the dominant accent. */
+  /* ── Charts. Brand green leads; alternates pick complementary
+        cool/warm tones that don't fight it. */
   --chart-1: oklch(0.62 0.14 155);
-  --chart-2: oklch(0.55 0.10 200);
-  --chart-3: oklch(0.50 0.12 60);
-  --chart-4: oklch(0.45 0.10 280);
-  --chart-5: oklch(0.40 0.08 30);
+  --chart-2: oklch(0.60 0.12 220);
+  --chart-3: oklch(0.55 0.13 40);
+  --chart-4: oklch(0.50 0.11 290);
+  --chart-5: oklch(0.45 0.10 10);
 
-  /* Tighter than the previous 0.625; reads as "tool" not "blob". */
+  /* Slightly tighter than the original shadcn 0.625 default. */
   --radius: 0.5rem;
 
-  /* ── Sidebar — slightly cooler/darker than the main bg so the panel
-        delineates without needing a border, and the active-nav state
-        (using --primary tint) reads clearly. */
-  --sidebar: oklch(0.13 0.008 60);
-  --sidebar-foreground: oklch(0.95 0.005 80);
+  /* ── Sidebar — deeper than the main bg so the rail reads as a
+        distinct surface even without a border. ElevenLabs uses this
+        same stepped-down sidebar trick. */
+  --sidebar: oklch(0.09 0 0);
+  --sidebar-foreground: oklch(0.96 0 0);
   --sidebar-primary: oklch(0.62 0.14 155);
-  --sidebar-primary-foreground: oklch(0.98 0.005 80);
-  --sidebar-accent: oklch(0.22 0.008 60);
-  --sidebar-accent-foreground: oklch(0.95 0.005 80);
-  --sidebar-border: oklch(1 0 0 / 6%);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.16 0 0);
+  --sidebar-accent-foreground: oklch(0.96 0 0);
+  --sidebar-border: oklch(1 0 0 / 5%);
   --sidebar-ring: oklch(0.62 0.14 155 / 50%);
 }
 
@@ -135,9 +136,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* A hair of negative tracking pairs better with the warm-charcoal
-       palette than the default 0; reads as more deliberate at body sizes. */
-    letter-spacing: -0.005em;
   }
   html {
     @apply font-sans;
@@ -189,18 +187,21 @@
    load-bearing.
    ════════════════════════════════════════════════════════════════════ */
 
-/* Status chip backgrounds — saturated enough to read on bg-card,
-   restrained enough not to dominate. */
-.bg-green-100 { background-color: oklch(0.30 0.10 155) !important; }
-.bg-blue-100 { background-color: oklch(0.30 0.08 250) !important; }
-.bg-amber-100 { background-color: oklch(0.32 0.10 80) !important; }
-.bg-red-100 { background-color: oklch(0.30 0.10 25) !important; }
-.bg-purple-100 { background-color: oklch(0.30 0.10 300) !important; }
-.bg-purple-50 { background-color: oklch(0.25 0.06 300) !important; }
-.bg-blue-50 { background-color: oklch(0.22 0.06 250) !important; }
-.bg-green-50 { background-color: oklch(0.22 0.08 155) !important; }
-.bg-amber-50 { background-color: oklch(0.25 0.08 80) !important; }
-.bg-red-50 { background-color: oklch(0.22 0.08 25) !important; }
+/* Status chip backgrounds — translucent saturated for that "tinted
+   patch" look that reads against the new neutral near-black surfaces.
+   Using `<color> / 18%` instead of solid darker tones means the bg
+   inherits the underlying surface, so chips on bg-card vs. bg-popover
+   look subtly different (correct: chips inherit context). */
+.bg-green-100 { background-color: oklch(0.65 0.18 155 / 20%) !important; }
+.bg-blue-100 { background-color: oklch(0.65 0.16 250 / 20%) !important; }
+.bg-amber-100 { background-color: oklch(0.75 0.16 80 / 20%) !important; }
+.bg-red-100 { background-color: oklch(0.65 0.20 25 / 20%) !important; }
+.bg-purple-100 { background-color: oklch(0.65 0.18 300 / 20%) !important; }
+.bg-purple-50 { background-color: oklch(0.65 0.18 300 / 12%) !important; }
+.bg-blue-50 { background-color: oklch(0.65 0.16 250 / 12%) !important; }
+.bg-green-50 { background-color: oklch(0.65 0.18 155 / 12%) !important; }
+.bg-amber-50 { background-color: oklch(0.75 0.16 80 / 12%) !important; }
+.bg-red-50 { background-color: oklch(0.65 0.20 25 / 12%) !important; }
 
 /* Status chip text — Tailwind's defaults for `text-{color}-{600,700}`
    are dark/medium tones designed to read on light surfaces. Brightened
