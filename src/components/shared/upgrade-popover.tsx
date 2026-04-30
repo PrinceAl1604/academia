@@ -50,28 +50,28 @@ export function MembershipPopover({ children }: MembershipPopoverProps) {
               <Crown className="h-4 w-4 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-neutral-900">
+              <p className="text-sm font-semibold text-foreground">
                 {t.pro.membership}
               </p>
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-muted-foreground">
                 {t.pro.unlockAll}
               </p>
             </div>
           </div>
 
           {/* Price */}
-          <p className="text-lg font-bold text-neutral-900">
-            {SUBSCRIPTION_PRICE.toLocaleString("fr-FR")} <span className="text-sm font-normal text-neutral-500">{SUBSCRIPTION_CURRENCY_DISPLAY} {t.subscription.perMonth}</span>
+          <p className="text-lg font-bold text-foreground">
+            {SUBSCRIPTION_PRICE.toLocaleString("fr-FR")} <span className="text-sm font-normal text-muted-foreground">{SUBSCRIPTION_CURRENCY_DISPLAY} {t.subscription.perMonth}</span>
           </p>
 
           {/* Benefits */}
-          <ul className="space-y-1.5 text-xs text-neutral-600">
+          <ul className="space-y-1.5 text-xs text-muted-foreground">
             <li className="flex items-center gap-2">
-              <Lock className="h-3 w-3 text-neutral-400" />
+              <Lock className="h-3 w-3 text-muted-foreground/70" />
               {t.pro.accessCourses}
             </li>
             <li className="flex items-center gap-2">
-              <Lock className="h-3 w-3 text-neutral-400" />
+              <Lock className="h-3 w-3 text-muted-foreground/70" />
               {t.pro.downloadResources}
             </li>
           </ul>

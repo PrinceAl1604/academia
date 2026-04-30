@@ -27,7 +27,7 @@ export default function SubscriptionPage() {
     <Suspense
       fallback={
         <div className="flex justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-neutral-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/70" />
         </div>
       }
     >
@@ -185,8 +185,8 @@ function SubscriptionContent() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 sm:px-0">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">{t.subscription.title}</h1>
-        <p className="mt-1 text-neutral-500">{t.subscription.subtitle}</p>
+        <h1 className="text-2xl font-bold text-foreground">{t.subscription.title}</h1>
+        <p className="mt-1 text-muted-foreground">{t.subscription.subtitle}</p>
       </div>
 
       {isPro ? (
@@ -199,16 +199,16 @@ function SubscriptionContent() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold text-neutral-900">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {t.subscription.proPlan}
                   </h3>
-                  <Badge className={isExpiringSoon ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}>
+                  <Badge className={isExpiringSoon ? "bg-amber-100 text-amber-700" : "bg-primary/15 text-primary"}>
                     {isExpiringSoon
                       ? `${daysUntilExpiry}${t.settings.daysLeft}`
                       : t.subscription.active}
                   </Badge>
                 </div>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-muted-foreground">
                   {t.subscription.fullAccess}
                 </p>
               </div>
@@ -217,12 +217,12 @@ function SubscriptionContent() {
 
           {/* Expiry info */}
           {proExpiresAt && (
-            <div className="flex flex-col gap-3 rounded-lg bg-neutral-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-lg bg-muted/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-muted-foreground">
                   {t.subscription.expires}
                 </p>
-                <p className="text-sm font-medium text-neutral-900">
+                <p className="text-sm font-medium text-foreground">
                   {new Date(proExpiresAt).toLocaleDateString(t.nav.signIn === "Sign In" ? "en-US" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                 </p>
               </div>
@@ -243,13 +243,13 @@ function SubscriptionContent() {
         /* ─── Free Plan → Upgrade ────────────────────────────────── */
         <>
           {/* Current plan */}
-          <Card className="border-b bg-neutral-50 p-6">
+          <Card className="border-b bg-muted/40 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-neutral-900">
+                <h3 className="text-lg font-semibold text-foreground">
                   {t.subscription.freePlan}
                 </h3>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-muted-foreground">
                   {t.subscription.freeDesc}
                 </p>
               </div>
@@ -260,30 +260,30 @@ function SubscriptionContent() {
           {/* Step 1: Buy via Chariow Snap */}
           <Card className="p-6">
             <div className="flex items-start gap-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold text-white shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-sm font-bold text-white shrink-0">
                 1
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-neutral-900">
+                <h3 className="text-lg font-semibold text-foreground">
                   {t.subscription.getKey}
                 </h3>
-                <p className="mt-1 text-sm text-neutral-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {t.subscription.purchaseDesc}
                 </p>
 
                 {/* Price display */}
                 <div className="mt-4">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-neutral-900">
+                    <span className="text-3xl font-bold text-foreground">
                       {selectedCurrency.symbol}{selectedCurrency.amount.toLocaleString()}
                     </span>
-                    <span className="text-lg text-neutral-500">{selectedCurrency.code}</span>
-                    <span className="text-sm text-neutral-400">{t.subscription.perMonth}</span>
+                    <span className="text-lg text-muted-foreground">{selectedCurrency.code}</span>
+                    <span className="text-sm text-muted-foreground/70">{t.subscription.perMonth}</span>
                   </div>
 
                   {/* Show USD equivalent if not USD */}
                   {selectedCurrency.code !== "USD" && (
-                    <p className="mt-1 text-sm text-neutral-400">
+                    <p className="mt-1 text-sm text-muted-foreground/70">
                       {t.subscription.approxUSD}
                     </p>
                   )}
@@ -291,7 +291,7 @@ function SubscriptionContent() {
                   {/* Toggle currency picker */}
                   <button
                     onClick={() => setShowCurrencyPicker(!showCurrencyPicker)}
-                    className="mt-2 text-xs text-neutral-500 underline underline-offset-2 hover:text-neutral-700 transition-colors"
+                    className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground/90 transition-colors"
                   >
                     {showCurrencyPicker
                       ? t.subscription.hideCurrencies
@@ -300,14 +300,14 @@ function SubscriptionContent() {
 
                   {/* Expandable currency picker */}
                   {showCurrencyPicker && (
-                    <div className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                    <div className="mt-3 rounded-lg border border-border bg-muted/40 p-3">
                       {/* Search */}
                       <input
                         type="text"
                         placeholder={t.subscription.searchCurrency}
                         value={currencySearch}
                         onChange={(e) => setCurrencySearch(e.target.value)}
-                        className="mb-2 h-8 w-full rounded-md border border-neutral-200 bg-white px-3 text-xs placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-300"
+                        className="mb-2 h-8 w-full rounded-md border border-input bg-card px-3 text-xs placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                       <div className="max-h-40 overflow-y-auto space-y-0.5">
                         {CURRENCIES.filter((c) =>
@@ -323,8 +323,8 @@ function SubscriptionContent() {
                             }}
                             className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-xs transition-colors ${
                               selectedCurrency.code === c.code
-                                ? "bg-neutral-900 text-white"
-                                : "hover:bg-neutral-200 text-neutral-700"
+                                ? "bg-card text-white"
+                                : "hover:bg-muted text-foreground/90"
                             }`}
                           >
                             <span className="truncate">{c.label}</span>
@@ -334,7 +334,7 @@ function SubscriptionContent() {
                           </button>
                         ))}
                       </div>
-                      <p className="mt-2 text-[10px] text-neutral-400">
+                      <p className="mt-2 text-[10px] text-muted-foreground/70">
                         {t.subscription.approxConversion}
                       </p>
                     </div>
@@ -359,7 +359,7 @@ function SubscriptionContent() {
                   )}
                 </Button>
 
-                <p className="mt-3 text-xs text-neutral-400">
+                <p className="mt-3 text-xs text-muted-foreground/70">
                   {t.subscription.paymentMethods}
                 </p>
               </div>
@@ -369,25 +369,25 @@ function SubscriptionContent() {
           {/* Step 2: Enter licence key */}
           <Card className="p-6">
             <div className="flex items-start gap-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-sm font-bold text-white shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-sm font-bold text-white shrink-0">
                 2
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-neutral-900">
+                <h3 className="text-lg font-semibold text-foreground">
                   {t.subscription.activateTitle}
                 </h3>
-                <p className="mt-1 text-sm text-neutral-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {t.subscription.activateDesc}
                 </p>
 
                 {success ? (
-                  <div className="mt-4 flex items-center gap-3 rounded-lg bg-green-50 p-4">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  <div className="mt-4 flex items-center gap-3 rounded-lg bg-primary/10 p-4">
+                    <CheckCircle className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium text-green-900">
                         {t.subscription.proActivated}
                       </p>
-                      <p className="text-sm text-green-700">
+                      <p className="text-sm text-primary">
                         {t.subscription.refreshing}
                       </p>
                     </div>
@@ -398,7 +398,7 @@ function SubscriptionContent() {
                       <Label htmlFor="licence-key">{t.subscription.licenceKeyLabel}</Label>
                       <div className="flex gap-2">
                         <div className="relative flex-1">
-                          <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                          <Key className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
                           <Input
                             id="licence-key"
                             placeholder="EDU-PRO-XXXX-XXXX-XXXX"
@@ -434,7 +434,7 @@ function SubscriptionContent() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs text-neutral-400">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground/70">
                       <Shield className="h-3.5 w-3.5" />
                       {t.subscription.keySingleUse}
                     </div>
@@ -448,7 +448,7 @@ function SubscriptionContent() {
 
       {/* Features */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-neutral-900">
+        <h3 className="text-lg font-semibold text-foreground">
           {t.subscription.whatsIncluded}
         </h3>
         <Separator className="my-4" />
@@ -463,9 +463,9 @@ function SubscriptionContent() {
           ].map((feature) => (
             <li
               key={feature}
-              className="flex items-center gap-2 text-sm text-neutral-700"
+              className="flex items-center gap-2 text-sm text-foreground/90"
             >
-              <Check className="h-4 w-4 text-green-600" />
+              <Check className="h-4 w-4 text-primary" />
               {feature}
             </li>
           ))}

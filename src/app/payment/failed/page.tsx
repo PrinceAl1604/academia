@@ -15,30 +15,30 @@ export default function PaymentFailedPage() {
 
         {/* Title */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-neutral-900">
+          <h1 className="text-3xl font-bold text-foreground">
             Payment Failed
           </h1>
-          <p className="text-lg text-neutral-500">
+          <p className="text-lg text-muted-foreground">
             Your payment could not be processed. No charge has been made.
           </p>
         </div>
 
         {/* Possible reasons */}
-        <div className="rounded-xl border border-neutral-200 bg-white p-6 text-left space-y-3">
-          <p className="text-sm font-semibold text-neutral-900">
+        <div className="rounded-xl border border-input bg-card p-6 text-left space-y-3">
+          <p className="text-sm font-semibold text-foreground">
             This might have happened because:
           </p>
-          <ul className="space-y-2 text-sm text-neutral-600">
+          <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
               Insufficient balance on your mobile money account
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
               The transaction was cancelled
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-neutral-400 shrink-0" />
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
               A temporary network issue occurred
             </li>
           </ul>
@@ -64,13 +64,13 @@ export default function PaymentFailedPage() {
         </div>
 
         {/* Help */}
-        <div className="flex items-center justify-center gap-2 text-sm text-neutral-400">
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground/70">
           <HelpCircle className="h-4 w-4" />
           <span>
             Need help?{" "}
             <Link
               href="/dashboard/help"
-              className="text-neutral-600 underline underline-offset-2"
+              className="text-muted-foreground underline underline-offset-2"
             >
               Contact support
             </Link>

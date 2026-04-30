@@ -22,7 +22,7 @@ interface CourseCardProps {
 /**
  * CourseCard — Cook-OS-flavored refresh.
  *
- * Migrated from `bg-white dark:bg-neutral-900 border-neutral-200/60` to
+ * Migrated from `bg-card border-border/60` to
  * semantic `bg-card border-border/60`. The colored gradient thumbnail
  * (kept for visual variety across cards) gets translated to dark
  * variants by the override block in globals.css until Phase 9 cleanup.

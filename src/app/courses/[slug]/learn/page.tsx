@@ -319,9 +319,9 @@ export default function CoursePlayerPage() {
             {lessonLocked ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 backdrop-blur">
-                  <Lock className="h-7 w-7 text-neutral-400" />
+                  <Lock className="h-7 w-7 text-muted-foreground/60" />
                 </div>
-                <p className="text-sm text-neutral-300 font-medium">
+                <p className="text-sm text-foreground/80 font-medium">
                   {isEn ? "Pro membership required" : "Abonnement Pro requis"}
                 </p>
                 <Link
@@ -342,9 +342,9 @@ export default function CoursePlayerPage() {
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/5 backdrop-blur">
-                  <Play className="h-7 w-7 text-neutral-400" fill="currentColor" />
+                  <Play className="h-7 w-7 text-muted-foreground/60" fill="currentColor" />
                 </div>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-muted-foreground/70">
                   {activeLesson?.title ?? "Select a lesson"}
                 </p>
               </div>
