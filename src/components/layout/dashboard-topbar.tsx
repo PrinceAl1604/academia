@@ -32,12 +32,15 @@ import {
   BookPlus,
   HelpCircle,
   LogOut,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { useSidebar } from "@/lib/sidebar-context";
 import { Logo } from "@/components/shared/logo";
 import { ExpiryBanner } from "@/components/shared/expiry-banner";
 import { supabase } from "@/lib/supabase";
@@ -108,6 +111,8 @@ export function DashboardTopbar() {
   const { isAdmin, isAuthenticated, userName, logout } = useAuth();
   const { t } = useLanguage();
   const pageTitle = usePageTitle();
+  const { collapsed, toggle } = useSidebar();
+  const isEn = t.nav.signIn === "Sign In";
 
   // Initials for the avatar fallback. Falls back to "U" if no name available
   // (newly signed-up users before they save a name in settings).
@@ -240,7 +245,33 @@ export function DashboardTopbar() {
           </SheetContent>
         </Sheet>
 
-        {/* ── Page title (left) ──────────────────────────────── */}
+        {/* ── Sidebar collapse toggle (desktop only) ───────────
+             Sits to the left of the page title, mirroring the
+             ElevenLabs / Linear / Vercel "panel-left icon next to
+             page label" pattern. Hidden on mobile because the
+             hamburger menu owns navigation there — the desktop
+             sidebar simply doesn't exist on small viewports. */}
+        {isAuthenticated && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden lg:inline-flex h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={toggle}
+            aria-label={
+              collapsed
+                ? isEn ? "Expand sidebar" : "Développer la barre latérale"
+                : isEn ? "Collapse sidebar" : "Réduire la barre latérale"
+            }
+          >
+            {collapsed ? (
+              <PanelLeft className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </Button>
+        )}
+
+        {/* ── Page title ─────────────────────────────────────── */}
         <div className="flex-1 min-w-0">
           {pageTitle && (
             <h1 className="text-sm font-medium text-foreground truncate">

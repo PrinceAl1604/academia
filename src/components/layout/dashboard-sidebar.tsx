@@ -16,8 +16,6 @@ import {
   FolderOpen,
   Users,
   Gift,
-  PanelLeftClose,
-  PanelLeft,
   MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -45,7 +43,7 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const { isAdmin, isAuthenticated } = useAuth();
   const { t } = useLanguage();
-  const { collapsed, toggle } = useSidebar();
+  const { collapsed } = useSidebar();
   const [referralOpen, setReferralOpen] = useState(false);
   const [unreadChat, setUnreadChat] = useState(0);
 
@@ -249,26 +247,11 @@ export function DashboardSidebar() {
         </div>
       </nav>
 
-      {/* ─── Bottom: collapse toggle only ──────────────────────
-           User profile + sign-out moved to the topbar (UserMenu) to
-           match the ElevenLabs / Linear / Vercel pattern: avatar
-           dropdown in the top-right anchors identity globally rather
-           than per-section. The sidebar bottom is now a single
-           focused control. */}
-      <div className="shrink-0 border-t border-sidebar-border p-2.5">
-        {/* Collapse toggle */}
-        <button
-          onClick={toggle}
-          className={cn(
-            "flex w-full items-center gap-2.5 rounded-md p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground",
-            collapsed ? "justify-center" : ""
-          )}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          {!collapsed && <span className="text-sm">{t.sidebar.collapse}</span>}
-        </button>
-      </div>
+      {/* User profile + sign-out moved to the topbar UserMenu.
+          Collapse toggle moved to the topbar (lives next to the page
+          title, ElevenLabs/Linear pattern). The sidebar bottom is now
+          a clean edge — no chrome, just the section ending at the
+          last nav item. */}
       {/* Referral Modal */}
       {!isAdmin && <ReferralModal open={referralOpen} onClose={() => setReferralOpen(false)} />}
     </aside>
