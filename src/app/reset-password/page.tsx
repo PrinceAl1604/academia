@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { FullLogo } from "@/components/shared/full-logo";
 import { LanguageToggle } from "@/components/shared/language-toggle";
+import { Illustration } from "@/components/shared/illustration";
 
 export default function ResetPasswordPage() {
   const { t } = useLanguage();
@@ -41,8 +42,9 @@ export default function ResetPasswordPage() {
         <LanguageToggle />
       </div>
 
-      <div className="flex flex-1 items-center justify-center px-4 pb-20">
-        <div className="w-full max-w-sm space-y-6">
+      <div className="flex-1 grid lg:grid-cols-2 px-4 pb-20">
+        <div className="flex items-center justify-center">
+          <div className="w-full max-w-sm space-y-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t.auth.resetTitle}</h1>
           <p className="text-muted-foreground">{t.auth.resetDesc}</p>
 
@@ -78,6 +80,14 @@ export default function ResetPasswordPage() {
               </div>
             </form>
           )}
+          </div>
+        </div>
+
+        {/* Illustration column — desktop only. Reuses the auth-illustration
+            already shipped for sign-in / sign-up so reset-password reads as
+            the same family rather than a third side-stream auth flow. */}
+        <div className="hidden lg:flex items-center justify-center px-8">
+          <Illustration name="auth-illustration" alt="" size="xl" />
         </div>
       </div>
     </div>
