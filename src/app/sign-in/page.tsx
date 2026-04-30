@@ -50,7 +50,7 @@ function SignInForm() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf9f7]">
+    <div className="flex min-h-screen flex-col bg-background">
       {/* Logo + Language Toggle */}
       <div className="flex items-center justify-between p-4 sm:p-8">
         <Link href="/sign-in" className="inline-block">
@@ -108,7 +108,7 @@ function SignInForm() {
 
             <Button
               type="submit"
-              className="h-12 w-full rounded-lg bg-muted text-base font-medium text-white hover:bg-muted/80"
+              className="h-12 w-full rounded-lg text-base font-medium"
               disabled={loading || !email || !password}
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t.auth.continueEmail}

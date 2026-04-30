@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
+    <div className="min-h-screen bg-background">
       <div className="p-8">
         <Link href="/" className="inline-block">
           <Logo className="h-6" />

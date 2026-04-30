@@ -33,7 +33,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#faf9f7]">
+    <div className="flex min-h-screen flex-col bg-background">
       <div className="flex items-center justify-between p-4 sm:p-8">
         <Link href="/sign-in" className="inline-block">
           <FullLogo className="h-7" />
@@ -67,7 +67,7 @@ export default function ResetPasswordPage() {
                   value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="h-12 w-full rounded-lg bg-muted text-base font-medium text-white hover:bg-muted/80"
+              <Button type="submit" className="h-12 w-full rounded-lg text-base font-medium"
                 disabled={loading || !email}>
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t.auth.sendResetLink}
               </Button>
