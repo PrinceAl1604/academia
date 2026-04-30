@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Gift, Zap, Crown, UserPlus, X, Copy, Check, Share2 } from "lucide-react";
+import { Zap, Crown, UserPlus, X, Copy, Check, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { Illustration } from "@/components/shared/illustration";
 
 interface ReferralModalProps {
   open: boolean;
@@ -101,27 +102,33 @@ export function ReferralModal({ open, onClose }: ReferralModalProps) {
           <X className="h-5 w-5" />
         </button>
 
-        {/* Top gradient section */}
-        <div className="relative bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 px-6 pt-5 pb-6">
-          {/* Badge */}
-          <span className="inline-flex items-center rounded-full bg-white/80 dark:bg-white/10 px-3 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-700/40 backdrop-blur-sm">
+        {/* Cover section — referral illustration takes the hero role
+            it deserves on a modal whose entire purpose is "share this
+            with friends and earn." The previous tiny Gift-icon-in-circle
+            was a placeholder; the real illustration carries the
+            emotional read of "give something, get something" much
+            better. Soft amber wash kept as a backdrop so the pink-tinted
+            illustration sits on a warm tonal field instead of bare
+            bg-card. */}
+        <div className="relative bg-gradient-to-b from-amber-500/10 via-amber-500/5 to-transparent px-6 pt-6 pb-2">
+          <div className="flex justify-center">
+            <Illustration name="referral" alt="" size="md" priority />
+          </div>
+        </div>
+
+        {/* Title block — centered for hero treatment, sits beneath the
+            cover illustration */}
+        <div className="px-6 pb-6 text-center space-y-3">
+          <span className="inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-500">
             {t.referral.earnBadge}
           </span>
-
-          <div className="mt-3 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">
-                {t.referral.title}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t.referral.subtitle}
-              </p>
-            </div>
-
-            {/* Decorative gift icon */}
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-amber-500 shadow-lg shadow-orange-200/50 dark:shadow-orange-900/30">
-              <Gift className="h-7 w-7 text-white" />
-            </div>
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+              {t.referral.title}
+            </h2>
+            <p className="mt-1.5 text-sm text-muted-foreground max-w-sm mx-auto">
+              {t.referral.subtitle}
+            </p>
           </div>
         </div>
 
