@@ -412,31 +412,60 @@ export function DashboardTopbar() {
                 </div>
 
                 {/* Subscription card — students only.
-                    Mirrors the ElevenLabs "Current workspace" card:
-                    bordered block with plan info on the left and
-                    a contextual CTA on the right (Upgrade if Free,
-                    Manage if Pro). Admins skip this entirely — they
-                    have full access by role, no subscription concept. */}
+                    Refactoring UI applied:
+                    - Plan name elevated to text-base font-semibold
+                      (was text-sm font-medium) — the most important
+                      element in the card, deserves the strongest weight
+                    - Status dot color-codes Pro state at a glance
+                      (green active / amber expiring / red expired);
+                      paired with metadata text in the same color so
+                      the two reinforce rather than compete
+                    - Padding harmonized to the 12/16px scale
+                      (px-4 py-3) — was mixing mx-2/px-3
+                    - Metadata bumped 10px → 11px with tabular-nums
+                      so digits scan cleanly across "30j" / "5j" / "Expiré"
+                    - CTA button left as-is (bordered for Pro, primary
+                      for Free) — already correct per visual hierarchy
+                      principle (paying customer doesn't need a loud CTA) */}
                 {!isAdmin && (
-                  <div className="mx-2 mb-1 rounded-lg border border-border/60 bg-muted/40 px-3 py-2.5">
-                    <div className="flex items-start justify-between gap-2">
+                  <div className="mx-2 mb-1 rounded-lg border border-border/60 bg-muted/40 px-4 py-3">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                           {isEn ? "Plan" : "Forfait"}
                         </p>
-                        <p className="mt-0.5 text-sm font-medium text-foreground">
-                          {isPro ? "Pro" : "Free"}
-                        </p>
+                        <div className="mt-1 flex items-center gap-2">
+                          {/* Status dot — green active / amber expiring /
+                              red expired / muted for free. Sized the
+                              same h-1.5 w-1.5 to read as "indicator"
+                              not "graphic." */}
+                          {isPro && (
+                            <span
+                              className={cn(
+                                "h-1.5 w-1.5 rounded-full shrink-0",
+                                isExpired
+                                  ? "bg-destructive"
+                                  : isExpiringSoon
+                                    ? "bg-amber-500"
+                                    : "bg-primary"
+                              )}
+                              aria-hidden
+                            />
+                          )}
+                          <p className="text-base font-semibold tracking-tight text-foreground leading-none">
+                            {isPro ? "Pro" : "Free"}
+                          </p>
+                        </div>
                         {/* Status line: expiry for Pro, value prop for Free */}
                         {isPro ? (
                           isExpired ? (
-                            <p className="mt-1 font-mono text-[10px] text-destructive tabular-nums">
+                            <p className="mt-1.5 font-mono text-[11px] text-destructive tabular-nums">
                               {isEn ? "Expired" : "Expiré"}
                             </p>
                           ) : daysUntilExpiry !== null ? (
                             <p
                               className={cn(
-                                "mt-1 font-mono text-[10px] tabular-nums",
+                                "mt-1.5 font-mono text-[11px] tabular-nums",
                                 isExpiringSoon
                                   ? "text-amber-500"
                                   : "text-muted-foreground"
@@ -448,7 +477,7 @@ export function DashboardTopbar() {
                             </p>
                           ) : null
                         ) : (
-                          <p className="mt-1 text-[11px] text-muted-foreground">
+                          <p className="mt-1.5 text-[11px] text-muted-foreground leading-snug">
                             {isEn
                               ? "Unlock all courses"
                               : "Débloquez tous les cours"}
@@ -458,7 +487,7 @@ export function DashboardTopbar() {
                       <Link
                         href="/dashboard/subscription"
                         className={cn(
-                          "shrink-0 rounded-md px-2.5 py-1 font-medium text-[11px] transition-colors",
+                          "shrink-0 mt-0.5 rounded-md px-3 py-1.5 font-medium text-[11px] transition-colors",
                           isPro
                             ? "border border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                             : "bg-primary text-primary-foreground hover:bg-primary/90"
