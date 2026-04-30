@@ -3,12 +3,11 @@
 @import "shadcn/tailwind.css";
 
 /* ─── Tailwind dark variant ─────────────────────────────────────────────
-   `dark:foo` rules apply when the element is inside a `.dark` ancestor.
-   The root layout adds `class="dark"` to <html>, so this matches every
-   descendant — effectively making `dark:` unconditional. We keep the
-   variant rather than aliasing it to `&` so individual components can
-   still opt out via `:not(.dark)` selectors if a future feature needs a
-   light surface (e.g. an embedded PDF viewer). */
+   The root layout sets `class="dark"` on <html> permanently, so this
+   variant matches every descendant — making `dark:*` rules unconditional
+   in practice. We keep the variant declaration because some components
+   (notably shadcn primitives and a few status-chip use sites) still
+   declare `dark:` partners for their explicit dark-mode appearance. */
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -56,13 +55,11 @@
 }
 
 /* ─── Theme tokens (dark-only, Cook-OS-inspired warm charcoal) ─────────
-   The previous design system shipped both `:root` (light) and `.dark`
-   (dark) variants. The app now ships dark-only; we mirror the same
-   palette on both selectors so semantic-token components render
-   correctly even outside the .dark cascade boundary (SSR streaming
-   edge case). Phase 9 of the redesign will collapse this to a single
-   `:root` block once the legacy class-translation rules below are
-   removed. */
+   The app ships dark-only. We mirror the same palette on `:root` and
+   `.dark` so semantic-token components render correctly even outside
+   the .dark cascade boundary (SSR streaming edge case). Adding a
+   light-mode option later means filling in just the `:root` block
+   with light values; the `.dark` block stays as the dark palette. */
 :root,
 .dark {
   /* ── Surfaces — a 4-step warm-charcoal scale.
@@ -163,115 +160,79 @@
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   Legacy class translation block
+   Status palette overrides
 
-   ~80% of pages still use hardcoded Tailwind neutral classes
-   (`bg-white`, `bg-neutral-50`, `border-neutral-200/60`, etc.) instead
-   of the semantic tokens defined above. Phases 2–8 of the redesign
-   will migrate them to `bg-card`, `bg-muted`, `border-border`, etc.
-   Until then, these rules translate the legacy classes to the new
-   warm-charcoal palette so the app reads as a single visual language
-   even before the migration is complete.
+   Status chips and category covers use Tailwind's color-named utilities
+   directly (`bg-amber-100`, `bg-blue-50`, `from-emerald-100`, etc.)
+   because the colors carry semantic meaning beyond the brand:
 
-   This whole block is removed in Phase 9.
+     amber  → warning / pending / pinned
+     red    → error / destructive
+     blue   → informational
+     green  → success (separate from --primary brand green)
+     purple → admin / privileged
+     and the course-card thumbnail rainbow
+
+   Tailwind's defaults for these palettes are tuned for light-mode
+   rendering: a `bg-blue-50` is nearly white. On the dark theme that
+   reads as "loud noise". The remaps below pin the same class names
+   to dark-friendly OKLCH values — same semantic intent, theme-fit
+   appearance. They're NOT translation hacks; they're the canonical
+   dark-mode palette for the named status colors. Adding a light-mode
+   theme later means defining the matching light values; this block
+   stays.
+
+   Compare to the previous "legacy class translation block" (Phases
+   2–8 removed it): that block was hijacking neutrals to make custom-
+   styled pages survive the dark-mode flip. Those pages now use
+   semantic tokens directly. This block is what's left — and it's
+   load-bearing.
    ════════════════════════════════════════════════════════════════════ */
 
-/* Backgrounds */
-.bg-white { background-color: oklch(0.18 0.008 60) !important; }
-.bg-neutral-50\/50, .bg-neutral-50 { background-color: oklch(0.16 0.008 60) !important; }
-.bg-neutral-100 { background-color: oklch(0.22 0.008 60) !important; }
-.bg-neutral-200 { background-color: oklch(0.26 0.008 60) !important; }
-.bg-\[\#faf9f7\] { background-color: oklch(0.145 0.008 60) !important; }
-
-/* Text — keep the contrast hierarchy but warm it slightly */
-.text-neutral-900 { color: oklch(0.96 0.005 80) !important; }
-.text-neutral-800 { color: oklch(0.92 0.005 80) !important; }
-.text-neutral-700 { color: oklch(0.85 0.005 80) !important; }
-.text-neutral-600 { color: oklch(0.75 0.005 80) !important; }
-.text-neutral-500 { color: oklch(0.65 0.005 80) !important; }
-.text-neutral-400 { color: oklch(0.55 0.005 80) !important; }
-
-/* Borders — translucent white scale */
-.border-neutral-200, .border-neutral-200\/60 { border-color: oklch(1 0 0 / 8%) !important; }
-.border-neutral-300 { border-color: oklch(1 0 0 / 12%) !important; }
-
-/* Translucent header surface (preserve the backdrop-blur effect) */
-.bg-white\/80 { background-color: oklch(0.18 0.008 60 / 80%) !important; }
-.hover\:bg-neutral-50:hover { background-color: oklch(0.22 0.008 60) !important; }
-.hover\:bg-neutral-100:hover { background-color: oklch(0.24 0.008 60) !important; }
-.hover\:bg-neutral-100\/80:hover { background-color: oklch(0.24 0.008 60 / 80%) !important; }
-
-/* Inputs — coerce all native form fields to the new dark palette
-   even when their own className overrides try to reset them */
-input, textarea, select {
-  background-color: oklch(0.20 0.008 60) !important;
-  border-color: oklch(1 0 0 / 10%) !important;
-  color: oklch(0.95 0.005 80) !important;
-}
-input::placeholder, textarea::placeholder {
-  color: oklch(0.50 0.005 80) !important;
-}
-
-/* Buttons — translate "dark on light" patterns into "primary green".
-   The :not() guards prevent us from hijacking explicit `data-slot`
-   buttons (shadcn primitives) or header backgrounds that are already
-   semantic. */
-.bg-neutral-800:not([class*="!"]) {
-  background-color: oklch(0.62 0.14 155) !important;
-  color: oklch(0.98 0.005 80) !important;
-}
-.bg-neutral-900:not([data-slot]):not(header):not(.border-neutral-900) {
-  background-color: oklch(0.62 0.14 155) !important;
-  color: oklch(0.98 0.005 80) !important;
-}
-.hover\:bg-neutral-700:hover { background-color: oklch(0.58 0.14 155) !important; }
-
-/* Preserve explicitly forced white buttons (used on dark hero overlays
-   where the contrast must survive a colored background) */
-.\!bg-white { background-color: white !important; color: oklch(0.12 0 0) !important; }
-.hover\:\!bg-neutral-200:hover { background-color: oklch(0.90 0 0) !important; }
-
-/* Category pills (used on filter rows in courses) */
-.border-neutral-900.bg-neutral-900 {
-  background-color: oklch(0.62 0.14 155) !important;
-  color: oklch(0.98 0.005 80) !important;
-  border-color: oklch(0.62 0.14 155) !important;
-}
-
-/* Status chip backgrounds — saturated enough to read at small sizes.
-   The 0.30-luminance band keeps them visible on the 0.18 card surface
-   without dominating. */
+/* Status chip backgrounds — saturated enough to read on bg-card,
+   restrained enough not to dominate. */
 .bg-green-100 { background-color: oklch(0.30 0.10 155) !important; }
 .bg-blue-100 { background-color: oklch(0.30 0.08 250) !important; }
 .bg-amber-100 { background-color: oklch(0.32 0.10 80) !important; }
 .bg-red-100 { background-color: oklch(0.30 0.10 25) !important; }
+.bg-purple-100 { background-color: oklch(0.30 0.10 300) !important; }
 .bg-purple-50 { background-color: oklch(0.25 0.06 300) !important; }
 .bg-blue-50 { background-color: oklch(0.22 0.06 250) !important; }
 .bg-green-50 { background-color: oklch(0.22 0.08 155) !important; }
 .bg-amber-50 { background-color: oklch(0.25 0.08 80) !important; }
+.bg-red-50 { background-color: oklch(0.22 0.08 25) !important; }
 
-/* Separator + scroll divider lines */
-[data-slot="separator"] { background-color: oklch(1 0 0 / 8%) !important; }
-.divide-y > * + * { border-color: oklch(1 0 0 / 6%); }
+/* Status chip text — Tailwind's defaults for `text-{color}-{600,700}`
+   are dark/medium tones designed to read on light surfaces. Brightened
+   here so they remain legible when used on the dark-friendly status
+   backgrounds above (or directly on bg-card). 0.78 luminance hits the
+   AA contrast threshold against both 0.30 chip backgrounds and the
+   0.145 page background. */
+.text-amber-700, .text-amber-600 { color: oklch(0.80 0.16 80) !important; }
+.text-blue-700, .text-blue-600 { color: oklch(0.78 0.13 250) !important; }
+.text-red-700, .text-red-600 { color: oklch(0.78 0.16 25) !important; }
+.text-green-700, .text-green-600 { color: oklch(0.78 0.16 155) !important; }
+.text-purple-700, .text-purple-600 { color: oklch(0.78 0.14 300) !important; }
+.text-amber-300 { color: oklch(0.85 0.13 80) !important; }
+.text-amber-500 { color: oklch(0.78 0.16 80) !important; }
+.text-amber-400 { color: oklch(0.82 0.14 80) !important; }
+.text-blue-500, .text-blue-400 { color: oklch(0.78 0.13 250) !important; }
+.text-red-500, .text-red-400 { color: oklch(0.78 0.16 25) !important; }
+.text-green-500, .text-green-400 { color: oklch(0.78 0.16 155) !important; }
+.text-purple-500, .text-purple-400 { color: oklch(0.78 0.14 300) !important; }
+.text-emerald-500 { color: oklch(0.78 0.16 165) !important; }
 
-/* Floating surfaces — popover / dropdown / dialog all share one elevated
-   surface tone (0.20) so they stack visually if multiple are open */
-[data-slot="popover-content"], [data-slot="dropdown-menu-content"] {
-  background-color: oklch(0.20 0.008 60) !important;
-  border-color: oklch(1 0 0 / 10%) !important;
-}
-[data-slot="dialog-content"] {
-  background-color: oklch(0.20 0.008 60) !important;
-  border-color: oklch(1 0 0 / 10%) !important;
-}
+/* Status borders — translucent saturated for warning banners etc. */
+.border-amber-200 { border-color: oklch(0.55 0.12 80 / 40%) !important; }
+.border-amber-700, .border-amber-800 { border-color: oklch(0.55 0.12 80 / 50%) !important; }
+.border-red-200 { border-color: oklch(0.55 0.16 25 / 40%) !important; }
+.border-blue-200 { border-color: oklch(0.55 0.13 250 / 40%) !important; }
 
-/* Accordion hover — same as the ambient muted surface */
-[data-slot="accordion-trigger"]:hover { background-color: oklch(0.22 0.008 60) !important; }
-
-/* Course-card colored gradient washes (used on category covers). The
-   Tailwind classes used by those components target *-100 starting tones;
-   we remap to muted dark equivalents so the colorful hierarchy survives
-   the dark-mode flip. */
+/* Course-card thumbnail gradient palette — the colorful variety system
+   that gives each course card its own personality. The Tailwind
+   defaults (`from-orange-100`, etc.) are pastel; we remap to muted
+   dark equivalents that read as "saturated tonal wash" instead of
+   "pale background". */
 .from-orange-100 { --tw-gradient-from: oklch(0.30 0.06 50) !important; }
 .from-blue-100 { --tw-gradient-from: oklch(0.28 0.06 250) !important; }
 .from-emerald-100 { --tw-gradient-from: oklch(0.28 0.08 165) !important; }
@@ -279,10 +240,10 @@ input::placeholder, textarea::placeholder {
 .from-amber-100 { --tw-gradient-from: oklch(0.30 0.08 80) !important; }
 .from-sky-100 { --tw-gradient-from: oklch(0.28 0.06 230) !important; }
 
-/* Switch track when off */
-[data-slot="switch"] { background-color: oklch(0.25 0.008 60); }
+/* ─── Utilities ──────────────────────────────────────────────────────── */
 
-/* Hide scrollbars on horizontal carousels (preserved from previous theme) */
+/* Hide scrollbars on horizontal carousels (used by the course rails on
+   the home page so the scroll is visually clean). Not theme-related. */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
