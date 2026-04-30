@@ -428,14 +428,17 @@ export function DashboardTopbar() {
                       for Free) — already correct per visual hierarchy
                       principle (paying customer doesn't need a loud CTA) */}
                 {!isAdmin && (
-                  // Card surface: bg-accent (oklch 0.20) sits ONE STEP
-                  // ABOVE bg-popover (0.19) on the luminance scale, so
-                  // the card reads as elevated against the dropdown.
-                  // Previous bg-muted/40 was actually darker than the
-                  // popover after the recent token bumps — recessed
-                  // instead of elevated. Border bumped to full
-                  // opacity for crisper edge definition.
-                  <div className="mx-2 mb-1 rounded-lg border border-border bg-accent px-4 py-3">
+                  // Card surface uses a custom oklch value (0.24) rather
+                  // than the bg-accent token (0.20). Reason: bg-accent is
+                  // only 0.01 luminance above bg-popover (0.19), which is
+                  // below the typical visual perception threshold —
+                  // the card was rendering visually identical to the
+                  // dropdown surface. The 0.24 value gives a clear 0.05
+                  // luminance gap, matching the bg-card/bg-background
+                  // separation elsewhere in the app. Stays local to this
+                  // card so the global --accent token (used for hover
+                  // states) isn't bumped along with it.
+                  <div className="mx-2 mb-1 rounded-lg border border-border bg-[oklch(0.24_0_0)] px-4 py-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
