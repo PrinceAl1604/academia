@@ -22,6 +22,7 @@ import {
   MessageSquare,
   UserPlus,
   BookPlus,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
@@ -40,15 +41,53 @@ interface Notification {
 }
 
 /**
- * Dashboard topbar — Cook-OS-flavored refresh.
+ * Resolve a human-readable page title from the current pathname.
+ * Mirrors the ElevenLabs pattern of "page label on the left of the topbar"
+ * — anchors the user in the navigation context without needing a
+ * breadcrumb trail. Title falls back to empty string for routes that
+ * don't have a meaningful label (auth flows, etc.).
+ */
+function usePageTitle(): string {
+  const pathname = usePathname();
+  const { t } = useLanguage();
+  const isEn = t.nav.signIn === "Sign In";
+
+  // Most-specific routes first so admin/courses/foo doesn't match /admin
+  if (pathname === "/") return isEn ? "Browse" : "Explorer";
+  if (pathname.startsWith("/dashboard/community")) return t.community?.title || "Community";
+  if (pathname.startsWith("/dashboard/courses")) return t.myCourses.title;
+  if (pathname.startsWith("/dashboard/subscription")) return t.subscription.title;
+  if (pathname.startsWith("/dashboard/settings")) return t.settings.title;
+  if (pathname.startsWith("/dashboard/help")) return t.help.title;
+  if (pathname === "/dashboard") return t.dashboard.title || "Dashboard";
+  if (pathname.startsWith("/admin/courses/new")) return isEn ? "New course" : "Nouveau cours";
+  if (pathname.startsWith("/admin/courses")) return t.admin.manageCourses;
+  if (pathname.startsWith("/admin/students")) return t.sidebar.students || "Students";
+  if (pathname.startsWith("/admin/licences")) return t.admin.licences;
+  if (pathname.startsWith("/admin/referrals")) return t.admin.referrals;
+  if (pathname.startsWith("/admin/categories")) return t.sidebar.categories || "Categories";
+  if (pathname.startsWith("/admin/analytics")) return t.admin.analytics;
+  if (pathname.startsWith("/admin/explorer")) return t.sidebar.explorer || "Explorer";
+  if (pathname.startsWith("/admin/settings")) return t.settings.title;
+  if (pathname === "/admin") return t.admin.dashboard;
+  if (pathname.startsWith("/courses/")) return isEn ? "Course" : "Cours";
+  return "";
+}
+
+/**
+ * Dashboard topbar — ElevenLabs-inspired layout.
  *
- * Migrated from hardcoded `bg-white dark:bg-neutral-950` etc. to
- * semantic `bg-background border-border` tokens.
+ * Left side: page title (anchors the user in nav context).
+ * Right side: utility cluster — search · help · language · notifications.
  *
- * The dark-mode toggle has been removed entirely. The app is force-dark
- * via `<html class="dark">` in the root layout; allowing a toggle here
- * could remove that class and break the entire theme. The Sun / Moon
- * icons and `toggleDarkMode` handler are gone with it.
+ * Previous design had search dominating the left side (taking flex-1)
+ * with no page label, so the user had no visual anchor for "where am I?"
+ * Search is now an icon-only button that expands inline when clicked,
+ * matching the compact-utility pattern of ElevenLabs / Linear / Vercel
+ * dashboards where search is just one of several utility icons.
+ *
+ * Help link added to mirror ElevenLabs' "Docs" affordance — single-click
+ * access to the in-app help page rather than buried in the sidebar.
  */
 export function DashboardTopbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -59,6 +98,7 @@ export function DashboardTopbar() {
   const router = useRouter();
   const { isAdmin, isAuthenticated } = useAuth();
   const { t } = useLanguage();
+  const pageTitle = usePageTitle();
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchQuery.trim()) {
@@ -127,7 +167,7 @@ export function DashboardTopbar() {
   return (
     <>
       <ExpiryBanner />
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur-md lg:px-8">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-md lg:px-8">
         {/* Mobile menu — visible below lg */}
         <Sheet>
           <SheetTrigger
@@ -182,10 +222,20 @@ export function DashboardTopbar() {
           </SheetContent>
         </Sheet>
 
-        {/* Search */}
-        <div className="flex-1">
+        {/* ── Page title (left) ──────────────────────────────── */}
+        <div className="flex-1 min-w-0">
+          {pageTitle && (
+            <h1 className="text-sm font-medium text-foreground truncate">
+              {pageTitle}
+            </h1>
+          )}
+        </div>
+
+        {/* ── Right utility cluster ──────────────────────────── */}
+        <div className="flex items-center gap-1">
+          {/* Search — icon-only when collapsed; expands inline on click */}
           {isSearchOpen ? (
-            <div className="w-full max-w-md">
+            <div className="w-56 sm:w-64">
               <Input
                 placeholder={t.nav.searchCourses}
                 className="h-9"
@@ -199,69 +249,80 @@ export function DashboardTopbar() {
           ) : (
             <Button
               variant="ghost"
-              className="gap-2 text-muted-foreground hover:text-foreground"
+              size="icon"
+              className="h-9 w-9"
               onClick={() => setIsSearchOpen(true)}
               aria-label={t.nav.searchCourses}
             >
               <Search className="h-4 w-4" />
-              <span className="hidden sm:inline">{t.nav.searchCourses}</span>
             </Button>
           )}
-        </div>
 
-        {/* Desktop-only actions: language toggle */}
-        <div className="hidden lg:flex items-center gap-2">
-          <LanguageToggle />
-        </div>
+          {/* Help — desktop only, authenticated only. Mirrors ElevenLabs'
+              "Docs" affordance — one click from any page in the app. */}
+          {isAuthenticated && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 hidden md:inline-flex gap-1.5 text-muted-foreground hover:text-foreground"
+              render={<Link href="/dashboard/help" />}
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span>{t.help.title}</span>
+            </Button>
+          )}
 
-        {/* Always-visible actions: notifications + profile (or auth buttons on desktop) */}
-        <div className="flex items-center gap-2">
-          {isAuthenticated ? (
-            <>
-              {/* Notification Popover */}
-              <Popover onOpenChange={(open) => { if (open) markNotificationsRead(); }}>
-                <PopoverTrigger render={<Button variant="ghost" size="icon" className="relative h-9 w-9" aria-label="Notifications" />}>
-                  <Bell className="h-4 w-4" />
-                  {unreadCount > 0 && (
-                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
-                  )}
-                </PopoverTrigger>
-                <PopoverContent className="w-[calc(100vw-1rem)] sm:w-80 p-0" align="end" sideOffset={8}>
-                  <div className="border-b border-border/60 px-4 py-3">
-                    <p className="text-sm font-semibold text-foreground">
-                      Notifications
+          {/* Language toggle */}
+          <div className="hidden md:block">
+            <LanguageToggle />
+          </div>
+
+          {/* Notifications */}
+          {isAuthenticated && (
+            <Popover onOpenChange={(open) => { if (open) markNotificationsRead(); }}>
+              <PopoverTrigger render={<Button variant="ghost" size="icon" className="relative h-9 w-9" aria-label="Notifications" />}>
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+                )}
+              </PopoverTrigger>
+              <PopoverContent className="w-[calc(100vw-1rem)] sm:w-80 p-0" align="end" sideOffset={8}>
+                <div className="border-b border-border/60 px-4 py-3">
+                  <p className="text-sm font-semibold text-foreground">
+                    Notifications
+                  </p>
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y divide-border/40">
+                  {notifications.length === 0 ? (
+                    <p className="p-4 text-sm text-muted-foreground text-center">
+                      {t.nav.signIn === "Sign In" ? "No notifications" : "Aucune notification"}
                     </p>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto divide-y divide-border/40">
-                    {notifications.length === 0 ? (
-                      <p className="p-4 text-sm text-muted-foreground text-center">
-                        {t.nav.signIn === "Sign In" ? "No notifications" : "Aucune notification"}
-                      </p>
-                    ) : (
-                      notifications.map((n) => (
-                        <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0 mt-0.5">
-                            {n.type === "new_student" ? (
-                              <UserPlus className="h-4 w-4 text-blue-400" />
-                            ) : (
-                              <BookPlus className="h-4 w-4 text-primary" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground">{n.message}</p>
-                            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
-                              {n.time}
-                            </p>
-                          </div>
+                  ) : (
+                    notifications.map((n) => (
+                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0 mt-0.5">
+                          {n.type === "new_student" ? (
+                            <UserPlus className="h-4 w-4 text-blue-400" />
+                          ) : (
+                            <BookPlus className="h-4 w-4 text-primary" />
+                          )}
                         </div>
-                      ))
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </>
-          ) : (
-            /* Desktop-only sign-in/sign-up — mobile uses the hamburger sheet */
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground">{n.message}</p>
+                          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                            {n.time}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {/* Sign in/up (unauthenticated, desktop only — mobile uses sheet) */}
+          {!isAuthenticated && (
             <div className="hidden lg:flex items-center gap-2">
               <Button variant="ghost" className="h-9 text-sm" render={<Link href="/sign-in" />}>
                 {t.nav.signIn}
