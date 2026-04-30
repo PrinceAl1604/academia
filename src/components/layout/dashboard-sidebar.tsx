@@ -16,12 +16,10 @@ import {
   FolderOpen,
   Users,
   Gift,
-  LogOut,
   PanelLeftClose,
   PanelLeft,
   MessageSquare,
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSidebar } from "@/lib/sidebar-context";
@@ -45,7 +43,7 @@ import { ReferralModal } from "@/components/shared/referral-modal";
  */
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { isAdmin, userName, logout, isAuthenticated } = useAuth();
+  const { isAdmin, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const { collapsed, toggle } = useSidebar();
   const [referralOpen, setReferralOpen] = useState(false);
@@ -136,12 +134,6 @@ export function DashboardSidebar() {
 
   const navGroups = isAdmin ? adminNavGroups : studentNavGroups;
   const accountItems = isAdmin ? adminAccountNav : studentAccountNav;
-
-  const initials = (userName || "U")
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase();
 
   return (
     <aside
@@ -257,37 +249,13 @@ export function DashboardSidebar() {
         </div>
       </nav>
 
-      {/* ─── Bottom: user + collapse toggle ────────────────── */}
-      <div className="shrink-0 border-t border-sidebar-border p-2.5 space-y-1">
-        {/* User profile row */}
-        <button
-          onClick={logout}
-          className={cn(
-            "flex w-full items-center gap-2.5 rounded-md p-2 text-left transition-colors hover:bg-sidebar-accent",
-            collapsed ? "justify-center" : ""
-          )}
-          title={collapsed ? `${userName || "User"} · ${t.dashboard.signOut}` : undefined}
-        >
-          <Avatar className="h-7 w-7 shrink-0">
-            <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          {!collapsed && (
-            <>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate leading-tight">
-                  {userName || "User"}
-                </p>
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground leading-tight mt-0.5">
-                  {isAdmin ? "Admin" : t.sidebar.student}
-                </p>
-              </div>
-              <LogOut className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            </>
-          )}
-        </button>
-
+      {/* ─── Bottom: collapse toggle only ──────────────────────
+           User profile + sign-out moved to the topbar (UserMenu) to
+           match the ElevenLabs / Linear / Vercel pattern: avatar
+           dropdown in the top-right anchors identity globally rather
+           than per-section. The sidebar bottom is now a single
+           focused control. */}
+      <div className="shrink-0 border-t border-sidebar-border p-2.5">
         {/* Collapse toggle */}
         <button
           onClick={toggle}

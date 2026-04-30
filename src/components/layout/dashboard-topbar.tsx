@@ -11,6 +11,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
   Bell,
   Menu,
   Search,
@@ -23,6 +31,7 @@ import {
   UserPlus,
   BookPlus,
   HelpCircle,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation";
@@ -96,9 +105,18 @@ export function DashboardTopbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const pathname = usePathname();
   const router = useRouter();
-  const { isAdmin, isAuthenticated } = useAuth();
+  const { isAdmin, isAuthenticated, userName, logout } = useAuth();
   const { t } = useLanguage();
   const pageTitle = usePageTitle();
+
+  // Initials for the avatar fallback. Falls back to "U" if no name available
+  // (newly signed-up users before they save a name in settings).
+  const initials = (userName || "U")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchQuery.trim()) {
@@ -319,6 +337,67 @@ export function DashboardTopbar() {
                 </div>
               </PopoverContent>
             </Popover>
+          )}
+
+          {/* User menu — avatar dropdown.
+              Replaces the previous sidebar-bottom profile section.
+              Anchors identity globally rather than per-section, matching
+              the ElevenLabs / Linear / Vercel pattern. */}
+          {isAuthenticated && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button
+                    type="button"
+                    aria-label="Open user menu"
+                    className="ml-1 flex shrink-0 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  />
+                }
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" sideOffset={8} className="w-56">
+                {/* Header: name + role */}
+                <div className="px-2 py-2">
+                  <p className="text-sm font-medium text-foreground truncate leading-tight">
+                    {userName || "User"}
+                  </p>
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                    {isAdmin ? "Admin" : t.sidebar.student}
+                  </p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2"
+                  render={<Link href={isAdmin ? "/admin/settings" : "/dashboard/settings"} />}
+                >
+                  <Settings className="h-4 w-4" />
+                  {t.settings.title}
+                </DropdownMenuItem>
+                {!isAdmin && (
+                  <DropdownMenuItem
+                    className="gap-2"
+                    render={<Link href="/dashboard/help" />}
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                    {t.help.title}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="gap-2"
+                  onClick={logout}
+                >
+                  <LogOut className="h-4 w-4" />
+                  {t.dashboard.signOut}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
           {/* Sign in/up (unauthenticated, desktop only — mobile uses sheet) */}
