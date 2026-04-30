@@ -184,11 +184,12 @@ export default function OnboardingPage() {
           {/* ─── Step 1: Personalize ─────────────────────── */}
           {step === 0 && (
             <div className="space-y-8">
-              {/* Hero illustration — sets the tone for the whole flow.
-                  Centered, lg size (360px) — bigger than empty-state
-                  illustrations because this is a moment, not a fallback. */}
+              {/* Hero illustration — sets the tone for the flow.
+                  md size (240px) matches the interests-step illustration
+                  for visual rhythm across the bookended onboarding steps;
+                  larger sizes were dominating the viewport above the form. */}
               <div className="flex justify-center">
-                <Illustration name="welcome-onboarding" alt="" size="lg" priority />
+                <Illustration name="welcome-onboarding" alt="" size="md" priority />
               </div>
               <div>
                 <h1 className="text-3xl font-medium tracking-tight text-foreground">
