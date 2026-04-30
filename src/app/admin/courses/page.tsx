@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { getAllCourses, deleteCourse, type CourseRow } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
+import { Illustration } from "@/components/shared/illustration";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,9 +101,10 @@ export default function AdminCoursesPage() {
       {/* Course List */}
       <div className="space-y-3">
         {filteredCourses.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              {t.admin.noResults}
+          <Card className="border-dashed">
+            <CardContent className="py-12 text-center flex flex-col items-center">
+              <Illustration name="admin-empty" alt="" size="md" />
+              <p className="mt-4 text-muted-foreground">{t.admin.noResults}</p>
             </CardContent>
           </Card>
         ) : (

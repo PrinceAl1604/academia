@@ -7,19 +7,9 @@ import { supabase } from "@/lib/supabase";
 import { syncAllCourseTotals } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import {
-  Users,
-  BookOpen,
-  Crown,
-  ArrowRight,
-  Plus,
-  BarChart3,
-  Loader2,
-  TrendingUp,
-  Gift,
-} from "lucide-react";
+import { ArrowRight, Loader2, Gift } from "lucide-react";
+import { Illustration } from "@/components/shared/illustration";
 
 interface ReferralUser {
   name: string | null;
@@ -43,6 +33,21 @@ interface Stats {
   recentSignups: number;
 }
 
+/**
+ * Admin dashboard — ElevenLabs-inspired layout.
+ *
+ * Three sections:
+ *   1. Hero — mono "/ Admin" preheader + tight headline (matches the
+ *      app's section-page pattern from Phase 4)
+ *   2. Six illustrated entry cards in a horizontal grid — every primary
+ *      admin action gets its own visual anchor. Replaces the old
+ *      mix of small stat cards (visually identical) + 3 "quick action"
+ *      cards (different size + treatment) which made the page feel
+ *      like two stitched-together patterns.
+ *   3. Lower split — recent activity (2/3 width) + stats sidebar
+ *      (1/3 width). Stats are de-prioritized to glanceable status
+ *      readouts because the cards above carry the visual weight.
+ */
 export default function AdminDashboardPage() {
   const { t } = useLanguage();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -78,7 +83,6 @@ export default function AdminDashboardPage() {
         recentSignups: recentSignups ?? 0,
       });
 
-      // Fetch recent referrals via admin API (bypasses RLS)
       try {
         const res = await fetch("/api/admin/referrals");
         if (res.ok) {
@@ -88,8 +92,6 @@ export default function AdminDashboardPage() {
       } catch {}
 
       setLoading(false);
-
-      // Sync all course totals in the background (fixes stale 0 values)
       syncAllCourseTotals();
     }
     loadStats();
@@ -103,192 +105,214 @@ export default function AdminDashboardPage() {
     );
   }
 
-  const statCards = [
-    {
-      label: t.admin.totalStudents,
-      value: stats?.totalStudents ?? 0,
-      icon: Users,
-      color: "bg-blue-50 text-blue-600",
-    },
-    {
-      label: t.admin.proSubscribers,
-      value: stats?.proStudents ?? 0,
-      icon: Crown,
-      color: "bg-amber-50 text-amber-600 dark:bg-amber-500/10",
-    },
-    {
-      label: t.admin.totalCourses,
-      value: `${stats?.publishedCourses ?? 0} / ${stats?.totalCourses ?? 0}`,
-      icon: BookOpen,
-      color: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
-      subtitle: t.admin.publishedSlashTotal,
-    },
-    {
-      label: t.admin.newSignups30d,
-      value: stats?.recentSignups ?? 0,
-      icon: TrendingUp,
-      color: "bg-green-50 text-green-600",
-    },
-  ];
-
-  const quickActions = [
+  // Six entry cards — primary admin actions. Order is deliberate: most-
+  // used actions first (Add Course, Manage Courses), then resource
+  // management (Students, Licences), then community/insights (Referrals,
+  // Analytics).
+  const entryCards = [
     {
       label: t.admin.addCourse,
-      description: t.admin.createNewCourse,
       href: "/admin/courses/new",
-      icon: Plus,
-      color: "bg-blue-50 text-blue-600",
+      illustration: "add-course",
     },
     {
       label: t.admin.manageCourses,
-      description: t.admin.editOrDeleteCourses,
       href: "/admin/courses",
-      icon: BookOpen,
-      color: "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400",
+      illustration: "courses-manage",
     },
     {
-      label: t.admin.viewAnalytics,
-      description: t.admin.detailedAnalytics,
+      label: t.sidebar.students || "Students",
+      href: "/admin/students",
+      illustration: "students",
+    },
+    {
+      label: t.admin.licences,
+      href: "/admin/licences",
+      illustration: "licences",
+    },
+    {
+      label: t.admin.referrals,
+      href: "/admin/referrals",
+      illustration: "referral",
+    },
+    {
+      label: t.admin.analytics,
       href: "/admin/analytics",
-      icon: BarChart3,
-      color: "bg-green-50 text-green-600",
+      illustration: "analytics",
     },
   ];
 
+  // At-a-glance stats — sidebar treatment, not heroic. Uses mono-tabular
+  // figures aligned right-edge so the eye can scan the column quickly.
+  const statRows = [
+    { label: t.admin.totalStudents, value: stats?.totalStudents ?? 0 },
+    { label: t.admin.proSubscribers, value: stats?.proStudents ?? 0 },
+    {
+      label: t.admin.totalCourses,
+      value: `${stats?.publishedCourses ?? 0} / ${stats?.totalCourses ?? 0}`,
+    },
+    { label: t.admin.newSignups30d, value: stats?.recentSignups ?? 0 },
+  ];
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
+    <div className="px-4 py-8 lg:px-8 lg:py-12 max-w-6xl mx-auto space-y-10">
+      {/* ── Hero ────────────────────────────────────────────── */}
+      <header className="space-y-2">
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          / Admin
+        </p>
+        <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground">
           {t.admin.dashboard}
         </h1>
-        <p className="mt-1 text-muted-foreground">{t.admin.overview}</p>
-      </div>
+        <p className="text-muted-foreground text-base max-w-prose">
+          {t.admin.overview}
+        </p>
+      </header>
 
-      {/* Stat Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="flex items-center gap-4">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.color}`}
-              >
-                <stat.icon className="h-5 w-5" />
+      {/* ── Six illustrated entry cards ─────────────────────── */}
+      <section>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {entryCards.map((card) => (
+            <Link
+              key={card.href}
+              href={card.href}
+              className="group flex aspect-square flex-col items-center justify-between rounded-2xl border border-border/60 bg-card p-4 transition-all hover:border-border hover:-translate-y-0.5"
+            >
+              <div className="flex flex-1 w-full items-center justify-center pt-1">
+                <Illustration
+                  name={card.illustration}
+                  alt=""
+                  size="sm"
+                  className="opacity-90 group-hover:opacity-100 transition-opacity"
+                />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-2xl font-bold text-foreground">
+              <p className="mt-2 text-sm font-medium text-center text-foreground tracking-tight">
+                {card.label}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Lower split: Recent activity + Stats ─────────────── */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent referrals — takes 2/3 width on lg+ */}
+        <section className="lg:col-span-2 space-y-4">
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                / Activity
+              </p>
+              <h2 className="text-base font-medium tracking-tight text-foreground">
+                {isEn ? "Recent referrals" : "Parrainages récents"}
+              </h2>
+            </div>
+            {referrals.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5"
+                render={<Link href="/admin/referrals" />}
+              >
+                {isEn ? "View all" : "Voir tout"}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+
+          {referrals.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center text-center py-12">
+                <Illustration name="admin-empty" alt="" size="md" />
+                <p className="mt-4 text-sm text-muted-foreground">
+                  {isEn ? "No referrals yet" : "Aucun parrainage pour le moment"}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <div className="divide-y divide-border/60">
+                  {referrals.slice(0, 5).map((ref) => {
+                    const referrerName =
+                      ref.referrer?.name || ref.referrer?.email?.split("@")[0] || "?";
+                    const referredName =
+                      ref.referred?.name || ref.referred?.email?.split("@")[0] || "?";
+                    const date = new Date(ref.created_at).toLocaleDateString(
+                      isEn ? "en-US" : "fr-FR",
+                      { month: "short", day: "numeric" }
+                    );
+
+                    return (
+                      <div key={ref.id} className="flex items-center gap-3 px-4 py-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/15 shrink-0">
+                          <Gift className="h-4 w-4 text-amber-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground">
+                            <span className="font-medium">{referredName}</span>
+                            <span className="text-muted-foreground">
+                              {isEn ? " signed up via " : " inscrit via "}
+                            </span>
+                            <span className="font-medium">{referrerName}</span>
+                          </p>
+                          <p className="font-mono text-[10px] text-muted-foreground/70 mt-0.5 truncate">
+                            {ref.referred?.email}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge
+                            className={
+                              ref.status === "rewarded"
+                                ? "bg-primary/15 text-primary"
+                                : "bg-amber-500/15 text-amber-500"
+                            }
+                          >
+                            {ref.status === "rewarded"
+                              ? isEn ? "Rewarded" : "Récompensé"
+                              : isEn ? "Pending" : "En attente"}
+                          </Badge>
+                          <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
+                            {date}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </section>
+
+        {/* Stats sidebar — glanceable status readouts */}
+        <aside className="space-y-4">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+              / Stats
+            </p>
+            <h2 className="text-base font-medium tracking-tight text-foreground">
+              {isEn ? "At a glance" : "En un coup d'œil"}
+            </h2>
+          </div>
+
+          <div className="space-y-2">
+            {statRows.map((stat) => (
+              <div
+                key={stat.label}
+                className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3"
+              >
+                <span className="text-sm text-muted-foreground">{stat.label}</span>
+                <span className="font-mono text-base font-medium text-foreground tabular-nums">
                   {typeof stat.value === "number"
                     ? stat.value.toLocaleString()
                     : stat.value}
-                </p>
+                </span>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
-      <div>
-        <h2 className="mb-4 text-lg font-semibold text-foreground">
-          {t.admin.quickActions}
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {quickActions.map((action) => (
-            <Card
-              key={action.href}
-              className="transition-shadow hover:shadow-md"
-            >
-              <CardContent className="flex flex-col gap-3">
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${action.color}`}
-                >
-                  <action.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">{action.label}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {action.description}
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  render={<Link href={action.href} />}
-                  className="mt-auto w-fit gap-1.5"
-                >
-                  {action.label}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-      {/* Recent Referrals */}
-      {referrals.length > 0 && (
-        <div>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">
-              {isEn ? "Recent Referrals" : "Parrainages récents"}
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5"
-              render={<Link href="/admin/referrals" />}
-            >
-              {isEn ? "View All" : "Voir tout"}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
+            ))}
           </div>
-          <Card>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border/60">
-                {referrals.slice(0, 5).map((ref) => {
-                  const referrerName = ref.referrer?.name || ref.referrer?.email?.split("@")[0] || "?";
-                  const referredName = ref.referred?.name || ref.referred?.email?.split("@")[0] || "?";
-                  const initials = referredName.slice(0, 2).toUpperCase();
-                  const date = new Date(ref.created_at).toLocaleDateString(
-                    isEn ? "en-US" : "fr-FR",
-                    { month: "short", day: "numeric" }
-                  );
-
-                  return (
-                    <div key={ref.id} className="flex items-center gap-3 px-4 py-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-50">
-                        <Gift className="h-4 w-4 text-amber-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground">
-                          <span className="font-medium">{referredName}</span>
-                          <span className="text-muted-foreground">
-                            {isEn ? " signed up via " : " inscrit via "}
-                          </span>
-                          <span className="font-medium">{referrerName}</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground/70">{ref.referred?.email}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge className={
-                          ref.status === "rewarded"
-                            ? "bg-primary/15 text-green-700 dark:bg-green-900/30"
-                            : "bg-amber-100 text-amber-700"
-                        }>
-                          {ref.status === "rewarded"
-                            ? (isEn ? "Rewarded" : "Récompensé")
-                            : (isEn ? "Pending" : "En attente")}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground/70">{date}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        </aside>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
+import { Illustration } from "@/components/shared/illustration";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Pencil, Trash2, Loader2, Check, X, FolderOpen } from "lucide-react";
@@ -123,7 +124,10 @@ export default function AdminCategoriesPage() {
       <Card>
         <CardContent className="divide-y p-0">
           {categories.length === 0 ? (
-            <p className="p-6 text-center text-muted-foreground">No categories yet</p>
+            <div className="py-12 px-6 text-center flex flex-col items-center">
+              <Illustration name="admin-empty" alt="" size="md" />
+              <p className="mt-4 text-muted-foreground">No categories yet</p>
+            </div>
           ) : (
             categories.map((cat) => (
               <div key={cat.id} className="flex items-center gap-3 px-4 py-3">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Illustration } from "@/components/shared/illustration";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -324,9 +325,9 @@ export default function AdminStudentsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/70" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-20 text-center">
-          <Users className="mx-auto h-10 w-10 text-muted-foreground/50" />
-          <p className="mt-3 text-muted-foreground">
+        <div className="py-16 text-center flex flex-col items-center">
+          <Illustration name="admin-empty" alt="" size="md" />
+          <p className="mt-4 text-muted-foreground max-w-md">
             {search
               ? isEn ? "No students match your search" : "Aucun étudiant trouvé"
               : isEn ? "No students yet" : "Aucun étudiant pour le moment"}

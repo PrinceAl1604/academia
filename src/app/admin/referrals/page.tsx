@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Illustration } from "@/components/shared/illustration";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -200,9 +201,9 @@ export default function AdminReferralsPage() {
 
       {/* Referrals Table */}
       {referrals.length === 0 ? (
-        <div className="py-20 text-center">
-          <Gift className="mx-auto h-10 w-10 text-muted-foreground/50" />
-          <p className="mt-3 text-muted-foreground">
+        <div className="py-16 text-center flex flex-col items-center">
+          <Illustration name="admin-empty" alt="" size="md" />
+          <p className="mt-4 text-muted-foreground max-w-md">
             {isEn
               ? "No referrals yet. Referrals will appear here when students share their codes."
               : "Aucun parrainage pour le moment. Les parrainages apparaitront ici quand les etudiants partageront leurs codes."}

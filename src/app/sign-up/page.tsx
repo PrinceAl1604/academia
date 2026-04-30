@@ -72,17 +72,19 @@ export default function SignUpPage() {
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center px-4 pb-12 sm:pb-20">
-          <div className="w-full max-w-sm space-y-4 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
-              <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+          <div className="w-full max-w-sm space-y-6 text-center">
+            <div className="flex justify-center">
+              <Illustration name="email-sent" alt="" size="md" priority />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">{t.auth.checkEmail}</h1>
-            <p className="text-muted-foreground">
-              {t.auth.confirmationSent} <strong>{email}</strong>.
-            </p>
-            <Link href="/sign-in" className="mt-4 inline-block text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-foreground">
+                {t.auth.checkEmail}
+              </h1>
+              <p className="text-muted-foreground">
+                {t.auth.confirmationSent} <strong className="text-foreground">{email}</strong>.
+              </p>
+            </div>
+            <Link href="/sign-in" className="inline-block text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
               {t.auth.backToSignIn}
             </Link>
           </div>

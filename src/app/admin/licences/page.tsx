@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
+import { Illustration } from "@/components/shared/illustration";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -271,9 +272,14 @@ export default function AdminLicencesPage() {
 
           {/* Rows */}
           {filteredKeys.length === 0 ? (
-            <p className="p-8 text-center text-muted-foreground">
-              {keys.length === 0 ? "No licence keys yet. Keys are generated when students purchase on Chariow." : "No results found"}
-            </p>
+            <div className="py-12 px-6 text-center flex flex-col items-center">
+              <Illustration name="admin-empty" alt="" size="md" />
+              <p className="mt-4 text-muted-foreground max-w-md">
+                {keys.length === 0
+                  ? "No licence keys yet. Keys are generated when students purchase on Chariow."
+                  : "No results found"}
+              </p>
+            </div>
           ) : (
             <div className="divide-y">
               {filteredKeys.map((lk) => (

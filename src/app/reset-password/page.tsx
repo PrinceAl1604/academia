@@ -49,11 +49,9 @@ export default function ResetPasswordPage() {
           <p className="text-muted-foreground">{t.auth.resetDesc}</p>
 
           {sent ? (
-            <div className="space-y-4 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
-                <svg className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+            <div className="space-y-6 text-center">
+              <div className="flex justify-center">
+                <Illustration name="email-sent" alt="" size="md" priority />
               </div>
               <p className="text-muted-foreground">{t.auth.checkEmailReset}</p>
               <Link href="/sign-in" className="inline-block text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
