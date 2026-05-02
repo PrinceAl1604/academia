@@ -1,23 +1,23 @@
 "use client";
 
 /**
- * Logo component for sidebar/navbar — full Brightroots logo (icon + wordmark).
- * - Light mode: dark text version (logo-login-dark.svg — fill="#333333")
- * - Dark mode: white text version (logo-login-light.svg — fill="white")
+ * Logo — full Brightroots wordmark + symbol.
+ *
+ * Single asset (`/logo.svg`) since the app is force-dark; the previous
+ * dual light/dark variants were a pre-Phase-1 hangover when the app
+ * had both modes.
+ *
+ * Use this in places that have horizontal room for the wordmark
+ * (sidebar expanded, auth pages, mobile sheet header). For tight or
+ * collapsed contexts (collapsed sidebar rail, favicon, very small
+ * sizes), use <Symbol /> instead.
  */
 export function Logo({ className = "h-5" }: { className?: string }) {
   return (
-    <>
-      <img
-        src="/logo-login-dark.svg"
-        alt="Brightroots"
-        className={`${className} block dark:hidden`}
-      />
-      <img
-        src="/logo-login-light.svg"
-        alt="Brightroots"
-        className={`${className} hidden dark:block`}
-      />
-    </>
+    <img
+      src="/logo.svg"
+      alt="Brightroots"
+      className={className}
+    />
   );
 }

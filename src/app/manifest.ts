@@ -8,16 +8,13 @@ export default function manifest(): MetadataRoute.Manifest {
       "Access premium courses taught by industry experts. One subscription, unlimited learning.",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#16a34a",
+    // Force-dark app — give installed PWA chrome a matching dark
+    // splash/title bar instead of the previous white default.
+    background_color: "#1c1c1c",
+    theme_color: "#269e5f",
     icons: [
       {
-        src: "/favicon-light.svg",
-        sizes: "any",
-        type: "image/svg+xml",
-      },
-      {
-        src: "/favicon-dark.svg",
+        src: "/symbol.svg",
         sizes: "any",
         type: "image/svg+xml",
       },

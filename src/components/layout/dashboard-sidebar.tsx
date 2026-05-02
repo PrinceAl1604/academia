@@ -21,6 +21,8 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSidebar } from "@/lib/sidebar-context";
 import { ReferralModal } from "@/components/shared/referral-modal";
+import { Logo } from "@/components/shared/logo";
+import { Symbol } from "@/components/shared/symbol";
 
 /**
  * Dashboard sidebar — Cook-OS-flavored refresh.
@@ -140,14 +142,16 @@ export function DashboardSidebar() {
         collapsed ? "w-[68px]" : "w-60"
       )}
     >
-      {/* ─── Logo ──────────────────────────────────────────── */}
+      {/* ─── Logo ──────────────────────────────────────────────
+           Collapsed rail (~68px) shows just the symbol mark; expanded
+           rail shows the full wordmark. Both pull from the new brand
+           assets (/symbol.svg and /logo.svg). */}
       <div className={cn("flex h-14 items-center shrink-0", collapsed ? "justify-center px-0" : "px-5")}>
         <Link href={isAdmin ? "/admin" : "/"} className="flex items-center overflow-hidden">
           {collapsed ? (
-            // We're dark-only now, so always render the dark-bg-friendly favicon
-            <img src="/favicon-dark.svg" alt="Brightroots" className="h-8 w-8 shrink-0 rounded-lg" />
+            <Symbol className="h-8 w-8 shrink-0" />
           ) : (
-            <img src="/logo-login-light.svg" alt="Brightroots" className="h-5" />
+            <Logo className="h-5" />
           )}
         </Link>
       </div>

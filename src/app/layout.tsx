@@ -30,13 +30,12 @@ export const metadata: Metadata = {
   description:
     "Access premium courses taught by industry experts. One subscription, unlimited learning.",
   icons: {
-    // The app is dark-only now, but we keep the dual favicon set so the
-    // browser tab adapts to the OS chrome regardless of how it's rendered.
-    icon: [
-      { url: "/favicon-light.svg", type: "image/svg+xml", media: "(prefers-color-scheme: light)" },
-      { url: "/favicon-dark.svg", type: "image/svg+xml", media: "(prefers-color-scheme: dark)" },
-    ],
-    apple: "/favicon-light.svg",
+    // Single brand symbol for all favicon contexts. The previous dual
+    // light/dark favicon set has been retired alongside the rest of the
+    // pre-Phase-1 brand assets — symbol.svg is designed to read on both
+    // light and dark browser chrome.
+    icon: { url: "/symbol.svg", type: "image/svg+xml" },
+    apple: "/symbol.svg",
   },
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "https://academia-vert-phi.vercel.app"
