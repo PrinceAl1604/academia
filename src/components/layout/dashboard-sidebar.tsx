@@ -88,6 +88,7 @@ export function DashboardSidebar() {
         { label: t.dashboard.browse || "Browse", href: "/", icon: Compass },
         { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
         { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
+        { label: t.sessions?.title || "Live sessions", href: "/dashboard/sessions", icon: Video },
       ],
     },
   ];

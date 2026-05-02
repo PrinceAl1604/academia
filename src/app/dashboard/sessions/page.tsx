@@ -1,0 +1,526 @@
+"use client";
+
+import { useState, useEffect, useCallback, useMemo } from "react";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/i18n/language-context";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Illustration } from "@/components/shared/illustration";
+import {
+  Loader2,
+  Users,
+  User,
+  Calendar as CalendarIcon,
+  Lock,
+  Crown,
+  Video,
+} from "lucide-react";
+
+/**
+ * Student Sessions page — `/dashboard/sessions`
+ *
+ * Phase 2 of the Live Sessions feature. Pro members see open upcoming
+ * slots and can book up to 2/month. Free users see a locked teaser
+ * card linking to the subscription page (conversion hook — they see
+ * what they're missing rather than getting redirected).
+ *
+ * The DB trigger does the heavy validation lifting (cap check,
+ * capacity check, plan check) so the client just needs to surface
+ * friendly errors and update local state optimistically.
+ */
+
+interface SessionSlot {
+  id: string;
+  type: "one_on_one" | "group";
+  title: string;
+  description: string | null;
+  starts_at: string;
+  duration_minutes: number;
+  max_attendees: number;
+  room_name: string;
+  status: "open" | "cancelled" | "completed";
+}
+
+interface SessionBooking {
+  id: string;
+  slot_id: string;
+  booked_at: string;
+  cancelled_at: string | null;
+  session_slots: SessionSlot;
+}
+
+const MONTHLY_CAP = 2;
+
+/**
+ * 🧠 LEARNING MOMENT — canCancelBooking
+ *
+ * Once a user has booked, when can they undo it?
+ *
+ *   - Up to N hours before the slot starts? Industry default is 24h
+ *     (gives the host time to fill the slot or close it).
+ *   - Always? (Most generous, least friction. Risk: last-minute
+ *     cancels game the cap — book Mon, cancel Sat night, re-book
+ *     next week with cap freed.)
+ *   - Never? (Hostile to legit conflicts. Don't pick this.)
+ *
+ * The cap counter currently treats every active booking as "used"
+ * toward the 2/month limit, INCLUDING bookings already in the past.
+ * That's a separate decision: should past sessions still count
+ * against this month's cap? (Most platforms say yes — you used the
+ * slot.)
+ *
+ * Return true if cancellation is allowed for this booking.
+ *
+ * Worth ~5-10 lines once you decide the policy.
+ */
+function canCancelBooking(slot: SessionSlot): boolean {
+  // Default: allow cancellation any time before the slot starts.
+  // Replace with your preferred policy — e.g. require 24h notice:
+  //   const HOURS_NOTICE = 24;
+  //   return new Date(slot.starts_at).getTime() - Date.now() > HOURS_NOTICE * 3600_000;
+  return new Date(slot.starts_at).getTime() > Date.now();
+}
+
+export default function StudentSessionsPage() {
+  const { t } = useLanguage();
+  const { user, isPro, isAuthenticated, loading: authLoading } = useAuth();
+  const isEn = t.nav.signIn === "Sign In";
+
+  const [slots, setSlots] = useState<SessionSlot[]>([]);
+  const [bookings, setBookings] = useState<SessionBooking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load open upcoming slots + the user's own bookings in parallel.
+  const loadData = useCallback(async () => {
+    if (!user) return;
+    const nowIso = new Date().toISOString();
+    const [slotsRes, bookingsRes] = await Promise.all([
+      supabase
+        .from("session_slots")
+        .select("*")
+        .eq("status", "open")
+        .gte("starts_at", nowIso)
+        .order("starts_at", { ascending: true }),
+      supabase
+        .from("session_bookings")
+        .select(
+          "id, slot_id, booked_at, cancelled_at, session_slots(*)"
+        )
+        .eq("user_id", user.id)
+        .is("cancelled_at", null)
+        .order("booked_at", { ascending: false }),
+    ]);
+    setSlots((slotsRes.data ?? []) as SessionSlot[]);
+    setBookings((bookingsRes.data ?? []) as unknown as SessionBooking[]);
+    setLoading(false);
+  }, [user]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) return;
+    loadData();
+  }, [authLoading, isAuthenticated, loadData]);
+
+  // Fetch attendance counts for ALL slots — used to mark slots full.
+  // Done once after slots load; cheap because we already have the IDs.
+  const [attendanceCounts, setAttendanceCounts] = useState<
+    Record<string, number>
+  >({});
+  useEffect(() => {
+    if (slots.length === 0) return;
+    (async () => {
+      const ids = slots.map((s) => s.id);
+      const { data } = await supabase
+        .from("session_bookings")
+        .select("slot_id")
+        .is("cancelled_at", null)
+        .in("slot_id", ids);
+      const counts: Record<string, number> = {};
+      (data ?? []).forEach((b: { slot_id: string }) => {
+        counts[b.slot_id] = (counts[b.slot_id] || 0) + 1;
+      });
+      setAttendanceCounts(counts);
+    })();
+  }, [slots]);
+
+  // Compute monthly cap usage from active bookings whose slot starts
+  // in the current calendar month. Mirrors the SQL function in the DB.
+  const monthlyCount = useMemo(() => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return bookings.filter((b) => {
+      const startsAt = new Date(b.session_slots.starts_at);
+      return startsAt >= monthStart && startsAt < monthEnd;
+    }).length;
+  }, [bookings]);
+
+  // Map slot id -> user's active booking id (if booked)
+  const myBookingBySlot = useMemo(() => {
+    const map: Record<string, string> = {};
+    bookings.forEach((b) => {
+      map[b.slot_id] = b.id;
+    });
+    return map;
+  }, [bookings]);
+
+  // Translate DB-trigger errors into i18n strings. Trigger raises
+  // exceptions with literal English messages — we match prefixes since
+  // the messages are short and stable.
+  const translateError = (msg: string | undefined | null): string => {
+    if (!msg) return t.sessions.errorGeneric;
+    if (msg.includes("Pro benefit")) return t.sessions.errorPro;
+    if (msg.includes("Monthly session cap")) return t.sessions.errorCap;
+    if (msg.includes("session is full")) return t.sessions.errorFull;
+    return msg;
+  };
+
+  const handleBook = async (slot: SessionSlot) => {
+    if (!user) return;
+    setError(null);
+    setBookingId(slot.id);
+    const { error: dbError } = await supabase.from("session_bookings").insert({
+      slot_id: slot.id,
+      user_id: user.id,
+    });
+    if (dbError) {
+      setError(translateError(dbError.message));
+      setBookingId(null);
+      return;
+    }
+    // Refresh both lists so capacity + cap counter sync up.
+    await loadData();
+    setBookingId(null);
+  };
+
+  const handleCancel = async (booking: SessionBooking) => {
+    setError(null);
+    setCancellingId(booking.id);
+    const { error: dbError } = await supabase
+      .from("session_bookings")
+      .update({ cancelled_at: new Date().toISOString() })
+      .eq("id", booking.id);
+    if (dbError) {
+      setError(t.sessions.errorGeneric);
+      setCancellingId(null);
+      return;
+    }
+    await loadData();
+    setCancellingId(null);
+  };
+
+  const formatStart = (iso: string) =>
+    new Date(iso).toLocaleString(isEn ? "en-US" : "fr-FR", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  if (authLoading || loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/70" />
+      </div>
+    );
+  }
+
+  // ── Free-user gate ─────────────────────────────────────────
+  if (!isPro) {
+    return (
+      <div className="px-4 py-8 lg:px-8 lg:py-12 max-w-4xl mx-auto space-y-8">
+        <header className="space-y-2">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            / Sessions
+          </p>
+          <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground">
+            {t.sessions.title}
+          </h1>
+          <p className="text-muted-foreground text-base max-w-prose">
+            {t.sessions.subtitle}
+          </p>
+        </header>
+
+        <Card className="overflow-hidden">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-6 p-8">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-amber-500">
+                <Crown className="h-4 w-4" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em]">
+                  Pro
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-medium tracking-tight text-foreground">
+                {t.sessions.proGateTitle}
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-prose">
+                {t.sessions.proGateBody}
+              </p>
+              <Button
+                render={<Link href="/dashboard/subscription" />}
+                className="gap-1.5 mt-2"
+              >
+                <Crown className="h-4 w-4" />
+                {t.sessions.proGateCta}
+              </Button>
+            </div>
+            <div className="hidden sm:block">
+              <Illustration name="subscription" alt="" size="md" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // ── Pro user view ──────────────────────────────────────────
+  const capReached = monthlyCount >= MONTHLY_CAP;
+  const capLabel = t.sessions.capUsed
+    .replace("{used}", String(monthlyCount))
+    .replace("{max}", String(MONTHLY_CAP));
+
+  return (
+    <div className="px-4 py-8 lg:px-8 lg:py-12 max-w-4xl mx-auto space-y-10">
+      {/* ── Hero ────────────────────────────────────────────── */}
+      <header className="space-y-2">
+        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          / Sessions
+        </p>
+        <div className="flex items-end justify-between gap-4 flex-wrap">
+          <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground">
+            {t.sessions.title}
+          </h1>
+          {/* Cap counter pill — at-a-glance "how many do I have left" */}
+          <div
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[11px] tabular-nums ${
+              capReached
+                ? "border-destructive/40 bg-destructive/10 text-destructive"
+                : "border-border/60 bg-card text-muted-foreground"
+            }`}
+          >
+            {capReached ? t.sessions.capReached : capLabel}
+          </div>
+        </div>
+        <p className="text-muted-foreground text-base max-w-prose">
+          {t.sessions.subtitle}
+        </p>
+      </header>
+
+      {/* Error banner */}
+      {error && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {/* ── Your upcoming sessions ─────────────────────────── */}
+      {bookings.length > 0 && (
+        <section className="space-y-3">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+              / Booked
+            </p>
+            <h2 className="text-base font-medium tracking-tight text-foreground">
+              {t.sessions.yourBookings}
+            </h2>
+          </div>
+
+          <div className="space-y-2">
+            {bookings.map((b) => {
+              const slot = b.session_slots;
+              const isGroup = slot.type === "group";
+              const cancellable = canCancelBooking(slot);
+              return (
+                <Card key={b.id} className="overflow-hidden">
+                  <CardContent className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] items-center gap-4 p-4">
+                    {/* Type icon block */}
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-primary shrink-0">
+                      {isGroup ? (
+                        <Users className="h-5 w-5" />
+                      ) : (
+                        <User className="h-5 w-5" />
+                      )}
+                    </div>
+
+                    {/* Title + meta */}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground tracking-tight truncate">
+                        {slot.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        <span>{formatStart(slot.starts_at)}</span>
+                        <span className="text-muted-foreground/50">
+                          · {slot.duration_minutes}m
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        render={
+                          <Link
+                            href={`/dashboard/sessions/${slot.id}`}
+                          />
+                        }
+                        className="gap-1.5"
+                      >
+                        <Video className="h-3.5 w-3.5" />
+                        {isEn ? "Join room" : "Rejoindre"}
+                      </Button>
+                      {cancellable && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                `${t.sessions.cancelConfirmTitle}\n\n${t.sessions.cancelConfirmBody}`
+                              )
+                            ) {
+                              handleCancel(b);
+                            }
+                          }}
+                          disabled={cancellingId === b.id}
+                          className="text-muted-foreground"
+                        >
+                          {cancellingId === b.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            t.sessions.cancelBooking
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── Available slots ─────────────────────────────────── */}
+      <section className="space-y-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+            / Available
+          </p>
+          <h2 className="text-base font-medium tracking-tight text-foreground">
+            {t.sessions.availableSlots}
+          </h2>
+        </div>
+
+        {slots.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center text-center py-12">
+              <Illustration name="chat-empty" alt="" size="md" />
+              <p className="mt-4 text-sm text-muted-foreground">
+                {t.sessions.noAvailableSlots}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {slots.map((slot) => {
+              const isGroup = slot.type === "group";
+              const taken = attendanceCounts[slot.id] ?? 0;
+              const full = taken >= slot.max_attendees;
+              const alreadyBooked = !!myBookingBySlot[slot.id];
+              const blocked = !alreadyBooked && (capReached || full);
+
+              return (
+                <Card
+                  key={slot.id}
+                  className={blocked ? "opacity-70" : ""}
+                >
+                  <CardContent className="p-5 space-y-3">
+                    {/* Type + capacity row */}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1.5">
+                        {isGroup ? (
+                          <Users className="h-3.5 w-3.5" />
+                        ) : (
+                          <User className="h-3.5 w-3.5" />
+                        )}
+                        {isGroup ? t.sessions.typeGroup : t.sessions.typeOneOnOne}
+                      </span>
+                      <span className="font-mono tabular-nums">
+                        {taken}/{slot.max_attendees}
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-base font-medium tracking-tight text-foreground">
+                      {slot.title}
+                    </h3>
+
+                    {slot.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {slot.description}
+                      </p>
+                    )}
+
+                    {/* When */}
+                    <div className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground tabular-nums">
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                      <span>{formatStart(slot.starts_at)}</span>
+                      <span className="text-muted-foreground/50">
+                        · {slot.duration_minutes}m
+                      </span>
+                    </div>
+
+                    {/* Action — state machine: booked / full / cap-reached / book */}
+                    <div className="pt-2">
+                      {alreadyBooked ? (
+                        <Badge className="bg-primary/15 text-primary">
+                          {t.sessions.bookedCta}
+                        </Badge>
+                      ) : full ? (
+                        <Button size="sm" disabled variant="outline" className="w-full">
+                          <Lock className="h-3.5 w-3.5 mr-1.5" />
+                          {t.sessions.slotFull}
+                        </Button>
+                      ) : capReached ? (
+                        <Button size="sm" disabled variant="outline" className="w-full">
+                          <Lock className="h-3.5 w-3.5 mr-1.5" />
+                          {t.sessions.capReached}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => handleBook(slot)}
+                          disabled={bookingId === slot.id}
+                          className="w-full"
+                        >
+                          {bookingId === slot.id ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                              {t.sessions.booking}
+                            </>
+                          ) : (
+                            t.sessions.bookCta
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
