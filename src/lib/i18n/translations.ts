@@ -582,6 +582,54 @@ export const translations = {
       createNewCourse: "Create a new course",
       editOrDeleteCourses: "Edit or delete courses",
       detailedAnalytics: "Detailed analytics",
+      sessions: "Live sessions",
+    },
+
+    // Live Sessions feature — admin publishes slots, Pro users book up to
+    // 2/month. Two shapes: 1:1 office hours and group cohort calls.
+    sessions: {
+      // Page-level
+      title: "Live sessions",
+      adminTitle: "Manage sessions",
+      subtitle:
+        "Office hours and group calls. Pro members book up to 2 per month.",
+      adminSubtitle:
+        "Publish time slots students can reserve. Each slot gets its own Jitsi room — no setup, just share and join.",
+      empty: "No sessions yet",
+      emptyAdminCta: "Create your first slot",
+      newSlot: "New slot",
+      // Slot types
+      typeOneOnOne: "1:1 office hours",
+      typeGroup: "Group call",
+      // Form
+      formTitleLabel: "Title",
+      formTitlePlaceholder: "e.g. Portfolio review office hours",
+      formDescriptionLabel: "Description (optional)",
+      formDescriptionPlaceholder:
+        "What you'll cover, what to prepare, etc.",
+      formTypeLabel: "Session type",
+      formStartsAtLabel: "Date & time",
+      formDurationLabel: "Duration",
+      formCapacityLabel: "Max attendees",
+      formCapacityHint: "1:1 sessions are always 1 attendee.",
+      formMinutes: "minutes",
+      formCancel: "Cancel",
+      formSave: "Publish slot",
+      formSaving: "Publishing…",
+      formErrorPast: "Start time must be in the future",
+      formErrorTitle: "Title is required",
+      formErrorCapacity: "Group sessions need at least 2 attendees",
+      // List
+      listColTitle: "Title",
+      listColType: "Type",
+      listColStartsAt: "Starts",
+      listColAttendees: "Booked",
+      listColStatus: "Status",
+      listColActions: "",
+      // Status
+      statusOpen: "Open",
+      statusCancelled: "Cancelled",
+      statusCompleted: "Completed",
     },
   },
 
@@ -1172,6 +1220,49 @@ export const translations = {
       createNewCourse: "Créer un nouveau cours",
       editOrDeleteCourses: "Modifier ou supprimer des cours",
       detailedAnalytics: "Analytiques détaillées",
+      sessions: "Sessions live",
+    },
+
+    // Sessions live — l'admin publie les créneaux, les Pro réservent
+    // jusqu'à 2 par mois. Deux formats : 1:1 et appels de groupe.
+    sessions: {
+      title: "Sessions live",
+      adminTitle: "Gérer les sessions",
+      subtitle:
+        "Heures de bureau et appels de groupe. Les membres Pro réservent jusqu'à 2 par mois.",
+      adminSubtitle:
+        "Publiez des créneaux que les étudiants peuvent réserver. Chaque créneau dispose de sa propre salle Jitsi — pas de configuration, partagez et rejoignez.",
+      empty: "Aucune session pour le moment",
+      emptyAdminCta: "Créer votre premier créneau",
+      newSlot: "Nouveau créneau",
+      typeOneOnOne: "Tête-à-tête",
+      typeGroup: "Appel de groupe",
+      formTitleLabel: "Titre",
+      formTitlePlaceholder: "ex : Revue de portfolio",
+      formDescriptionLabel: "Description (facultatif)",
+      formDescriptionPlaceholder:
+        "Ce que vous couvrirez, comment se préparer, etc.",
+      formTypeLabel: "Type de session",
+      formStartsAtLabel: "Date et heure",
+      formDurationLabel: "Durée",
+      formCapacityLabel: "Capacité maximale",
+      formCapacityHint: "Les sessions 1:1 sont toujours limitées à 1 participant.",
+      formMinutes: "minutes",
+      formCancel: "Annuler",
+      formSave: "Publier le créneau",
+      formSaving: "Publication…",
+      formErrorPast: "L'heure de début doit être dans le futur",
+      formErrorTitle: "Le titre est requis",
+      formErrorCapacity: "Les sessions de groupe doivent accueillir au moins 2 personnes",
+      listColTitle: "Titre",
+      listColType: "Type",
+      listColStartsAt: "Début",
+      listColAttendees: "Réservés",
+      listColStatus: "Statut",
+      listColActions: "",
+      statusOpen: "Ouvert",
+      statusCancelled: "Annulé",
+      statusCompleted: "Terminé",
     },
   },
 } as const;

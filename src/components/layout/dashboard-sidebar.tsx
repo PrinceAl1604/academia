@@ -16,6 +16,7 @@ import {
   Users,
   Gift,
   MessageSquare,
+  Video,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -118,6 +119,7 @@ export function DashboardSidebar() {
       label: t.sidebar.engage || "Engage",
       items: [
         { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
+        { label: t.admin.sessions || "Live sessions", href: "/admin/sessions", icon: Video },
       ],
     },
   ];
