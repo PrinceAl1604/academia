@@ -4,7 +4,11 @@ import {
   sendRenewalReminderEmail,
   sendProExpiredEmail,
   sendInactiveNudgeEmail,
+  sendSessionReminderEmail,
 } from "@/lib/email";
+
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app";
 
 /**
  * GET /api/cron/daily-emails
@@ -12,6 +16,7 @@ import {
  *  1. Renewal reminders (3 days before Pro expires)
  *  2. Pro expired notifications (expired within last 24h)
  *  3. Inactive user nudges (14 days without login)
+ *  4. Live session reminders (~24h before booked sessions)
  *
  * Protected by CRON_SECRET to prevent unauthorized access.
  */
@@ -24,7 +29,13 @@ export async function GET(req: Request) {
 
   const supabase = getSupabaseAdmin();
   const now = new Date();
-  const results = { reminders: 0, expired: 0, nudges: 0, errors: [] as string[] };
+  const results = {
+    reminders: 0,
+    expired: 0,
+    nudges: 0,
+    sessionReminders: 0,
+    errors: [] as string[],
+  };
 
   // ─── 1. Renewal reminders: Pro expires in exactly 3 days ───
   try {
@@ -120,13 +131,81 @@ export async function GET(req: Request) {
     results.errors.push(`nudge_query:${String(err)}`);
   }
 
+  // ─── 4. Live session reminders: tomorrow's bookings ────────
+  // Cron runs daily at 8am UTC, so we look for bookings starting in
+  // the next 12-36 hours. That window catches every session happening
+  // tomorrow regardless of time-of-day, and the next cron run will
+  // catch the day after. The `reminder_sent_at IS NULL` clause on the
+  // partial index makes this query cheap as the table grows.
+  try {
+    const windowStart = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+    const windowEnd = new Date(now.getTime() + 36 * 60 * 60 * 1000);
+
+    const { data: pendingReminders } = await supabase
+      .from("session_bookings")
+      .select(
+        "id, session_slots!inner(id, title, starts_at, duration_minutes, type, status), users!inner(email, name)"
+      )
+      .is("cancelled_at", null)
+      .is("reminder_sent_at", null)
+      .gte("session_slots.starts_at", windowStart.toISOString())
+      .lte("session_slots.starts_at", windowEnd.toISOString())
+      .eq("session_slots.status", "open");
+
+    for (const row of pendingReminders ?? []) {
+      // Supabase types the join as object|object[] depending on the
+      // FK shape — at runtime !inner returns a single object for both.
+      const slot = (row as unknown as {
+        session_slots: {
+          id: string;
+          title: string;
+          starts_at: string;
+          duration_minutes: number;
+          type: "one_on_one" | "group";
+        };
+        users: { email: string; name: string };
+      }).session_slots;
+      const user = (row as unknown as {
+        users: { email: string; name: string };
+      }).users;
+
+      try {
+        await sendSessionReminderEmail({
+          to: user.email,
+          name: user.name,
+          sessionTitle: slot.title,
+          startsAtIso: slot.starts_at,
+          durationMinutes: slot.duration_minutes,
+          type: slot.type,
+          joinUrl: `${APP_URL}/dashboard/sessions/${slot.id}`,
+        });
+        await supabase
+          .from("session_bookings")
+          .update({ reminder_sent_at: new Date().toISOString() })
+          .eq("id", (row as { id: string }).id);
+        results.sessionReminders++;
+      } catch (err) {
+        results.errors.push(
+          `session_reminder:${user.email}:${String(err)}`
+        );
+      }
+    }
+  } catch (err) {
+    results.errors.push(`session_reminders_query:${String(err)}`);
+  }
+
   return NextResponse.json({
     ok: true,
-    sent: results.reminders + results.expired + results.nudges,
+    sent:
+      results.reminders +
+      results.expired +
+      results.nudges +
+      results.sessionReminders,
     details: {
       reminders: results.reminders,
       expired: results.expired,
       nudges: results.nudges,
+      sessionReminders: results.sessionReminders,
     },
     errors: results.errors.length > 0 ? results.errors : undefined,
   });

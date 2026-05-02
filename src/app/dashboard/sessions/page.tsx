@@ -185,15 +185,31 @@ export default function StudentSessionsPage() {
     if (!user) return;
     setError(null);
     setBookingId(slot.id);
-    const { error: dbError } = await supabase.from("session_bookings").insert({
-      slot_id: slot.id,
-      user_id: user.id,
-    });
-    if (dbError) {
-      setError(translateError(dbError.message));
+    const { data: inserted, error: dbError } = await supabase
+      .from("session_bookings")
+      .insert({ slot_id: slot.id, user_id: user.id })
+      .select("id")
+      .single();
+    if (dbError || !inserted) {
+      setError(translateError(dbError?.message));
       setBookingId(null);
       return;
     }
+
+    // Fire-and-forget the confirmation email. We don't block the UI
+    // refresh on Resend latency — the booking exists in the DB the
+    // moment the insert resolves, so the user already has access. If
+    // email delivery fails the booking is still valid; it'll just
+    // mean the user gets the day-before reminder without an
+    // immediate confirmation.
+    fetch("/api/sessions/notify-booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ booking_id: inserted.id }),
+    }).catch(() => {
+      // intentionally swallowed — surfaced via server logs
+    });
+
     // Refresh both lists so capacity + cap counter sync up.
     await loadData();
     setBookingId(null);

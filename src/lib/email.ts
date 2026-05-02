@@ -486,6 +486,153 @@ export async function sendInactiveNudgeEmail({
   });
 }
 
+/* ─── Live session — booking confirmation ─────────────────── */
+/**
+ * Sent immediately when a Pro user books a session. Confirms what
+ * they reserved + gives a shortcut to the room (which they can return
+ * to right before the session starts).
+ *
+ * Locale-agnostic for now (English only) — matches the rest of the
+ * email layer. When we i18n emails, this will be the easy template
+ * to fork.
+ */
+export async function sendSessionBookedEmail({
+  to,
+  name,
+  sessionTitle,
+  startsAtIso,
+  durationMinutes,
+  type,
+  joinUrl,
+}: {
+  to: string;
+  name: string;
+  sessionTitle: string;
+  startsAtIso: string;
+  durationMinutes: number;
+  type: "one_on_one" | "group";
+  joinUrl: string;
+}) {
+  const firstName = name.split(" ")[0] || name;
+  const date = new Date(startsAtIso);
+  const dateStr = date.toLocaleString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+  const typeLabel = type === "group" ? "Group call" : "1:1 office hours";
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `Booked: ${sessionTitle}`,
+    html: emailWrapper({
+      heading: `You're confirmed`,
+      preheading: `${sessionTitle} — ${dateStr}.`,
+      body: `
+        <p style="margin:0 0 20px;">
+          Hi ${firstName}, your spot is locked in. We'll send you a reminder
+          the day before so it stays on your radar.
+        </p>
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
+          <tr>
+            <td style="padding:20px; background:#f0fdf4; border-radius:10px; border-left:4px solid #16a34a;">
+              <p style="margin:0 0 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#16a34a;">${typeLabel}</p>
+              <p style="margin:0 0 10px; font-size:18px; font-weight:700; color:#171717;">${sessionTitle}</p>
+              <p style="margin:0; font-size:14px; color:#525252;">
+                <strong>${dateStr}</strong> &middot; ${durationMinutes} min
+              </p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0;">
+          When it's time, head to the link below to join the room.
+        </p>`,
+      buttonLabel: "View My Sessions",
+      buttonUrl: joinUrl,
+      footnote:
+        "Need to cancel? Open the session in your dashboard and use the cancel link. Doing it early frees the slot for someone else.",
+    }),
+  });
+}
+
+/* ─── Live session — 24h reminder ─────────────────────────── */
+/**
+ * Sent by the daily cron the day before a booked session. Includes
+ * the join URL so the user doesn't need to dig through the dashboard
+ * to find it.
+ */
+export async function sendSessionReminderEmail({
+  to,
+  name,
+  sessionTitle,
+  startsAtIso,
+  durationMinutes,
+  type,
+  joinUrl,
+}: {
+  to: string;
+  name: string;
+  sessionTitle: string;
+  startsAtIso: string;
+  durationMinutes: number;
+  type: "one_on_one" | "group";
+  joinUrl: string;
+}) {
+  const firstName = name.split(" ")[0] || name;
+  const date = new Date(startsAtIso);
+  const dateStr = date.toLocaleString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+  const typeLabel = type === "group" ? "Group call" : "1:1 office hours";
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `Tomorrow: ${sessionTitle}`,
+    html: emailWrapper({
+      heading: `Tomorrow at a glance`,
+      preheading: `${sessionTitle} starts ${dateStr}.`,
+      body: `
+        <p style="margin:0 0 20px;">
+          Hi ${firstName}, a heads-up that you're booked for a session
+          tomorrow.
+        </p>
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
+          <tr>
+            <td style="padding:20px; background:#fffbeb; border-radius:10px; border-left:4px solid #f59e0b;">
+              <p style="margin:0 0 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#d97706;">${typeLabel}</p>
+              <p style="margin:0 0 10px; font-size:18px; font-weight:700; color:#171717;">${sessionTitle}</p>
+              <p style="margin:0; font-size:14px; color:#525252;">
+                <strong>${dateStr}</strong> &middot; ${durationMinutes} min
+              </p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0 0 16px;">
+          Block out the time, grab a drink, and we'll see you there. The
+          room link below works straight away — bookmark it if you want.
+        </p>
+        <p style="margin:0; font-size:13px; color:#a3a3a3;">
+          Camera and mic check before joining. The room runs on Jitsi —
+          first time you visit, your browser will ask permission.
+        </p>`,
+      buttonLabel: "Join Room",
+      buttonUrl: joinUrl,
+      footnote:
+        "Plans changed? Cancel from the dashboard so the slot can free up for someone else.",
+    }),
+  });
+}
+
 /* ─── Password changed confirmation ───────────────────────── */
 export async function sendPasswordChangedEmail({
   to,
