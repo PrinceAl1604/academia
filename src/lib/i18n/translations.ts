@@ -687,6 +687,10 @@ export const translations = {
       adminCancelNo: "Keep it",
       adminCancelling: "Cancelling…",
       adminCancelError: "Couldn't cancel the slot. Please try again.",
+      // Admin host-side
+      adminJoinRoom: "Join room",
+      adminEarlyAccessHint:
+        "You're seeing this room as the host — students see a countdown until 15 minutes before the start.",
     },
   },
 
@@ -1370,6 +1374,9 @@ export const translations = {
       adminCancelNo: "Garder",
       adminCancelling: "Annulation…",
       adminCancelError: "Impossible d'annuler le créneau. Veuillez réessayer.",
+      adminJoinRoom: "Rejoindre la salle",
+      adminEarlyAccessHint:
+        "Vous voyez cette salle en tant qu'hôte — les étudiants voient un compte à rebours jusqu'à 15 minutes avant le début.",
     },
   },
 } as const;

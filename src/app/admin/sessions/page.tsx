@@ -23,6 +23,7 @@ import {
   User,
   Calendar as CalendarIcon,
   X,
+  Video,
 } from "lucide-react";
 
 /**
@@ -202,7 +203,7 @@ export default function AdminSessionsPage() {
           <CardContent className="p-0">
             <div className="divide-y divide-border/60">
               {/* Header row — mono uppercase, matches admin design language */}
-              <div className="hidden lg:grid grid-cols-[1fr_140px_180px_100px_100px_44px] items-center gap-4 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+              <div className="hidden lg:grid grid-cols-[1fr_140px_180px_100px_100px_88px] items-center gap-4 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                 <span>{t.sessions.listColTitle}</span>
                 <span>{t.sessions.listColType}</span>
                 <span>{t.sessions.listColStartsAt}</span>
@@ -217,10 +218,15 @@ export default function AdminSessionsPage() {
                 // Only show cancel for slots that are still actionable —
                 // already-cancelled or past slots have nothing to cancel.
                 const cancellable = slot.status === "open" && !past;
+                // Admin can join the room any time the slot still
+                // exists (open + not yet completed) — needed so they
+                // can prep and grab moderator privileges by entering
+                // before students.
+                const joinable = slot.status === "open";
                 return (
                   <div
                     key={slot.id}
-                    className={`grid grid-cols-1 lg:grid-cols-[1fr_140px_180px_100px_100px_44px] items-center gap-4 px-5 py-4 transition-opacity ${
+                    className={`grid grid-cols-1 lg:grid-cols-[1fr_140px_180px_100px_100px_88px] items-center gap-4 px-5 py-4 transition-opacity ${
                       past ? "opacity-60" : ""
                     }`}
                   >
@@ -286,10 +292,23 @@ export default function AdminSessionsPage() {
                       </Badge>
                     </div>
 
-                    {/* Action: cancel — only shown for open future slots.
-                         Icon-only for compactness; the dialog explains
-                         what happens. */}
-                    <div className="lg:flex lg:justify-end">
+                    {/* Actions: join (admin enters as host/moderator)
+                         + cancel. Icon-only with title attrs for
+                         affordance — matches the dense Linear/ClickUp
+                         row pattern. Both are gated by status. */}
+                    <div className="lg:flex lg:justify-end items-center gap-1">
+                      {joinable && (
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          render={<Link href={`/dashboard/sessions/${slot.id}`} />}
+                          title={t.sessions.adminJoinRoom}
+                          aria-label={t.sessions.adminJoinRoom}
+                          className="text-muted-foreground hover:text-primary"
+                        >
+                          <Video className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       {cancellable && (
                         <Button
                           size="icon-sm"

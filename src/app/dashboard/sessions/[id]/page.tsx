@@ -125,9 +125,18 @@ export default function SessionRoomPage({
 
   // Compute the lifecycle state from the slot + the current tick.
   // useMemo with `tick` as a dep means it re-evaluates every second.
+  //
+  // Admin bypass: the host needs to enter the Jitsi room BEFORE
+  // attendees so they get moderator privileges (meet.jit.si grants
+  // moderator to whoever joins first). The PRE gate exists to spare
+  // students the "I joined an empty room" confusion — the host
+  // expects emptiness, so we skip the gate for them. POST is also
+  // skipped so admin can keep a room open if a session runs long.
+  // CANCELLED still applies — the slot was killed, no room to enter.
   const lifecycle = useMemo<LifecycleState | null>(() => {
     if (!slot) return null;
     if (slot.status === "cancelled") return "cancelled";
+    if (isAdmin) return "live";
     const startMs = new Date(slot.starts_at).getTime();
     const endMs = startMs + slot.duration_minutes * 60_000;
     const now = Date.now();
@@ -136,7 +145,7 @@ export default function SessionRoomPage({
     return "live";
     // tick intentionally drives re-evaluation
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slot, tick]);
+  }, [slot, tick, isAdmin]);
 
   if (authLoading || loading || !slot || lifecycle === null) {
     return (
@@ -207,6 +216,15 @@ export default function SessionRoomPage({
       </Button>
 
       <Header />
+
+      {/* Host-only banner — makes it obvious admin is seeing the
+           unfiltered room so they don't accidentally publish a slot
+           link expecting it to behave the same for students. */}
+      {isAdmin && lifecycle === "live" && (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-500">
+          {t.sessions.adminEarlyAccessHint}
+        </div>
+      )}
 
       {lifecycle === "pre" && (
         <PreSessionCard
