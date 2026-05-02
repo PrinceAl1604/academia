@@ -10,6 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Illustration } from "@/components/shared/illustration";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Loader2,
   Users,
   User,
@@ -95,6 +103,9 @@ export default function StudentSessionsPage() {
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Cancel-confirmation dialog: holds the booking we're about to
+  // cancel. null = closed; setting a value opens the dialog.
+  const [cancelTarget, setCancelTarget] = useState<SessionBooking | null>(null);
 
   // Load open upcoming slots + the user's own bookings in parallel.
   const loadData = useCallback(async () => {
@@ -229,6 +240,7 @@ export default function StudentSessionsPage() {
     }
     await loadData();
     setCancellingId(null);
+    setCancelTarget(null);
   };
 
   const formatStart = (iso: string) =>
@@ -398,15 +410,7 @@ export default function StudentSessionsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => {
-                            if (
-                              confirm(
-                                `${t.sessions.cancelConfirmTitle}\n\n${t.sessions.cancelConfirmBody}`
-                              )
-                            ) {
-                              handleCancel(b);
-                            }
-                          }}
+                          onClick={() => setCancelTarget(b)}
                           disabled={cancellingId === b.id}
                           className="text-muted-foreground"
                         >
@@ -549,6 +553,44 @@ export default function StudentSessionsPage() {
           </div>
         )}
       </section>
+
+      {/* ── Cancel-confirmation dialog ──────────────────────────
+           Single dialog instance reused for any booking the user
+           clicks "cancel" on. open === !!cancelTarget so closing
+           also clears the target — no stale state. */}
+      <Dialog open={!!cancelTarget} onOpenChange={(o) => !o && setCancelTarget(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.sessions.cancelConfirmTitle}</DialogTitle>
+            <DialogDescription>
+              {t.sessions.cancelConfirmBody}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setCancelTarget(null)}
+              disabled={!!cancellingId}
+            >
+              {t.sessions.cancelConfirmNo}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => cancelTarget && handleCancel(cancelTarget)}
+              disabled={!!cancellingId}
+            >
+              {cancellingId ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  {t.sessions.cancelling}
+                </>
+              ) : (
+                t.sessions.cancelConfirmYes
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

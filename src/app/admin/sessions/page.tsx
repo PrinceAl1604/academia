@@ -9,11 +9,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Illustration } from "@/components/shared/illustration";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Plus,
   Loader2,
   Users,
   User,
   Calendar as CalendarIcon,
+  X,
 } from "lucide-react";
 
 /**
@@ -53,6 +62,11 @@ export default function AdminSessionsPage() {
   const isEn = t.nav.signIn === "Sign In";
   const [slots, setSlots] = useState<SlotWithBookings[]>([]);
   const [loading, setLoading] = useState(true);
+  // Cancel-confirmation dialog state. cancelTarget holds the slot the
+  // admin is about to cancel; null = closed.
+  const [cancelTarget, setCancelTarget] = useState<SlotWithBookings | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const loadSlots = useCallback(async () => {
     // Fetch all slots admin-side. RLS lets admin read everything; we
@@ -94,6 +108,33 @@ export default function AdminSessionsPage() {
   useEffect(() => {
     loadSlots();
   }, [loadSlots]);
+
+  // Cancel a slot through the API route — the route cascades the
+  // cancellation to every active booking and emails the affected
+  // users. We refresh the list locally so the row's status flips
+  // without a hard reload.
+  const handleCancelSlot = async () => {
+    if (!cancelTarget) return;
+    setCancelError(null);
+    setCancelling(true);
+    try {
+      const res = await fetch("/api/sessions/cancel-slot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot_id: cancelTarget.id }),
+      });
+      if (!res.ok) {
+        setCancelError(t.sessions.adminCancelError);
+        setCancelling(false);
+        return;
+      }
+      await loadSlots();
+      setCancelTarget(null);
+    } catch {
+      setCancelError(t.sessions.adminCancelError);
+    }
+    setCancelling(false);
+  };
 
   if (loading) {
     return (
@@ -161,21 +202,25 @@ export default function AdminSessionsPage() {
           <CardContent className="p-0">
             <div className="divide-y divide-border/60">
               {/* Header row — mono uppercase, matches admin design language */}
-              <div className="hidden lg:grid grid-cols-[1fr_140px_180px_100px_100px] items-center gap-4 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+              <div className="hidden lg:grid grid-cols-[1fr_140px_180px_100px_100px_44px] items-center gap-4 px-5 py-3 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                 <span>{t.sessions.listColTitle}</span>
                 <span>{t.sessions.listColType}</span>
                 <span>{t.sessions.listColStartsAt}</span>
                 <span className="text-right">{t.sessions.listColAttendees}</span>
                 <span className="text-right">{t.sessions.listColStatus}</span>
+                <span></span>
               </div>
 
               {slots.map((slot) => {
                 const past = isPast(slot.starts_at);
                 const isGroup = slot.type === "group";
+                // Only show cancel for slots that are still actionable —
+                // already-cancelled or past slots have nothing to cancel.
+                const cancellable = slot.status === "open" && !past;
                 return (
                   <div
                     key={slot.id}
-                    className={`grid grid-cols-1 lg:grid-cols-[1fr_140px_180px_100px_100px] items-center gap-4 px-5 py-4 transition-opacity ${
+                    className={`grid grid-cols-1 lg:grid-cols-[1fr_140px_180px_100px_100px_44px] items-center gap-4 px-5 py-4 transition-opacity ${
                       past ? "opacity-60" : ""
                     }`}
                   >
@@ -240,6 +285,24 @@ export default function AdminSessionsPage() {
                           : t.sessions.statusCompleted}
                       </Badge>
                     </div>
+
+                    {/* Action: cancel — only shown for open future slots.
+                         Icon-only for compactness; the dialog explains
+                         what happens. */}
+                    <div className="lg:flex lg:justify-end">
+                      {cancellable && (
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => setCancelTarget(slot)}
+                          title={t.sessions.adminCancelSlot}
+                          aria-label={t.sessions.adminCancelSlot}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -247,6 +310,61 @@ export default function AdminSessionsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* ── Admin cancel-slot dialog ────────────────────────────
+           Single dialog reused for any slot. Body-text changes
+           depending on whether anyone has booked yet — phrasing
+           the consequence honestly ("3 attendees will be notified")
+           prevents accidental cancellations of full slots. */}
+      <Dialog
+        open={!!cancelTarget}
+        onOpenChange={(o) => {
+          if (!o) {
+            setCancelTarget(null);
+            setCancelError(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.sessions.adminCancelTitle}</DialogTitle>
+            <DialogDescription>
+              {cancelTarget && cancelTarget.active_bookings > 0
+                ? t.sessions.adminCancelBody.replace(
+                    "{n}",
+                    String(cancelTarget.active_bookings)
+                  )
+                : t.sessions.adminCancelBodyEmpty}
+            </DialogDescription>
+          </DialogHeader>
+          {cancelError && (
+            <p className="text-sm text-destructive">{cancelError}</p>
+          )}
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setCancelTarget(null)}
+              disabled={cancelling}
+            >
+              {t.sessions.adminCancelNo}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelSlot}
+              disabled={cancelling}
+            >
+              {cancelling ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  {t.sessions.adminCancelling}
+                </>
+              ) : (
+                t.sessions.adminCancelYes
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

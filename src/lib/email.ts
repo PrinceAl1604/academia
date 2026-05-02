@@ -633,6 +633,67 @@ export async function sendSessionReminderEmail({
   });
 }
 
+/* ─── Live session — slot cancelled by admin ──────────────── */
+/**
+ * Sent when an admin cancels a slot that already has bookings on it.
+ * Apologetic in tone (the user is being inconvenienced) and points
+ * back to the sessions list so they can immediately re-book if they
+ * want. Their monthly cap was already freed when their booking was
+ * marked cancelled, so they have full headroom.
+ */
+export async function sendSlotCancelledEmail({
+  to,
+  name,
+  sessionTitle,
+  startsAtIso,
+}: {
+  to: string;
+  name: string;
+  sessionTitle: string;
+  startsAtIso: string;
+}) {
+  const firstName = name.split(" ")[0] || name;
+  const date = new Date(startsAtIso);
+  const dateStr = date.toLocaleString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `Cancelled: ${sessionTitle}`,
+    html: emailWrapper({
+      heading: `Your session was cancelled`,
+      preheading: `${sessionTitle} (${dateStr}) won't be happening.`,
+      body: `
+        <p style="margin:0 0 20px;">
+          Hi ${firstName}, the host has cancelled the session you were
+          booked into:
+        </p>
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
+          <tr>
+            <td style="padding:20px; background:#fef2f2; border-radius:10px; border-left:4px solid #ef4444;">
+              <p style="margin:0 0 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#dc2626;">Cancelled</p>
+              <p style="margin:0 0 6px; font-size:18px; font-weight:700; color:#171717;">${sessionTitle}</p>
+              <p style="margin:0; font-size:14px; color:#525252;"><strong>${dateStr}</strong></p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0 0 16px;">
+          Sorry for the change. Your monthly cap has been freed, so you can
+          book another slot right away.
+        </p>`,
+      buttonLabel: "Browse Available Slots",
+      buttonUrl: `${APP_URL}/dashboard/sessions`,
+    }),
+  });
+}
+
 /* ─── Password changed confirmation ───────────────────────── */
 export async function sendPasswordChangedEmail({
   to,

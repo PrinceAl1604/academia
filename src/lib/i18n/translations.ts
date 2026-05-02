@@ -659,6 +659,34 @@ export const translations = {
       errorCap: "You've already booked 2 sessions this month.",
       errorFull: "This slot is full.",
       errorGeneric: "Something went wrong. Please try again.",
+      // Room lifecycle states
+      roomTooEarlyTitle: "Doors aren't open yet",
+      roomTooEarlyBody:
+        "The room opens 15 minutes before the session starts. Hang tight.",
+      roomOpensIn: "Opens in {time}",
+      roomTestSetup: "Test camera & mic",
+      roomEndedTitle: "This session has ended",
+      roomEndedBody:
+        "Hope it went well. Browse upcoming slots if you'd like to book another.",
+      roomCancelledTitle: "This session was cancelled",
+      roomCancelledBody:
+        "The host cancelled this slot. We've already freed up your monthly cap so you can book another.",
+      roomBackToList: "Back to sessions",
+      // Time formatting (used in countdown)
+      timeDays: "{n}d",
+      timeHours: "{n}h",
+      timeMinutes: "{n}m",
+      // Admin cancel slot
+      adminCancelSlot: "Cancel slot",
+      adminCancelTitle: "Cancel this slot?",
+      adminCancelBody:
+        "All {n} booked attendees will be notified by email and their monthly cap will be freed. This can't be undone.",
+      adminCancelBodyEmpty:
+        "No one has booked this slot yet. You can safely cancel it.",
+      adminCancelYes: "Yes, cancel slot",
+      adminCancelNo: "Keep it",
+      adminCancelling: "Cancelling…",
+      adminCancelError: "Couldn't cancel the slot. Please try again.",
     },
   },
 
@@ -1317,6 +1345,31 @@ export const translations = {
       errorCap: "Vous avez déjà réservé 2 sessions ce mois-ci.",
       errorFull: "Ce créneau est complet.",
       errorGeneric: "Une erreur s'est produite. Veuillez réessayer.",
+      roomTooEarlyTitle: "La salle n'est pas encore ouverte",
+      roomTooEarlyBody:
+        "La salle ouvre 15 minutes avant le début de la session. Patience.",
+      roomOpensIn: "Ouvre dans {time}",
+      roomTestSetup: "Tester caméra & micro",
+      roomEndedTitle: "Cette session est terminée",
+      roomEndedBody:
+        "Nous espérons que ça s'est bien passé. Parcourez les créneaux à venir si vous souhaitez réserver à nouveau.",
+      roomCancelledTitle: "Cette session a été annulée",
+      roomCancelledBody:
+        "L'hôte a annulé ce créneau. Votre plafond mensuel a été libéré pour que vous puissiez réserver autre chose.",
+      roomBackToList: "Retour aux sessions",
+      timeDays: "{n}j",
+      timeHours: "{n}h",
+      timeMinutes: "{n}min",
+      adminCancelSlot: "Annuler le créneau",
+      adminCancelTitle: "Annuler ce créneau ?",
+      adminCancelBody:
+        "Les {n} participants inscrits recevront un e-mail et leur plafond mensuel sera libéré. Cette action est irréversible.",
+      adminCancelBodyEmpty:
+        "Personne n'a encore réservé ce créneau. Vous pouvez l'annuler sans risque.",
+      adminCancelYes: "Oui, annuler le créneau",
+      adminCancelNo: "Garder",
+      adminCancelling: "Annulation…",
+      adminCancelError: "Impossible d'annuler le créneau. Veuillez réessayer.",
     },
   },
 } as const;
