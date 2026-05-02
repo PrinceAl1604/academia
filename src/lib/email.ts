@@ -622,8 +622,8 @@ export async function sendSessionReminderEmail({
           room link below works straight away — bookmark it if you want.
         </p>
         <p style="margin:0; font-size:13px; color:#a3a3a3;">
-          Camera and mic check before joining. The room runs on Jitsi —
-          first time you visit, your browser will ask permission.
+          Camera and mic check before joining. First time you visit
+          the room, your browser will ask permission for both.
         </p>`,
       buttonLabel: "Join Room",
       buttonUrl: joinUrl,

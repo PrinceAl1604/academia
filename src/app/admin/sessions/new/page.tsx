@@ -28,10 +28,9 @@ import { ArrowLeft, Loader2, User, Users } from "lucide-react";
  * insert (the DB requires the room_name at insert time, so we generate
  * a UUID-shortened slug client-side and pass it in).
  *
- * The Jitsi join URL becomes `https://meet.jit.si/{room_name}` — this
- * is the "free, flexible, integrated" video provider choice: no API
- * key, no auth flow, just embed an iframe at that URL on the
- * student-facing session page (Phase 4).
+ * The Daily.co join URL becomes `https://{NEXT_PUBLIC_DAILY_DOMAIN}.daily.co/{room_name}`
+ * — the actual Daily room is created lazily on first visit by
+ * /api/sessions/ensure-room. We just store the name here.
  */
 
 type SessionType = "one_on_one" | "group";
@@ -102,9 +101,9 @@ function validateSlot(
 
 /**
  * Generate a stable, URL-safe room name. Used as the unique part of
- * the Jitsi join URL. Format: `brightroots-{12 hex chars}`. We don't
- * use the slot's UUID directly because Jitsi rooms with hyphens are
- * ugly — short hex is cleaner.
+ * the Daily room URL. Format: `brightroots-{12 hex chars}`. We don't
+ * use the slot's UUID directly because Daily room names with long
+ * hyphenated UUIDs read badly in URLs — short hex is cleaner.
  */
 function generateRoomName(): string {
   const hex = Array.from({ length: 12 }, () =>

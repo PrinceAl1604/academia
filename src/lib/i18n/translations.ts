@@ -594,7 +594,7 @@ export const translations = {
       subtitle:
         "Office hours and group calls. Pro members book up to 2 per month.",
       adminSubtitle:
-        "Publish time slots students can reserve. Each slot gets its own Jitsi room — no setup, just share and join.",
+        "Publish time slots students can reserve. Each slot gets its own video room — no setup, just share and join.",
       empty: "No sessions yet",
       emptyAdminCta: "Create your first slot",
       newSlot: "New slot",
@@ -1292,7 +1292,7 @@ export const translations = {
       subtitle:
         "Heures de bureau et appels de groupe. Les membres Pro réservent jusqu'à 2 par mois.",
       adminSubtitle:
-        "Publiez des créneaux que les étudiants peuvent réserver. Chaque créneau dispose de sa propre salle Jitsi — pas de configuration, partagez et rejoignez.",
+        "Publiez des créneaux que les étudiants peuvent réserver. Chaque créneau dispose de sa propre salle vidéo — pas de configuration, partagez et rejoignez.",
       empty: "Aucune session pour le moment",
       emptyAdminCta: "Créer votre premier créneau",
       newSlot: "Nouveau créneau",

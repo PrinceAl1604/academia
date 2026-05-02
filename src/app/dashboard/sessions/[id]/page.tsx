@@ -31,14 +31,18 @@ import {
  *             join an empty room and wonder if they're in the right place.
  *
  *   2. LIVE — within [start - 15min, start + duration + 30min buffer].
- *             Iframe renders — actual Jitsi meeting time.
+ *             Iframe renders — actual Daily.co meeting time.
  *
  *   3. PAST — past the LIVE window OR slot.status is completed/cancelled.
  *             Show a closing card with a back link. Iframe is hidden so
- *             we don't burn a Jitsi room load on a meeting that's done.
+ *             we don't burn an embed on a meeting that's done.
  *
  * Authorization (orthogonal to lifecycle): user must have an active
  * (non-cancelled) booking, OR be admin. Anyone else gets bounced.
+ *
+ * The actual Daily.co room is created lazily on first visit via
+ * /api/sessions/ensure-room — idempotent, so multiple visits don't
+ * mint multiple rooms.
  */
 
 interface SessionSlot {
@@ -126,13 +130,13 @@ export default function SessionRoomPage({
   // Compute the lifecycle state from the slot + the current tick.
   // useMemo with `tick` as a dep means it re-evaluates every second.
   //
-  // Admin bypass: the host needs to enter the Jitsi room BEFORE
-  // attendees so they get moderator privileges (meet.jit.si grants
-  // moderator to whoever joins first). The PRE gate exists to spare
-  // students the "I joined an empty room" confusion — the host
-  // expects emptiness, so we skip the gate for them. POST is also
-  // skipped so admin can keep a room open if a session runs long.
-  // CANCELLED still applies — the slot was killed, no room to enter.
+  // Admin bypass: the host wants to be able to prep the Daily room
+  // (test screenshare, drop a welcome message in chat) before
+  // attendees arrive. The PRE gate exists to spare students the "I
+  // joined an empty room" confusion — the host expects emptiness, so
+  // we skip the gate for them. POST is also skipped so admin can keep
+  // a room open if a session runs long. CANCELLED still applies —
+  // the slot was killed, no room to enter.
   const lifecycle = useMemo<LifecycleState | null>(() => {
     if (!slot) return null;
     if (slot.status === "cancelled") return "cancelled";
@@ -229,14 +233,14 @@ export default function SessionRoomPage({
       {lifecycle === "pre" && (
         <PreSessionCard
           startsAt={slot.starts_at}
-          roomName={slot.room_name}
+          slotId={slot.id}
           tick={tick}
         />
       )}
 
       {lifecycle === "live" && (
         <LiveSessionFrame
-          roomName={slot.room_name}
+          slotId={slot.id}
           title={slot.title}
           displayName={
             user?.user_metadata?.full_name ||
@@ -257,20 +261,41 @@ export default function SessionRoomPage({
 /* ─── PRE state — countdown card ──────────────────────────── */
 /**
  * Shown when the user arrives more than 15 min before their slot.
- * Better than rendering an empty Jitsi room (confusing) or 404'ing
- * (rude). Includes a "test cam/mic" link that opens the same Jitsi
- * room in a new tab so the user can verify their setup.
+ * Better than rendering an empty room (confusing) or 404'ing (rude).
+ * Includes a "test cam/mic" link that opens the same Daily room in a
+ * new tab so the user can verify their setup. We pre-fetch the room
+ * URL via ensure-room so the test link works on first click.
  */
 function PreSessionCard({
   startsAt,
-  roomName,
+  slotId,
   tick,
 }: {
   startsAt: string;
-  roomName: string;
+  slotId: string;
   tick: number;
 }) {
   const { t } = useLanguage();
+  const [roomUrl, setRoomUrl] = useState<string | null>(null);
+
+  // Pre-mint the Daily room so the "Test camera & mic" link works
+  // the moment the user clicks it.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/sessions/ensure-room", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slot_id: slotId }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.url) setRoomUrl(data.url);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [slotId]);
 
   // Compute time-until-doors-open. tick keeps this fresh every second
   // without an explicit dependency.
@@ -314,12 +339,13 @@ function PreSessionCard({
             variant="outline"
             className="gap-1.5 mt-2"
             size="sm"
+            disabled={!roomUrl}
             render={
-              <a
-                href={`https://meet.jit.si/${roomName}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              />
+              roomUrl ? (
+                <a href={roomUrl} target="_blank" rel="noopener noreferrer" />
+              ) : (
+                <span />
+              )
             }
           >
             <Video className="h-3.5 w-3.5" />
@@ -334,31 +360,102 @@ function PreSessionCard({
   );
 }
 
-/* ─── LIVE state — Jitsi iframe ───────────────────────────── */
+/* ─── LIVE state — Daily.co iframe ────────────────────────── */
+/**
+ * Fetches the Daily room URL via /api/sessions/ensure-room (which
+ * lazy-creates the room on Daily if it doesn't exist yet) and
+ * embeds it as an iframe. The display name rides on the URL via
+ * `?userName=` so Daily pre-fills it in the avatar.
+ *
+ * Loading state is a centered spinner — the API call is fast (one
+ * Daily POST) but networks vary. Error state surfaces a friendly
+ * message; the underlying detail goes to the console for debugging.
+ */
 function LiveSessionFrame({
-  roomName,
+  slotId,
   title,
   displayName,
   isEn,
 }: {
-  roomName: string;
+  slotId: string;
   title: string;
   displayName: string;
   isEn: boolean;
 }) {
-  // Jitsi config flags ride on the URL hash:
-  //   - prejoinPageEnabled=false → boot straight into the call
-  //   - userInfo.displayName → pre-fill the user's name
-  const jitsiUrl = `https://meet.jit.si/${roomName}#config.prejoinPageEnabled=false&userInfo.displayName=%22${encodeURIComponent(
-    displayName
-  )}%22`;
+  const [roomUrl, setRoomUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/sessions/ensure-room", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slot_id: slotId }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          if (!cancelled) {
+            setError(
+              isEn
+                ? "Couldn't open the room. Please refresh the page."
+                : "Impossible d'ouvrir la salle. Veuillez actualiser la page."
+            );
+            console.error("ensure-room failed:", body);
+          }
+          return;
+        }
+        const { url } = await res.json();
+        if (cancelled) return;
+        // Pre-fill display name via URL param so Daily shows the user
+        // as e.g. "Alex" instead of "Guest" the moment they enter.
+        setRoomUrl(`${url}?userName=${encodeURIComponent(displayName)}`);
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            isEn
+              ? "Couldn't open the room. Please refresh the page."
+              : "Impossible d'ouvrir la salle. Veuillez actualiser la page."
+          );
+          console.error(err);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [slotId, displayName, isEn]);
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-16 text-sm text-destructive">
+          {error}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!roomUrl) {
+    return (
+      <Card>
+        <CardContent
+          className="flex items-center justify-center"
+          style={{ minHeight: "480px" }}
+        >
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/70" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           <iframe
-            src={jitsiUrl}
+            src={roomUrl}
             allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
             className="block w-full"
             style={{ height: "min(70vh, 720px)", minHeight: "480px", border: 0 }}
@@ -368,8 +465,8 @@ function LiveSessionFrame({
       </Card>
       <p className="text-xs text-muted-foreground/70 text-center">
         {isEn
-          ? "Powered by Jitsi Meet — free, open-source, no account required."
-          : "Propulsé par Jitsi Meet — libre, open-source, sans compte."}
+          ? "Powered by Daily.co — production-grade video, no account required."
+          : "Propulsé par Daily.co — vidéo de qualité production, sans compte."}
       </p>
     </>
   );
