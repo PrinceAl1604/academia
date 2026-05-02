@@ -431,7 +431,11 @@ export default function StudentSessionsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          // grid items-stretch (default) + h-full on card + flex column on
+          // CardContent + mt-auto on the action = every card the same
+          // height, every CTA aligned to the same baseline. Optional
+          // description no longer collapses the layout.
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch">
             {slots.map((slot) => {
               const isGroup = slot.type === "group";
               const taken = attendanceCounts[slot.id] ?? 0;
@@ -442,11 +446,14 @@ export default function StudentSessionsPage() {
               return (
                 <Card
                   key={slot.id}
-                  className={blocked ? "opacity-70" : ""}
+                  className={`flex flex-col h-full ${blocked ? "opacity-70" : ""}`}
                 >
-                  <CardContent className="p-5 space-y-3">
-                    {/* Type + capacity row */}
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <CardContent className="p-5 flex flex-col flex-1 gap-3">
+                    {/* Type + capacity — true label metadata: mono uppercase
+                         tight-tracking, matches the rest of the design
+                         language. De-emphasized so it doesn't compete with
+                         the title. */}
+                    <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                       <span className="inline-flex items-center gap-1.5">
                         {isGroup ? (
                           <Users className="h-3.5 w-3.5" />
@@ -455,23 +462,26 @@ export default function StudentSessionsPage() {
                         )}
                         {isGroup ? t.sessions.typeGroup : t.sessions.typeOneOnOne}
                       </span>
-                      <span className="font-mono tabular-nums">
+                      <span className="tabular-nums">
                         {taken}/{slot.max_attendees}
                       </span>
                     </div>
 
-                    {/* Title */}
-                    <h3 className="text-base font-medium tracking-tight text-foreground">
+                    {/* Title — primary content, leading-tight to keep the
+                         block compact when wrapping to two lines. */}
+                    <h3 className="text-base font-medium tracking-tight text-foreground leading-tight">
                       {slot.title}
                     </h3>
 
-                    {slot.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {slot.description}
-                      </p>
-                    )}
+                    {/* Description — ALWAYS rendered with min-h so a slot
+                         without one doesn't collapse the layout. line-clamp
+                         keeps long descriptions from breaking the grid. */}
+                    <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+                      {slot.description ?? ""}
+                    </p>
 
-                    {/* When */}
+                    {/* When — matches the metadata language used elsewhere
+                         (mono tabular for time, muted) */}
                     <div className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground tabular-nums">
                       <CalendarIcon className="h-3.5 w-3.5" />
                       <span>{formatStart(slot.starts_at)}</span>
@@ -480,8 +490,10 @@ export default function StudentSessionsPage() {
                       </span>
                     </div>
 
-                    {/* Action — state machine: booked / full / cap-reached / book */}
-                    <div className="pt-2">
+                    {/* Action — mt-auto pushes it to the bottom of the
+                         card so every CTA aligns across the row regardless
+                         of how much content sits above. */}
+                    <div className="pt-2 mt-auto">
                       {alreadyBooked ? (
                         <Badge className="bg-primary/15 text-primary">
                           {t.sessions.bookedCta}
