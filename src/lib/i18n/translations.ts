@@ -716,6 +716,11 @@ export const translations = {
       feedbackSubmitted: "Thanks for the feedback!",
       adminFeedback: "Feedback",
       noRatingYet: "No rating yet",
+      // Recurring slots
+      formRepeatLabel: "Repeat weekly",
+      formRepeatHint:
+        "Publishes {n} slots — same day of the week, same time, for the next {n} weeks.",
+      formRepeatWeeks: "for {n} weeks",
     },
   },
 
@@ -1428,6 +1433,10 @@ export const translations = {
       feedbackSubmitted: "Merci pour votre avis !",
       adminFeedback: "Avis",
       noRatingYet: "Aucune note pour l'instant",
+      formRepeatLabel: "Répéter chaque semaine",
+      formRepeatHint:
+        "Publie {n} créneaux — même jour de la semaine, même heure, pour les {n} prochaines semaines.",
+      formRepeatWeeks: "pendant {n} semaines",
     },
   },
 } as const;

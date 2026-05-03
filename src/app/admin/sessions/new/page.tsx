@@ -18,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2, User, Users } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ArrowLeft, Loader2, User, Users, Repeat } from "lucide-react";
 
 /**
  * Admin Sessions — create slot
@@ -141,6 +142,11 @@ export default function AdminSessionsNewPage() {
   const [startsAt, setStartsAt] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [maxAttendees, setMaxAttendees] = useState(1);
+  // Recurring publication: when on, we insert N rows at once with
+  // the same time-of-day across consecutive weeks. Saves the admin
+  // from filling this form 4-8 times per month for office hours.
+  const [repeatWeekly, setRepeatWeekly] = useState(false);
+  const [repeatWeeks, setRepeatWeeks] = useState(4);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -175,16 +181,31 @@ export default function AdminSessionsNewPage() {
     }
 
     setSaving(true);
-    const { error: dbError } = await supabase.from("session_slots").insert({
-      host_id: user.id,
-      type: input.type,
-      title: input.title.trim(),
-      description: input.description.trim() || null,
-      starts_at: new Date(input.startsAt).toISOString(),
-      duration_minutes: input.durationMinutes,
-      max_attendees: input.maxAttendees,
-      room_name: generateRoomName(),
-    });
+
+    // Build the row(s) to insert. Recurring weekly = N rows with the
+    // same time-of-day pushed forward by 7 days each. Each row gets
+    // its own random room_name so Daily creates distinct rooms.
+    const baseStart = new Date(input.startsAt);
+    const count = repeatWeekly ? Math.max(1, Math.min(52, repeatWeeks)) : 1;
+    const rows = [];
+    for (let i = 0; i < count; i++) {
+      const dt = new Date(baseStart);
+      dt.setDate(dt.getDate() + i * 7);
+      rows.push({
+        host_id: user.id,
+        type: input.type,
+        title: input.title.trim(),
+        description: input.description.trim() || null,
+        starts_at: dt.toISOString(),
+        duration_minutes: input.durationMinutes,
+        max_attendees: input.maxAttendees,
+        room_name: generateRoomName(),
+      });
+    }
+
+    const { error: dbError } = await supabase
+      .from("session_slots")
+      .insert(rows);
 
     if (dbError) {
       setError(dbError.message);
@@ -347,6 +368,56 @@ export default function AdminSessionsNewPage() {
                 <p className="text-xs text-muted-foreground">
                   {t.sessions.formCapacityHint}
                 </p>
+              )}
+            </div>
+
+            {/* Recurrence — toggle + week count.
+                 Massive admin productivity win for office hours
+                 (publish 8 weeks of "every Tuesday at 4pm" in one
+                 click instead of filling the form 8 times). */}
+            <div className="space-y-3 rounded-lg border border-border/60 bg-muted/30 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <Label
+                  htmlFor="repeat"
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Repeat className="h-3.5 w-3.5 text-muted-foreground" />
+                  {t.sessions.formRepeatLabel}
+                </Label>
+                <Switch
+                  id="repeat"
+                  checked={repeatWeekly}
+                  onCheckedChange={setRepeatWeekly}
+                />
+              </div>
+              {repeatWeekly && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={2}
+                      max={52}
+                      value={repeatWeeks}
+                      onChange={(e) =>
+                        setRepeatWeeks(
+                          Math.max(2, Math.min(52, Number(e.target.value) || 2))
+                        )
+                      }
+                      className="w-20"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {t.sessions.formRepeatWeeks
+                        .replace("{n}", String(repeatWeeks))
+                        .replace(/^\d+\s*/, "")}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {t.sessions.formRepeatHint.replace(
+                      /\{n\}/g,
+                      String(repeatWeeks)
+                    )}
+                  </p>
+                </>
               )}
             </div>
 
