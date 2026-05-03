@@ -55,6 +55,10 @@ interface SessionSlot {
   max_attendees: number;
   room_name: string;
   status: "open" | "cancelled" | "completed";
+  /** Set when admin first lands on the room — promotes slot to LIVE
+   * for students even before the scheduled start time. NULL = host
+   * hasn't opened the room yet. */
+  host_started_at: string | null;
 }
 
 const PRE_SESSION_BUFFER_MS = 15 * 60 * 1000; // doors open 15 min early
@@ -137,19 +141,83 @@ export default function SessionRoomPage({
   // we skip the gate for them. POST is also skipped so admin can keep
   // a room open if a session runs long. CANCELLED still applies —
   // the slot was killed, no room to enter.
+  //
+  // Host-started bypass: when admin lands on this page we POST to
+  // /api/sessions/mark-started which sets host_started_at. From that
+  // moment onward, students see the slot as LIVE (not PRE) — the
+  // assumption being "if the host opened the room, it's open". The
+  // bypass only counts within a sane window after host_started_at so
+  // an old "started but never re-cancelled" slot doesn't stay live
+  // forever.
   const lifecycle = useMemo<LifecycleState | null>(() => {
     if (!slot) return null;
     if (slot.status === "cancelled") return "cancelled";
     if (isAdmin) return "live";
+
     const startMs = new Date(slot.starts_at).getTime();
     const endMs = startMs + slot.duration_minutes * 60_000;
     const now = Date.now();
+
+    // Host-started bypass for non-admin users.
+    if (slot.host_started_at) {
+      const hostStartedMs = new Date(slot.host_started_at).getTime();
+      const liveWindowEnd =
+        Math.max(endMs, hostStartedMs + slot.duration_minutes * 60_000) +
+        POST_SESSION_BUFFER_MS;
+      if (now <= liveWindowEnd) return "live";
+    }
+
     if (now < startMs - PRE_SESSION_BUFFER_MS) return "pre";
     if (now > endMs + POST_SESSION_BUFFER_MS) return "past";
     return "live";
     // tick intentionally drives re-evaluation
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slot, tick, isAdmin]);
+
+  // Admin auto-mark: the moment admin sees the LIVE iframe (= they're
+  // intending to enter the room), POST to mark-started so booked
+  // students see the slot as live too. The endpoint is idempotent —
+  // first call wins, subsequent reloads no-op. fire-and-forget; we
+  // don't need to block UI on the response.
+  useEffect(() => {
+    if (!isAdmin || !slot || lifecycle !== "live") return;
+    if (slot.host_started_at) return; // already marked
+    fetch("/api/sessions/mark-started", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slot_id: slot.id }),
+    }).catch(() => {
+      // intentionally swallowed — surfaced via server logs
+    });
+  }, [isAdmin, slot, lifecycle]);
+
+  // Student poll: while on the PRE screen, re-check the slot every
+  // 20 seconds to detect host_started_at flipping. Without this, a
+  // student waiting for the session would have to manually refresh
+  // to discover the host opened the room early. Polling stops the
+  // moment lifecycle leaves PRE (re-effect cleans up).
+  useEffect(() => {
+    if (!slot || lifecycle !== "pre" || isAdmin) return;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("session_slots")
+        .select("host_started_at, status")
+        .eq("id", slot.id)
+        .single();
+      if (data) {
+        setSlot((prev) =>
+          prev
+            ? {
+                ...prev,
+                host_started_at: data.host_started_at,
+                status: data.status,
+              }
+            : prev
+        );
+      }
+    }, 20_000);
+    return () => clearInterval(interval);
+  }, [slot, lifecycle, isAdmin]);
 
   if (authLoading || loading || !slot || lifecycle === null) {
     return (

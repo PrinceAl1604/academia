@@ -691,6 +691,9 @@ export const translations = {
       adminJoinRoom: "Join room",
       adminEarlyAccessHint:
         "You're seeing this room as the host — students see a countdown until 15 minutes before the start.",
+      // Host has opened the room
+      liveNow: "Live now",
+      hostStartedNote: "The host has opened the room — you can join now.",
     },
   },
 
@@ -1377,6 +1380,9 @@ export const translations = {
       adminJoinRoom: "Rejoindre la salle",
       adminEarlyAccessHint:
         "Vous voyez cette salle en tant qu'hôte — les étudiants voient un compte à rebours jusqu'à 15 minutes avant le début.",
+      liveNow: "En direct",
+      hostStartedNote:
+        "L'hôte a ouvert la salle — vous pouvez rejoindre maintenant.",
     },
   },
 } as const;

@@ -50,6 +50,9 @@ interface SessionSlot {
   max_attendees: number;
   room_name: string;
   status: "open" | "cancelled" | "completed";
+  /** Set when the host first opened the room. Drives the LIVE NOW
+   * badge on booking cards so students can spot active sessions. */
+  host_started_at: string | null;
 }
 
 interface SessionBooking {
@@ -365,6 +368,22 @@ export default function StudentSessionsPage() {
               const slot = b.session_slots;
               const isGroup = slot.type === "group";
               const cancellable = canCancelBooking(slot);
+              // "Live now" applies when the host has flipped
+              // host_started_at AND we're still within the session
+              // window (start of host_started_at through end of slot
+              // + 1h buffer). After that the slot is past — no point
+              // teasing a finished session with a LIVE badge.
+              const liveNow = (() => {
+                if (!slot.host_started_at) return false;
+                const hostStartedMs = new Date(slot.host_started_at).getTime();
+                const slotEndMs =
+                  new Date(slot.starts_at).getTime() +
+                  slot.duration_minutes * 60_000;
+                const liveWindowEnd =
+                  Math.max(slotEndMs, hostStartedMs + slot.duration_minutes * 60_000) +
+                  60 * 60_000; // 1h grace
+                return Date.now() <= liveWindowEnd;
+              })();
               return (
                 <Card key={b.id} className="overflow-hidden">
                   <CardContent className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] items-center gap-4 p-4">
@@ -379,9 +398,17 @@ export default function StudentSessionsPage() {
 
                     {/* Title + meta */}
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground tracking-tight truncate">
-                        {slot.title}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground tracking-tight truncate">
+                          {slot.title}
+                        </p>
+                        {liveNow && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-destructive">
+                            <span className="h-1.5 w-1.5 rounded-full bg-destructive animate-pulse" />
+                            {t.sessions.liveNow}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
                         <CalendarIcon className="h-3.5 w-3.5" />
                         <span>{formatStart(slot.starts_at)}</span>
@@ -395,7 +422,7 @@ export default function StudentSessionsPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant={liveNow ? "default" : "outline"}
                         render={
                           <Link
                             href={`/dashboard/sessions/${slot.id}`}
