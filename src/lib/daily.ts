@@ -98,7 +98,21 @@ export async function ensureDailyRoom(
  * Construct the public Daily room URL. Used by the iframe src.
  * Does NOT call the API — assumes the room exists (or will be auto-
  * created by ensureDailyRoom on the same request).
+ *
+ * `domain` is normalized so any of these env-var forms work:
+ *   - brightroots
+ *   - brightroots.daily.co
+ *   - https://brightroots.daily.co
+ *   - https://brightroots.daily.co/
+ * Daily's dashboard shows the full `brightroots.daily.co` so users
+ * naturally copy the longer form. Without normalization the URL
+ * would silently double-up to `brightroots.daily.co.daily.co`.
  */
 function roomUrl(domain: string, roomName: string): string {
-  return `https://${domain}.daily.co/${roomName}`;
+  const subdomain = domain
+    .trim()
+    .replace(/^https?:\/\//, "")
+    .replace(/\.daily\.co\/?$/i, "")
+    .replace(/\/$/, "");
+  return `https://${subdomain}.daily.co/${roomName}`;
 }
