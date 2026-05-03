@@ -486,11 +486,78 @@ export async function sendInactiveNudgeEmail({
   });
 }
 
+/* ─── Live session — .ics calendar invite builder ─────────── */
+/**
+ * Build an iCalendar (.ics) attachment that mail clients (Gmail,
+ * Apple Mail, Outlook) auto-detect and offer as "Add to calendar".
+ * Sent alongside the confirmation + reminder emails so the session
+ * lands on the user's actual calendar — by far the most-noticed
+ * gap users hit when comparing us to Calendly/Cal.com.
+ *
+ * Format follows RFC 5545 minimal event spec. Long-line folding is
+ * skipped — modern calendar apps tolerate unfolded lines just fine.
+ */
+function buildIcsInvite({
+  uid,
+  title,
+  description,
+  startsAtIso,
+  durationMinutes,
+  joinUrl,
+}: {
+  uid: string;
+  title: string;
+  description: string;
+  startsAtIso: string;
+  durationMinutes: number;
+  joinUrl: string;
+}): string {
+  const fmt = (d: Date) =>
+    d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const start = new Date(startsAtIso);
+  const end = new Date(start.getTime() + durationMinutes * 60_000);
+  const stamp = new Date();
+
+  // Escape commas, semicolons, and newlines per RFC 5545.
+  const escape = (s: string) =>
+    s
+      .replace(/\\/g, "\\\\")
+      .replace(/\n/g, "\\n")
+      .replace(/,/g, "\\,")
+      .replace(/;/g, "\\;");
+
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Brightroots//Live Sessions//EN",
+    "METHOD:REQUEST",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `UID:${uid}@brightroots`,
+    `DTSTAMP:${fmt(stamp)}`,
+    `DTSTART:${fmt(start)}`,
+    `DTEND:${fmt(end)}`,
+    `SUMMARY:${escape(title)}`,
+    `DESCRIPTION:${escape(`${description}\n\nJoin the room: ${joinUrl}`)}`,
+    `LOCATION:${escape(joinUrl)}`,
+    `URL:${escape(joinUrl)}`,
+    `ORGANIZER;CN=${APP_NAME}:mailto:${HELP_EMAIL}`,
+    "STATUS:CONFIRMED",
+    "TRANSP:OPAQUE",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ];
+  return lines.join("\r\n");
+}
+
 /* ─── Live session — booking confirmation ─────────────────── */
 /**
  * Sent immediately when a Pro user books a session. Confirms what
  * they reserved + gives a shortcut to the room (which they can return
  * to right before the session starts).
+ *
+ * Includes a .ics calendar attachment so the session auto-lands on
+ * the user's calendar (Gmail, Apple Mail, Outlook all detect it).
  *
  * Locale-agnostic for now (English only) — matches the rest of the
  * email layer. When we i18n emails, this will be the easy template
@@ -504,6 +571,7 @@ export async function sendSessionBookedEmail({
   durationMinutes,
   type,
   joinUrl,
+  bookingId,
 }: {
   to: string;
   name: string;
@@ -512,6 +580,7 @@ export async function sendSessionBookedEmail({
   durationMinutes: number;
   type: "one_on_one" | "group";
   joinUrl: string;
+  bookingId?: string;
 }) {
   const firstName = name.split(" ")[0] || name;
   const date = new Date(startsAtIso);
@@ -556,6 +625,22 @@ export async function sendSessionBookedEmail({
       footnote:
         "Need to cancel? Open the session in your dashboard and use the cancel link. Doing it early frees the slot for someone else.",
     }),
+    // Calendar invite — Resend base64-encodes the string content.
+    // Filename matters for some mail clients to auto-detect the
+    // calendar action button.
+    attachments: [
+      {
+        filename: "session.ics",
+        content: buildIcsInvite({
+          uid: bookingId ?? `${startsAtIso}-${to}`,
+          title: sessionTitle,
+          description: typeLabel,
+          startsAtIso,
+          durationMinutes,
+          joinUrl,
+        }),
+      },
+    ],
   });
 }
 
@@ -573,6 +658,7 @@ export async function sendSessionReminderEmail({
   durationMinutes,
   type,
   joinUrl,
+  bookingId,
 }: {
   to: string;
   name: string;
@@ -581,6 +667,7 @@ export async function sendSessionReminderEmail({
   durationMinutes: number;
   type: "one_on_one" | "group";
   joinUrl: string;
+  bookingId?: string;
 }) {
   const firstName = name.split(" ")[0] || name;
   const date = new Date(startsAtIso);
@@ -630,6 +717,22 @@ export async function sendSessionReminderEmail({
       footnote:
         "Plans changed? Cancel from the dashboard so the slot can free up for someone else.",
     }),
+    // Re-attach the .ics so users who deleted/missed the original
+    // confirmation email's calendar invite can still add the session
+    // to their calendar from the reminder.
+    attachments: [
+      {
+        filename: "session.ics",
+        content: buildIcsInvite({
+          uid: bookingId ?? `${startsAtIso}-${to}`,
+          title: sessionTitle,
+          description: typeLabel,
+          startsAtIso,
+          durationMinutes,
+          joinUrl,
+        }),
+      },
+    ],
   });
 }
 

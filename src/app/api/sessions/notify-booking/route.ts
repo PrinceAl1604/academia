@@ -83,6 +83,7 @@ export async function POST(req: Request) {
       durationMinutes: slot.duration_minutes,
       type: slot.type,
       joinUrl: `${APP_URL}/dashboard/sessions/${slot.id}`,
+      bookingId, // stable UID for the .ics so calendar updates merge correctly
     });
   } catch (err) {
     // Non-fatal — log and continue. The booking already exists.

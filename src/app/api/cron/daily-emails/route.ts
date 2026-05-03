@@ -179,6 +179,7 @@ export async function GET(req: Request) {
           durationMinutes: slot.duration_minutes,
           type: slot.type,
           joinUrl: `${APP_URL}/dashboard/sessions/${slot.id}`,
+          bookingId: (row as { id: string }).id,
         });
         await supabase
           .from("session_bookings")
