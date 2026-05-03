@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Illustration } from "@/components/shared/illustration";
+import { NextSessionWidget } from "@/components/shared/next-session-widget";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
@@ -117,6 +118,9 @@ export default function DashboardPage() {
           icon={<Play className="h-4 w-4" />}
         />
       </section>
+
+      {/* ── Next live session (if any) ───────────────────────── */}
+      <NextSessionWidget />
 
       {/* ── Enrolled courses ──────────────────────────────────── */}
       <section className="space-y-4">
