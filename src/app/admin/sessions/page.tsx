@@ -70,11 +70,16 @@ export default function AdminSessionsPage() {
   const [cancelError, setCancelError] = useState<string | null>(null);
 
   const loadSlots = useCallback(async () => {
-    // Fetch all slots admin-side. RLS lets admin read everything; we
-    // sort upcoming-first so the most actionable rows are at the top.
+    // PERF: single query with nested join instead of two round-trips.
+    // Previously we fetched all slots, then ALL bookings system-wide,
+    // then merged client-side. The new join scopes bookings to the
+    // slots we're returning, eliminating a round-trip AND reducing
+    // payload size as the bookings table grows.
     const { data: slotData } = await supabase
       .from("session_slots")
-      .select("*")
+      .select(
+        "id, type, title, description, starts_at, duration_minutes, max_attendees, room_name, status, created_at, bookings:session_bookings(cancelled_at)"
+      )
       .order("starts_at", { ascending: true });
 
     if (!slotData) {
@@ -83,25 +88,16 @@ export default function AdminSessionsPage() {
       return;
     }
 
-    // Get active booking counts in a single query, grouped client-side.
-    // For Phase 1 traffic this is cheap; if it grows past ~hundreds of
-    // slots we can swap to a database view that pre-aggregates.
-    const { data: bookings } = await supabase
-      .from("session_bookings")
-      .select("slot_id, cancelled_at");
-
-    const counts: Record<string, number> = {};
-    (bookings ?? []).forEach((b: { slot_id: string; cancelled_at: string | null }) => {
-      if (b.cancelled_at === null) {
-        counts[b.slot_id] = (counts[b.slot_id] || 0) + 1;
-      }
-    });
-
     setSlots(
-      slotData.map((s) => ({
-        ...s,
-        active_bookings: counts[s.id] ?? 0,
-      }))
+      slotData.map((s) => {
+        const row = s as SessionSlot & {
+          bookings?: Array<{ cancelled_at: string | null }>;
+        };
+        const active = (row.bookings ?? []).filter(
+          (b) => b.cancelled_at === null
+        ).length;
+        return { ...row, active_bookings: active } as SlotWithBookings;
+      })
     );
     setLoading(false);
   }, []);

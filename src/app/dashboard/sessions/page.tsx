@@ -140,7 +140,9 @@ export default function StudentSessionsPage() {
   const [bookNote, setBookNote] = useState("");
 
   // Load open upcoming slots + the user's own bookings + past
-  // sessions awaiting feedback in parallel.
+  // sessions awaiting feedback. PERF: slots query now nests its own
+  // booking counts (was a separate post-load query — eliminates a
+  // round-trip + payload size).
   const loadData = useCallback(async () => {
     if (!user) return;
     const nowIso = new Date().toISOString();
@@ -151,9 +153,14 @@ export default function StudentSessionsPage() {
       Date.now() - 30 * 24 * 60 * 60 * 1000
     ).toISOString();
     const [slotsRes, bookingsRes, pastRes] = await Promise.all([
+      // Slots + nested booking rows so we can count active bookings
+      // client-side without a separate query. Same shape the admin
+      // list uses (consistency + cache-friendliness).
       supabase
         .from("session_slots")
-        .select("*")
+        .select(
+          "id, type, title, description, starts_at, duration_minutes, max_attendees, room_name, status, host_started_at, bookings:session_bookings(cancelled_at)"
+        )
         .eq("status", "open")
         .gte("starts_at", nowIso)
         .order("starts_at", { ascending: true }),
@@ -177,7 +184,19 @@ export default function StudentSessionsPage() {
         .gte("session_slots.starts_at", thirtyDaysAgo)
         .order("session_slots(starts_at)", { ascending: false }),
     ]);
-    setSlots((slotsRes.data ?? []) as SessionSlot[]);
+
+    // Compute attendance counts from the nested join — no extra query.
+    const newSlots = (slotsRes.data ?? []) as Array<
+      SessionSlot & { bookings?: Array<{ cancelled_at: string | null }> }
+    >;
+    const counts: Record<string, number> = {};
+    for (const slot of newSlots) {
+      counts[slot.id] = (slot.bookings ?? []).filter(
+        (b) => b.cancelled_at === null
+      ).length;
+    }
+    setSlots(newSlots as SessionSlot[]);
+    setAttendanceCounts(counts);
     setBookings((bookingsRes.data ?? []) as unknown as SessionBooking[]);
     setPastBookings(
       (pastRes.data ?? []) as unknown as SessionBooking[]
@@ -191,27 +210,12 @@ export default function StudentSessionsPage() {
     loadData();
   }, [authLoading, isAuthenticated, loadData]);
 
-  // Fetch attendance counts for ALL slots — used to mark slots full.
-  // Done once after slots load; cheap because we already have the IDs.
+  // Attendance counts now populated in loadData() via the slots
+  // join — no separate query needed (was a 3rd round-trip per
+  // page load).
   const [attendanceCounts, setAttendanceCounts] = useState<
     Record<string, number>
   >({});
-  useEffect(() => {
-    if (slots.length === 0) return;
-    (async () => {
-      const ids = slots.map((s) => s.id);
-      const { data } = await supabase
-        .from("session_bookings")
-        .select("slot_id")
-        .is("cancelled_at", null)
-        .in("slot_id", ids);
-      const counts: Record<string, number> = {};
-      (data ?? []).forEach((b: { slot_id: string }) => {
-        counts[b.slot_id] = (counts[b.slot_id] || 0) + 1;
-      });
-      setAttendanceCounts(counts);
-    })();
-  }, [slots]);
 
   // Compute monthly cap usage from active bookings whose slot starts
   // in the current calendar month. Mirrors the SQL function in the DB.
