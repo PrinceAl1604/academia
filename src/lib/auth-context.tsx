@@ -111,29 +111,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // `cancelled` guards against React Strict Mode double-mounts and
+    // user-changes-route-during-fetch races. Without it, a stale
+    // resolution from an old session can overwrite the new one.
+    let cancelled = false;
+
+    // CRITICAL: await loadUserProfile BEFORE flipping loading=false.
+    // The previous code fired the profile fetch and set loading=false
+    // immediately, so admin-only layouts saw isAdmin=false (role
+    // hadn't loaded yet) and redirected to "/" — students would see
+    // their dashboard for ~300ms before the role resolved as admin.
+    // Now consumers don't see anything until role/plan are reliable.
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (cancelled) return;
       setUser(session?.user ?? null);
       if (session?.user) {
-        loadUserProfile(session.user.id);
+        await loadUserProfile(session.user.id);
       }
+      if (cancelled) return;
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (event, session) => {
+        if (cancelled) return;
+        // INITIAL_SESSION fires on subscribe and would duplicate the
+        // getSession() above — wasted query + potential race. Skip it.
+        if (event === "INITIAL_SESSION") return;
         setUser(session?.user ?? null);
         if (session?.user) {
-          loadUserProfile(session.user.id);
+          await loadUserProfile(session.user.id);
         } else {
           setRole(null);
           setPlan("free");
           setProExpiresAt(null);
         }
+        if (cancelled) return;
         setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [loadUserProfile]);
 
   const markOnboarded = useCallback(() => {
@@ -141,7 +162,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    // Optimistic state clear so the UI updates instantly. The actual
+    // network signOut fires in the background — users perceive logout
+    // as immediate even though the JWT revocation takes 200-500ms.
+    // If signOut() fails the worst case is a stale local session that
+    // will fail-and-redirect on the next API call, which is fine.
     setUser(null);
     setRole(null);
     setPlan("free");
@@ -149,6 +174,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setHasOnboarded(true);
     setReferralCode(null);
     router.push("/");
+    supabase.auth.signOut().catch(() => {
+      // intentionally swallowed — local state already cleared
+    });
   }, [router]);
 
   const userName = useMemo(
