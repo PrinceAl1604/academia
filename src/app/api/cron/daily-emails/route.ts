@@ -6,6 +6,7 @@ import {
   sendInactiveNudgeEmail,
   sendSessionReminderEmail,
 } from "@/lib/email";
+import { getDailyMeetingParticipants } from "@/lib/daily";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app";
@@ -29,12 +30,14 @@ export async function GET(req: Request) {
 
   const supabase = getSupabaseAdmin();
   const now = new Date();
+  const startedAtMs = Date.now();
   const results = {
     reminders: 0,
     expired: 0,
     nudges: 0,
     sessionReminders: 0,
     sessionsCompleted: 0,
+    noShowsFlagged: 0,
     errors: [] as string[],
   };
 
@@ -235,6 +238,67 @@ export async function GET(req: Request) {
         .in("id", toComplete)
         .eq("status", "open");
       results.sessionsCompleted = toComplete.length;
+
+      // For each just-completed slot, query Daily for the meeting's
+      // participant list and flag bookings whose user didn't appear.
+      // No-shows still consume the user's monthly cap (that's the
+      // whole point — book → ghost → cap is gone, so they think
+      // twice next time).
+      for (const slotId of toComplete) {
+        try {
+          const { data: slotRow } = await supabase
+            .from("session_slots")
+            .select("room_name")
+            .eq("id", slotId)
+            .single();
+          if (!slotRow) continue;
+          const roomName = (slotRow as { room_name: string }).room_name;
+
+          const participantNames = await getDailyMeetingParticipants(
+            roomName
+          );
+          // Empty set is informative — meeting never happened. We
+          // don't flag the booking as no-show in that case (the host
+          // didn't show up either). Skip.
+          if (participantNames.length === 0) continue;
+
+          const { data: slotBookings } = await supabase
+            .from("session_bookings")
+            .select("id, users!inner(name, email)")
+            .eq("slot_id", slotId)
+            .is("cancelled_at", null)
+            .is("no_show_at", null);
+
+          for (const row of slotBookings ?? []) {
+            const u = (row as unknown as {
+              users: { name: string | null; email: string };
+            }).users;
+            const candidates = [
+              u.name?.toLowerCase().trim(),
+              u.email.split("@")[0].toLowerCase().trim(),
+              u.name?.split(" ")[0].toLowerCase().trim(),
+            ].filter(Boolean) as string[];
+            // Match if any candidate substring appears in any
+            // participant name. Fuzzy intentionally — Daily preserves
+            // user-typed casing/format and we need to tolerate
+            // "Alex L." vs "Alex Landrin" etc.
+            const attended = candidates.some((c) =>
+              participantNames.some((p) => p.includes(c) || c.includes(p))
+            );
+            if (!attended) {
+              await supabase
+                .from("session_bookings")
+                .update({ no_show_at: new Date().toISOString() })
+                .eq("id", (row as { id: string }).id);
+              results.noShowsFlagged++;
+            }
+          }
+        } catch (err) {
+          results.errors.push(
+            `no_show_check_${slotId}:${String(err)}`
+          );
+        }
+      }
     }
     // widestEndCutoff intentionally referenced via comment for context
     void widestEndCutoff;
@@ -242,20 +306,78 @@ export async function GET(req: Request) {
     results.errors.push(`auto_complete:${String(err)}`);
   }
 
+  // ─── 6. Persist cron log + alert admin on errors ───────────
+  // Without this, silent failures (Resend down, Daily auth wrong)
+  // go unnoticed for days. cron_logs gives admin a queryable
+  // history; the email alert escalates anything that errored.
+  const durationMs = Date.now() - startedAtMs;
+  const totalSent =
+    results.reminders +
+    results.expired +
+    results.nudges +
+    results.sessionReminders;
+  try {
+    await supabase.from("cron_logs").insert({
+      job_name: "daily-emails",
+      ok: results.errors.length === 0,
+      details: {
+        sent: totalSent,
+        reminders: results.reminders,
+        expired: results.expired,
+        nudges: results.nudges,
+        sessionReminders: results.sessionReminders,
+        sessionsCompleted: results.sessionsCompleted,
+        noShowsFlagged: results.noShowsFlagged,
+      },
+      errors: results.errors.length > 0 ? results.errors : null,
+      duration_ms: durationMs,
+    });
+  } catch {
+    // Logging failure must never break the response — swallow.
+  }
+
+  // Best-effort admin alert. We could route to Slack/PagerDuty later;
+  // for now, the FROM_EMAIL also receives a digest if anything broke.
+  // Skipped if no errors.
+  if (results.errors.length > 0) {
+    try {
+      const { Resend } = await import("resend");
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const adminAlert = process.env.ADMIN_ALERT_EMAIL;
+      if (adminAlert) {
+        await resend.emails.send({
+          from:
+            process.env.FROM_EMAIL ||
+            "Brightroots <noreply@resend.dev>",
+          to: adminAlert,
+          subject: `[Brightroots cron] daily-emails had ${results.errors.length} error(s)`,
+          text: [
+            `Run at ${now.toISOString()}`,
+            `Duration: ${durationMs}ms`,
+            `Sent: ${totalSent}`,
+            ``,
+            `Errors:`,
+            ...results.errors.map((e) => `- ${e}`),
+          ].join("\n"),
+        });
+      }
+    } catch {
+      // ignore — already logged in cron_logs above
+    }
+  }
+
   return NextResponse.json({
     ok: true,
-    sent:
-      results.reminders +
-      results.expired +
-      results.nudges +
-      results.sessionReminders,
+    sent: totalSent,
     details: {
       reminders: results.reminders,
       expired: results.expired,
       nudges: results.nudges,
       sessionReminders: results.sessionReminders,
       sessionsCompleted: results.sessionsCompleted,
+      noShowsFlagged: results.noShowsFlagged,
     },
     errors: results.errors.length > 0 ? results.errors : undefined,
+    duration_ms: durationMs,
   });
 }

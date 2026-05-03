@@ -49,6 +49,7 @@ interface BookingWithUser {
   booked_at: string;
   notes: string | null;
   cancelled_at: string | null;
+  no_show_at: string | null;
   feedback_rating: number | null;
   feedback_comment: string | null;
   feedback_submitted_at: string | null;
@@ -78,7 +79,7 @@ export default function AdminSlotDetailPage({
       supabase
         .from("session_bookings")
         .select(
-          "id, booked_at, notes, cancelled_at, feedback_rating, feedback_comment, feedback_submitted_at, user:users(id, name, email)"
+          "id, booked_at, notes, cancelled_at, no_show_at, feedback_rating, feedback_comment, feedback_submitted_at, user:users(id, name, email)"
         )
         .eq("slot_id", id)
         .order("booked_at", { ascending: true }),
@@ -242,9 +243,16 @@ export default function AdminSlotDetailPage({
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {b.user.name || b.user.email.split("@")[0]}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {b.user.name || b.user.email.split("@")[0]}
+                        </p>
+                        {b.no_show_at && (
+                          <Badge className="bg-destructive/15 text-destructive font-mono text-[10px] uppercase tracking-[0.12em]">
+                            {isEn ? "No-show" : "Absent"}
+                          </Badge>
+                        )}
+                      </div>
                       <p className="font-mono text-[10px] text-muted-foreground/70 truncate">
                         {b.user.email}
                       </p>

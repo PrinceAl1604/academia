@@ -95,6 +95,50 @@ export async function ensureDailyRoom(
 }
 
 /**
+ * Fetch the list of participants who joined a Daily room. Used by
+ * the daily cron to flag no-shows after a session ends.
+ *
+ * Daily retains meeting history for ~30 days on the free tier so
+ * the cron's once-a-day cadence has plenty of buffer to query a
+ * just-ended session.
+ *
+ * Returns an array of normalized display-name strings (lowercased,
+ * trimmed) for fuzzy matching against the booking owner's name. We
+ * lowercase because Daily preserves casing as the user typed; the
+ * URL-param `userName` is what we set, but users can override in the
+ * pre-join screen even when prejoin is disabled (some clients have a
+ * "rename" affordance mid-meeting).
+ */
+export async function getDailyMeetingParticipants(
+  roomName: string
+): Promise<string[]> {
+  const apiKey = process.env.DAILY_API_KEY;
+  if (!apiKey) throw new Error("DAILY_API_KEY env var not set");
+
+  const res = await fetch(
+    `${DAILY_API_BASE}/meetings?room=${encodeURIComponent(roomName)}&limit=100`,
+    {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    }
+  );
+  if (!res.ok) {
+    throw new Error(`Daily /meetings ${res.status}`);
+  }
+  const data = (await res.json()) as {
+    data?: Array<{
+      participants?: Array<{ user_name?: string }>;
+    }>;
+  };
+  const names = new Set<string>();
+  for (const meeting of data.data ?? []) {
+    for (const p of meeting.participants ?? []) {
+      if (p.user_name) names.add(p.user_name.trim().toLowerCase());
+    }
+  }
+  return Array.from(names);
+}
+
+/**
  * Construct the public Daily room URL. Used by the iframe src.
  * Does NOT call the API — assumes the room exists (or will be auto-
  * created by ensureDailyRoom on the same request).
