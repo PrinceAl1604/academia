@@ -27,6 +27,7 @@ import {
   Lock,
   Crown,
   Video,
+  Star,
 } from "lucide-react";
 
 /**
@@ -62,6 +63,9 @@ interface SessionBooking {
   slot_id: string;
   booked_at: string;
   cancelled_at: string | null;
+  feedback_rating?: number | null;
+  feedback_comment?: string | null;
+  feedback_submitted_at?: string | null;
   session_slots: SessionSlot;
 }
 
@@ -111,7 +115,18 @@ export default function StudentSessionsPage() {
 
   const [slots, setSlots] = useState<SessionSlot[]>([]);
   const [bookings, setBookings] = useState<SessionBooking[]>([]);
+  // Past sessions awaiting user feedback (no rating yet, slot ended).
+  // Pulled separately because the active-bookings query filters to
+  // future-dated slots and we don't want to widen that filter.
+  const [pastBookings, setPastBookings] = useState<SessionBooking[]>([]);
   const [loading, setLoading] = useState(true);
+  // Feedback dialog state
+  const [feedbackTarget, setFeedbackTarget] = useState<SessionBooking | null>(
+    null
+  );
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -124,11 +139,18 @@ export default function StudentSessionsPage() {
   const [bookTarget, setBookTarget] = useState<SessionSlot | null>(null);
   const [bookNote, setBookNote] = useState("");
 
-  // Load open upcoming slots + the user's own bookings in parallel.
+  // Load open upcoming slots + the user's own bookings + past
+  // sessions awaiting feedback in parallel.
   const loadData = useCallback(async () => {
     if (!user) return;
     const nowIso = new Date().toISOString();
-    const [slotsRes, bookingsRes] = await Promise.all([
+    // Past-feedback window: sessions whose start was within the last
+    // 30 days. Older than that and the feedback feels stale; we'll
+    // surface a "view full history" later if needed.
+    const thirtyDaysAgo = new Date(
+      Date.now() - 30 * 24 * 60 * 60 * 1000
+    ).toISOString();
+    const [slotsRes, bookingsRes, pastRes] = await Promise.all([
       supabase
         .from("session_slots")
         .select("*")
@@ -138,14 +160,28 @@ export default function StudentSessionsPage() {
       supabase
         .from("session_bookings")
         .select(
-          "id, slot_id, booked_at, cancelled_at, session_slots(*)"
+          "id, slot_id, booked_at, cancelled_at, feedback_rating, feedback_comment, feedback_submitted_at, session_slots(*)"
         )
         .eq("user_id", user.id)
         .is("cancelled_at", null)
         .order("booked_at", { ascending: false }),
+      supabase
+        .from("session_bookings")
+        .select(
+          "id, slot_id, booked_at, cancelled_at, feedback_rating, feedback_comment, feedback_submitted_at, session_slots!inner(*)"
+        )
+        .eq("user_id", user.id)
+        .is("cancelled_at", null)
+        .is("feedback_rating", null)
+        .lt("session_slots.starts_at", nowIso)
+        .gte("session_slots.starts_at", thirtyDaysAgo)
+        .order("session_slots(starts_at)", { ascending: false }),
     ]);
     setSlots((slotsRes.data ?? []) as SessionSlot[]);
     setBookings((bookingsRes.data ?? []) as unknown as SessionBooking[]);
+    setPastBookings(
+      (pastRes.data ?? []) as unknown as SessionBooking[]
+    );
     setLoading(false);
   }, [user]);
 
@@ -248,6 +284,29 @@ export default function StudentSessionsPage() {
     setBookingId(null);
     setBookTarget(null);
     setBookNote("");
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackTarget || feedbackRating === 0) return;
+    setSubmittingFeedback(true);
+    const { error: dbError } = await supabase
+      .from("session_bookings")
+      .update({
+        feedback_rating: feedbackRating,
+        feedback_comment: feedbackComment.trim() || null,
+        feedback_submitted_at: new Date().toISOString(),
+      })
+      .eq("id", feedbackTarget.id);
+    if (dbError) {
+      setError(t.sessions.errorGeneric);
+      setSubmittingFeedback(false);
+      return;
+    }
+    await loadData();
+    setFeedbackTarget(null);
+    setFeedbackRating(0);
+    setFeedbackComment("");
+    setSubmittingFeedback(false);
   };
 
   const handleCancel = async (booking: SessionBooking) => {
@@ -370,6 +429,64 @@ export default function StudentSessionsPage() {
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </div>
+      )}
+
+      {/* ── Past sessions awaiting feedback ────────────────── */}
+      {pastBookings.length > 0 && (
+        <section className="space-y-3">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+              / Feedback
+            </p>
+            <h2 className="text-base font-medium tracking-tight text-foreground">
+              {t.sessions.pastSessionsTitle}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t.sessions.pastSessionsSubtitle}
+            </p>
+          </div>
+          <div className="space-y-2">
+            {pastBookings.map((b) => {
+              const slot = b.session_slots;
+              const isGroup = slot.type === "group";
+              return (
+                <Card key={b.id}>
+                  <CardContent className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] items-center gap-4 p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground shrink-0">
+                      {isGroup ? (
+                        <Users className="h-5 w-5" />
+                      ) : (
+                        <User className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground tracking-tight truncate">
+                        {slot.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
+                        <CalendarIcon className="h-3.5 w-3.5" />
+                        <span>{formatStart(slot.starts_at)}</span>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setFeedbackTarget(b);
+                        setFeedbackRating(0);
+                        setFeedbackComment("");
+                      }}
+                      className="gap-1.5"
+                    >
+                      <Star className="h-3.5 w-3.5" />
+                      {t.sessions.leaveFeedback}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {/* ── Your upcoming sessions ─────────────────────────── */}
@@ -661,6 +778,94 @@ export default function StudentSessionsPage() {
                 </>
               ) : (
                 t.sessions.bookConfirmYes
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Feedback dialog ────────────────────────────────────
+           5-star rating + optional comment. Disabled-submit guard
+           on rating === 0 forces user to actually rate. */}
+      <Dialog
+        open={!!feedbackTarget}
+        onOpenChange={(o) => {
+          if (!o) {
+            setFeedbackTarget(null);
+            setFeedbackRating(0);
+            setFeedbackComment("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.sessions.feedbackTitle}</DialogTitle>
+            <DialogDescription>{t.sessions.feedbackBody}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t.sessions.feedbackRatingLabel}</Label>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setFeedbackRating(n)}
+                    aria-label={`${n} ${n === 1 ? "star" : "stars"}`}
+                    className="p-1 transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`h-7 w-7 transition-colors ${
+                        n <= feedbackRating
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-muted-foreground/40"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="feedback-comment">
+                {t.sessions.feedbackCommentLabel}
+              </Label>
+              <Textarea
+                id="feedback-comment"
+                value={feedbackComment}
+                onChange={(e) =>
+                  setFeedbackComment(e.target.value.slice(0, 1000))
+                }
+                placeholder={t.sessions.feedbackCommentPlaceholder}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground/70 text-right tabular-nums">
+                {feedbackComment.length}/1000
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setFeedbackTarget(null);
+                setFeedbackRating(0);
+                setFeedbackComment("");
+              }}
+              disabled={submittingFeedback}
+            >
+              {t.sessions.cancelConfirmNo}
+            </Button>
+            <Button
+              onClick={handleSubmitFeedback}
+              disabled={submittingFeedback || feedbackRating === 0}
+            >
+              {submittingFeedback ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  {t.sessions.feedbackSubmitting}
+                </>
+              ) : (
+                t.sessions.feedbackSubmit
               )}
             </Button>
           </DialogFooter>

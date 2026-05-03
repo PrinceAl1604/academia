@@ -18,6 +18,7 @@ import {
   Video,
   Mail,
   Pencil,
+  Star,
 } from "lucide-react";
 
 /**
@@ -48,6 +49,9 @@ interface BookingWithUser {
   booked_at: string;
   notes: string | null;
   cancelled_at: string | null;
+  feedback_rating: number | null;
+  feedback_comment: string | null;
+  feedback_submitted_at: string | null;
   user: {
     id: string;
     name: string | null;
@@ -74,7 +78,7 @@ export default function AdminSlotDetailPage({
       supabase
         .from("session_bookings")
         .select(
-          "id, booked_at, notes, cancelled_at, user:users(id, name, email)"
+          "id, booked_at, notes, cancelled_at, feedback_rating, feedback_comment, feedback_submitted_at, user:users(id, name, email)"
         )
         .eq("slot_id", id)
         .order("booked_at", { ascending: true }),
@@ -262,6 +266,36 @@ export default function AdminSlotDetailPage({
                       <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
                         {b.notes}
                       </p>
+                    </div>
+                  )}
+
+                  {/* Post-session feedback (only after user submits).
+                       Shows rating + optional comment. */}
+                  {b.feedback_rating !== null && (
+                    <div className="pl-12">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground mb-1.5">
+                        / {t.sessions.adminFeedback}
+                      </p>
+                      <div className="flex items-center gap-1.5 mb-2">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star
+                            key={n}
+                            className={`h-4 w-4 ${
+                              n <= (b.feedback_rating ?? 0)
+                                ? "fill-amber-400 text-amber-400"
+                                : "text-muted-foreground/30"
+                            }`}
+                          />
+                        ))}
+                        <span className="ml-1 font-mono text-xs text-muted-foreground tabular-nums">
+                          {b.feedback_rating}/5
+                        </span>
+                      </div>
+                      {b.feedback_comment && (
+                        <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed italic">
+                          &ldquo;{b.feedback_comment}&rdquo;
+                        </p>
+                      )}
                     </div>
                   )}
                 </CardContent>
