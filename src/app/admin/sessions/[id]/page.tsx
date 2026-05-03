@@ -17,6 +17,7 @@ import {
   Clock,
   Video,
   Mail,
+  Pencil,
 } from "lucide-react";
 
 /**
@@ -182,13 +183,23 @@ export default function AdminSlotDetailPage({
             </div>
           </div>
           {slot.status === "open" && (
-            <Button
-              render={<Link href={`/dashboard/sessions/${slot.id}`} />}
-              className="gap-1.5"
-            >
-              <Video className="h-4 w-4" />
-              {t.sessions.adminJoinRoom}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                render={<Link href={`/admin/sessions/${slot.id}/edit`} />}
+                className="gap-1.5"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit
+              </Button>
+              <Button
+                render={<Link href={`/dashboard/sessions/${slot.id}`} />}
+                className="gap-1.5"
+              >
+                <Video className="h-4 w-4" />
+                {t.sessions.adminJoinRoom}
+              </Button>
+            </div>
           )}
         </div>
         {slot.description && (

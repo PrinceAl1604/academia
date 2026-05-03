@@ -736,6 +736,112 @@ export async function sendSessionReminderEmail({
   });
 }
 
+/* ─── Live session — slot updated/rescheduled ─────────────── */
+/**
+ * Sent when admin edits a slot that has bookings. Tone shifts based
+ * on what changed:
+ *   - Time changed → "Rescheduled" (most disruptive — call it out)
+ *   - Other fields → "Updated" (lighter touch)
+ *
+ * Includes a fresh .ics with the SAME UID as the original booking,
+ * so calendar apps merge the update into the existing event instead
+ * of creating a duplicate. SEQUENCE bumps each call so calendars
+ * know to honor the latest version.
+ */
+export async function sendSlotUpdatedEmail({
+  to,
+  name,
+  sessionTitle,
+  oldStartsAtIso,
+  newStartsAtIso,
+  durationMinutes,
+  type,
+  joinUrl,
+  bookingId,
+  rescheduled,
+}: {
+  to: string;
+  name: string;
+  sessionTitle: string;
+  oldStartsAtIso: string;
+  newStartsAtIso: string;
+  durationMinutes: number;
+  type: "one_on_one" | "group";
+  joinUrl: string;
+  bookingId: string;
+  rescheduled: boolean;
+}) {
+  const firstName = name.split(" ")[0] || name;
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    });
+  const oldDate = fmt(oldStartsAtIso);
+  const newDate = fmt(newStartsAtIso);
+  const typeLabel = type === "group" ? "Group call" : "1:1 office hours";
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: rescheduled
+      ? `Rescheduled: ${sessionTitle}`
+      : `Updated: ${sessionTitle}`,
+    html: emailWrapper({
+      heading: rescheduled ? "Your session has been moved" : "Session updated",
+      preheading: rescheduled
+        ? `${sessionTitle} — new time: ${newDate}.`
+        : `${sessionTitle} — details updated.`,
+      body: `
+        <p style="margin:0 0 20px;">
+          Hi ${firstName}, the host updated a session you're booked into.
+        </p>
+        <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
+          <tr>
+            <td style="padding:20px; background:#fffbeb; border-radius:10px; border-left:4px solid #f59e0b;">
+              <p style="margin:0 0 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#d97706;">${typeLabel}</p>
+              <p style="margin:0 0 10px; font-size:18px; font-weight:700; color:#171717;">${sessionTitle}</p>
+              ${
+                rescheduled
+                  ? `<p style="margin:0 0 6px; font-size:13px; color:#a3a3a3; text-decoration:line-through;">${oldDate}</p>
+                     <p style="margin:0; font-size:14px; color:#525252;"><strong>${newDate}</strong> &middot; ${durationMinutes} min</p>`
+                  : `<p style="margin:0; font-size:14px; color:#525252;"><strong>${newDate}</strong> &middot; ${durationMinutes} min</p>`
+              }
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0 0 16px;">
+          ${
+            rescheduled
+              ? "Your booking is preserved at the new time. The calendar invite below replaces the old one in your calendar."
+              : "Your booking is unchanged — just refreshing the details."
+          }
+        </p>`,
+      buttonLabel: "View Session",
+      buttonUrl: joinUrl,
+      footnote:
+        "If the new time doesn't work for you, you can cancel from your dashboard.",
+    }),
+    attachments: [
+      {
+        filename: "session.ics",
+        content: buildIcsInvite({
+          uid: bookingId,
+          title: sessionTitle,
+          description: typeLabel,
+          startsAtIso: newStartsAtIso,
+          durationMinutes,
+          joinUrl,
+        }),
+      },
+    ],
+  });
+}
+
 /* ─── Live session — slot cancelled by admin ──────────────── */
 /**
  * Sent when an admin cancels a slot that already has bookings on it.
