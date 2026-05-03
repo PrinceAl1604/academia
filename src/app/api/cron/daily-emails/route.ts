@@ -34,6 +34,7 @@ export async function GET(req: Request) {
     expired: 0,
     nudges: 0,
     sessionReminders: 0,
+    sessionsCompleted: 0,
     errors: [] as string[],
   };
 
@@ -194,6 +195,52 @@ export async function GET(req: Request) {
     results.errors.push(`session_reminders_query:${String(err)}`);
   }
 
+  // ─── 5. Auto-complete past slots ───────────────────────────
+  // Once a slot has aged past `starts_at + duration + 30min buffer`
+  // (the LIVE window), flip status from 'open' to 'completed' so
+  // the admin list is a clean log. We only touch slots still 'open'
+  // so we don't clobber 'cancelled' state.
+  //
+  // PostgREST can't express the per-row computed expression
+  // `starts_at + duration_minutes`, so we pre-filter to rows whose
+  // starts_at could possibly be past the buffer (max valid duration
+  // is 240 min, so anything older than (240+30)min from now is
+  // definitely past), then resolve per-row in app code.
+  try {
+    const widestEndCutoff = new Date(
+      now.getTime() - (240 + 30) * 60 * 1000
+    ); // anything older than this is DEFINITELY past
+    const earliestPossiblyPast = new Date(now.getTime() - 30 * 60 * 1000);
+    const { data: candidates } = await supabase
+      .from("session_slots")
+      .select("id, starts_at, duration_minutes")
+      .eq("status", "open")
+      .lte("starts_at", earliestPossiblyPast.toISOString())
+      .gte("starts_at", new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString());
+
+    const toComplete: string[] = [];
+    for (const row of candidates ?? []) {
+      const r = row as { id: string; starts_at: string; duration_minutes: number };
+      const endsAtMs = new Date(r.starts_at).getTime() + r.duration_minutes * 60_000;
+      if (endsAtMs + 30 * 60_000 < now.getTime()) {
+        toComplete.push(r.id);
+      }
+    }
+
+    if (toComplete.length > 0) {
+      await supabase
+        .from("session_slots")
+        .update({ status: "completed" })
+        .in("id", toComplete)
+        .eq("status", "open");
+      results.sessionsCompleted = toComplete.length;
+    }
+    // widestEndCutoff intentionally referenced via comment for context
+    void widestEndCutoff;
+  } catch (err) {
+    results.errors.push(`auto_complete:${String(err)}`);
+  }
+
   return NextResponse.json({
     ok: true,
     sent:
@@ -206,6 +253,7 @@ export async function GET(req: Request) {
       expired: results.expired,
       nudges: results.nudges,
       sessionReminders: results.sessionReminders,
+      sessionsCompleted: results.sessionsCompleted,
     },
     errors: results.errors.length > 0 ? results.errors : undefined,
   });

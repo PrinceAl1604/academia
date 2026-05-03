@@ -14,13 +14,50 @@ import { ensureDailyRoom } from "@/lib/daily";
  * minting Daily rooms is a chargeable action — we don't want anyone
  * burning your free-tier minutes by hitting this with random slot IDs.
  *
+ * Rate limit: 10 requests per user per minute. Daily creates rooms
+ * via paid API, so a malicious authenticated user could otherwise
+ * thrash the endpoint and burn quota. The room page client makes 1
+ * call per visit — this leaves headroom for navigation churn while
+ * blocking abuse.
+ *
  * Idempotent — multiple POSTs for the same slot return the same URL
  * without re-creating the room (Daily treats name collisions as no-op).
  */
+
+// In-memory token bucket per user. Survives across requests within a
+// single Vercel function instance. Cold starts reset, which is fine —
+// the rate limit's purpose is to bound damage from an abusive client,
+// not to enforce hard global counts.
+const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 10;
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const bucket = rateLimitBuckets.get(userId);
+  if (!bucket || bucket.resetAt < now) {
+    rateLimitBuckets.set(userId, {
+      count: 1,
+      resetAt: now + RATE_LIMIT_WINDOW_MS,
+    });
+    return true;
+  }
+  if (bucket.count >= RATE_LIMIT_MAX) return false;
+  bucket.count++;
+  return true;
+}
+
 export async function POST(req: Request) {
   const access = await validateUserAccess();
   if (!access.authenticated || !access.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!checkRateLimit(access.user.id)) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
   }
 
   let slotId: string | undefined;

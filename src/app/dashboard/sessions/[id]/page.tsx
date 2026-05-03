@@ -435,10 +435,17 @@ function PreSessionCard({
  * embeds it as an iframe. The display name rides on the URL via
  * `?userName=` so Daily pre-fills it in the avatar.
  *
+ * Module-level cache survives component re-mounts (e.g. lifecycle
+ * PRE → LIVE swap on host_started_at flip). Without it, the iframe
+ * would briefly unmount and re-POST to Daily on every state change,
+ * burning quota and causing a flash of the loading spinner.
+ *
  * Loading state is a centered spinner — the API call is fast (one
  * Daily POST) but networks vary. Error state surfaces a friendly
  * message; the underlying detail goes to the console for debugging.
  */
+const dailyUrlCache = new Map<string, string>();
+
 function LiveSessionFrame({
   slotId,
   title,
@@ -450,10 +457,17 @@ function LiveSessionFrame({
   displayName: string;
   isEn: boolean;
 }) {
-  const [roomUrl, setRoomUrl] = useState<string | null>(null);
+  // Cache lookup keyed by slot+name pair. The displayName is part of
+  // the URL so changing accounts on the same machine doesn't show a
+  // stale name.
+  const cacheKey = `${slotId}|${displayName}`;
+  const [roomUrl, setRoomUrl] = useState<string | null>(
+    dailyUrlCache.get(cacheKey) ?? null
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (roomUrl) return; // cache hit — skip the network call
     let cancelled = false;
     (async () => {
       try {
@@ -478,7 +492,9 @@ function LiveSessionFrame({
         if (cancelled) return;
         // Pre-fill display name via URL param so Daily shows the user
         // as e.g. "Alex" instead of "Guest" the moment they enter.
-        setRoomUrl(`${url}?userName=${encodeURIComponent(displayName)}`);
+        const fullUrl = `${url}?userName=${encodeURIComponent(displayName)}`;
+        dailyUrlCache.set(cacheKey, fullUrl);
+        setRoomUrl(fullUrl);
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -493,7 +509,7 @@ function LiveSessionFrame({
     return () => {
       cancelled = true;
     };
-  }, [slotId, displayName, isEn]);
+  }, [slotId, displayName, isEn, roomUrl, cacheKey]);
 
   if (error) {
     return (

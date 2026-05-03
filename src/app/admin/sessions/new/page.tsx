@@ -80,21 +80,39 @@ function validateSlot(
   input: SlotInput,
   t: ReturnType<typeof useLanguage>["t"]
 ): string | null {
-  // Two sanity checks already wired — the rest is up to you.
-  if (!input.title.trim()) return t.sessions.formErrorTitle;
-  if (new Date(input.startsAt).getTime() <= Date.now()) {
+  // Title — required + capped at 80 chars so the list view doesn't
+  // wrap awkwardly. The DB column is unbounded text but UI has finite
+  // real estate (admin row title column = ~280px, ~80 chars max).
+  const title = input.title.trim();
+  if (!title) return t.sessions.formErrorTitle;
+  if (title.length > 80) {
+    return t.sessions.formErrorTitle; // re-using; copy is generic enough
+  }
+
+  // Start time — must be at least 5 min in the future. The 5-min
+  // buffer prevents "I clicked publish at 3:00:00 for a 3:00:01 slot"
+  // edge cases where the user perceives the slot as past by the time
+  // it's saved.
+  const startsAtMs = new Date(input.startsAt).getTime();
+  const FIVE_MIN_MS = 5 * 60 * 1000;
+  if (startsAtMs <= Date.now() + FIVE_MIN_MS) {
     return t.sessions.formErrorPast;
   }
 
-  // TODO(you): add the rest of your validation rules here.
-  //   - Group sessions: enforce a minimum capacity?
-  //   - Title length: cap at, say, 80 chars?
-  //   - Far-future cap?
-  //
-  // Example shape for the group-min check:
-  //   if (input.type === "group" && input.maxAttendees < 2) {
-  //     return t.sessions.formErrorCapacity;
-  //   }
+  // Far-future cap — 6 months. Beyond that, the slot is more likely
+  // to be a typo than intentional, and group composition (who's a Pro
+  // user, who's around) shifts so much that pre-publishing months
+  // ahead just creates stale slots that need cleanup.
+  const SIX_MONTHS_MS = 180 * 24 * 60 * 60 * 1000;
+  if (startsAtMs > Date.now() + SIX_MONTHS_MS) {
+    return t.sessions.formErrorPast; // closest existing copy
+  }
+
+  // Group capacity — at least 2. A "group" of 1 is a 1:1, so refuse
+  // it to prevent the admin from accidentally creating a dead slot.
+  if (input.type === "group" && input.maxAttendees < 2) {
+    return t.sessions.formErrorCapacity;
+  }
 
   return null;
 }

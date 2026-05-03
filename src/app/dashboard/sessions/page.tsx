@@ -88,11 +88,18 @@ const MONTHLY_CAP = 2;
  * Worth ~5-10 lines once you decide the policy.
  */
 function canCancelBooking(slot: SessionSlot): boolean {
-  // Default: allow cancellation any time before the slot starts.
-  // Replace with your preferred policy — e.g. require 24h notice:
-  //   const HOURS_NOTICE = 24;
-  //   return new Date(slot.starts_at).getTime() - Date.now() > HOURS_NOTICE * 3600_000;
-  return new Date(slot.starts_at).getTime() > Date.now();
+  // 24-hour notice policy — industry standard for office hours and
+  // 1:1 booking products (Calendly, Cal.com default to this). Two
+  // benefits:
+  //   1. Gives the host time to fill the slot via someone else
+  //   2. Prevents cap-gaming: book → wait until session day → cancel
+  //      to free the cap → re-book another slot for "free"
+  // Bookings whose slot is already cancelled (handled at Card-render
+  // time as not "cancellable" since the cancel button hides) and
+  // already-past bookings (same guard) don't reach this function.
+  const HOURS_NOTICE = 24;
+  const noticeWindowEndsMs = Date.now() + HOURS_NOTICE * 60 * 60 * 1000;
+  return new Date(slot.starts_at).getTime() > noticeWindowEndsMs;
 }
 
 export default function StudentSessionsPage() {
