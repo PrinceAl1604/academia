@@ -8,6 +8,8 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Illustration } from "@/components/shared/illustration";
 import {
   Dialog,
@@ -116,6 +118,11 @@ export default function StudentSessionsPage() {
   // Cancel-confirmation dialog: holds the booking we're about to
   // cancel. null = closed; setting a value opens the dialog.
   const [cancelTarget, setCancelTarget] = useState<SessionBooking | null>(null);
+  // Book-with-notes dialog: holds the slot the user is about to
+  // book. Opens a textarea so they can tell the host what they want
+  // to discuss (optional).
+  const [bookTarget, setBookTarget] = useState<SessionSlot | null>(null);
+  const [bookNote, setBookNote] = useState("");
 
   // Load open upcoming slots + the user's own bookings in parallel.
   const loadData = useCallback(async () => {
@@ -202,13 +209,18 @@ export default function StudentSessionsPage() {
     return msg;
   };
 
-  const handleBook = async (slot: SessionSlot) => {
+  const handleBook = async (slot: SessionSlot, note: string) => {
     if (!user) return;
     setError(null);
     setBookingId(slot.id);
+    const trimmedNote = note.trim();
     const { data: inserted, error: dbError } = await supabase
       .from("session_bookings")
-      .insert({ slot_id: slot.id, user_id: user.id })
+      .insert({
+        slot_id: slot.id,
+        user_id: user.id,
+        notes: trimmedNote || null,
+      })
       .select("id")
       .single();
     if (dbError || !inserted) {
@@ -234,6 +246,8 @@ export default function StudentSessionsPage() {
     // Refresh both lists so capacity + cap counter sync up.
     await loadData();
     setBookingId(null);
+    setBookTarget(null);
+    setBookNote("");
   };
 
   const handleCancel = async (booking: SessionBooking) => {
@@ -565,7 +579,10 @@ export default function StudentSessionsPage() {
                       ) : (
                         <Button
                           size="sm"
-                          onClick={() => handleBook(slot)}
+                          onClick={() => {
+                            setBookTarget(slot);
+                            setBookNote("");
+                          }}
                           disabled={bookingId === slot.id}
                           className="w-full"
                         >
@@ -587,6 +604,68 @@ export default function StudentSessionsPage() {
           </div>
         )}
       </section>
+
+      {/* ── Book-with-notes dialog ──────────────────────────────
+           Optional notes give the host context before walking into
+           1:1 office hours. Capped at 500 chars (DB enforces too). */}
+      <Dialog
+        open={!!bookTarget}
+        onOpenChange={(o) => {
+          if (!o) {
+            setBookTarget(null);
+            setBookNote("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.sessions.bookConfirmTitle}</DialogTitle>
+            {bookTarget && (
+              <DialogDescription>
+                {bookTarget.title} · {formatStart(bookTarget.starts_at)}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="book-note">{t.sessions.bookNotesLabel}</Label>
+            <Textarea
+              id="book-note"
+              value={bookNote}
+              onChange={(e) => setBookNote(e.target.value.slice(0, 500))}
+              placeholder={t.sessions.bookNotesPlaceholder}
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground/70 text-right tabular-nums">
+              {bookNote.length}/500
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setBookTarget(null);
+                setBookNote("");
+              }}
+              disabled={!!bookingId}
+            >
+              {t.sessions.cancelConfirmNo}
+            </Button>
+            <Button
+              onClick={() => bookTarget && handleBook(bookTarget, bookNote)}
+              disabled={!!bookingId}
+            >
+              {bookingId ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  {t.sessions.booking}
+                </>
+              ) : (
+                t.sessions.bookConfirmYes
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Cancel-confirmation dialog ──────────────────────────
            Single dialog instance reused for any booking the user

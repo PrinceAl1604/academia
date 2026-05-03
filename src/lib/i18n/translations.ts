@@ -694,6 +694,14 @@ export const translations = {
       // Host has opened the room
       liveNow: "Live now",
       hostStartedNote: "The host has opened the room — you can join now.",
+      // Booking notes
+      bookConfirmTitle: "Book this session?",
+      bookNotesLabel: "Anything you want the host to prep? (optional)",
+      bookNotesPlaceholder:
+        "e.g. I'd like to walk through my portfolio's case study #2 and get feedback on the layout.",
+      bookNotesHint: "Up to 500 characters",
+      bookConfirmYes: "Confirm booking",
+      adminBookingNotes: "From the attendee",
     },
   },
 
@@ -1383,6 +1391,14 @@ export const translations = {
       liveNow: "En direct",
       hostStartedNote:
         "L'hôte a ouvert la salle — vous pouvez rejoindre maintenant.",
+      bookConfirmTitle: "Réserver cette session ?",
+      bookNotesLabel:
+        "Quelque chose que l'hôte devrait préparer ? (facultatif)",
+      bookNotesPlaceholder:
+        "ex : j'aimerais revoir l'étude de cas #2 de mon portfolio et avoir un retour sur la mise en page.",
+      bookNotesHint: "Jusqu'à 500 caractères",
+      bookConfirmYes: "Confirmer la réservation",
+      adminBookingNotes: "De la part du participant",
     },
   },
 } as const;

@@ -230,11 +230,15 @@ export default function AdminSessionsPage() {
                       past ? "opacity-60" : ""
                     }`}
                   >
-                    {/* Title + description */}
+                    {/* Title + description (whole title is a link to
+                         the slot detail page where admin sees notes) */}
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground tracking-tight truncate">
+                      <Link
+                        href={`/admin/sessions/${slot.id}`}
+                        className="text-sm font-medium text-foreground tracking-tight truncate hover:text-primary transition-colors block"
+                      >
                         {slot.title}
-                      </p>
+                      </Link>
                       {slot.description && (
                         <p className="text-xs text-muted-foreground truncate mt-0.5">
                           {slot.description}
