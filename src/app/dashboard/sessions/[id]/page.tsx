@@ -191,32 +191,47 @@ export default function SessionRoomPage({
     });
   }, [isAdmin, slot, lifecycle]);
 
-  // Student poll: while on the PRE screen, re-check the slot every
-  // 20 seconds to detect host_started_at flipping. Without this, a
-  // student waiting for the session would have to manually refresh
-  // to discover the host opened the room early. Polling stops the
-  // moment lifecycle leaves PRE (re-effect cleans up).
+  // Student Realtime subscription: while on PRE screen, listen for
+  // UPDATE events on this specific slot row. When admin enters the
+  // room (host_started_at flips) or admin cancels the slot, we get
+  // a push event within ~1 second instead of waiting for the next
+  // 20s poll. Subscription auto-cleans up when lifecycle leaves PRE.
+  //
+  // Filter: server-side `id=eq.<uuid>` so we only receive events for
+  // THIS slot, not the entire table — saves bandwidth and avoids
+  // leaking other students' slot state.
   useEffect(() => {
     if (!slot || lifecycle !== "pre" || isAdmin) return;
-    const interval = setInterval(async () => {
-      const { data } = await supabase
-        .from("session_slots")
-        .select("host_started_at, status")
-        .eq("id", slot.id)
-        .single();
-      if (data) {
-        setSlot((prev) =>
-          prev
-            ? {
-                ...prev,
-                host_started_at: data.host_started_at,
-                status: data.status,
-              }
-            : prev
-        );
-      }
-    }, 20_000);
-    return () => clearInterval(interval);
+    const channel = supabase
+      .channel(`session_slot_${slot.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "session_slots",
+          filter: `id=eq.${slot.id}`,
+        },
+        (payload) => {
+          const next = payload.new as {
+            host_started_at: string | null;
+            status: "open" | "cancelled" | "completed";
+          };
+          setSlot((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  host_started_at: next.host_started_at,
+                  status: next.status,
+                }
+              : prev
+          );
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [slot, lifecycle, isAdmin]);
 
   if (authLoading || loading || !slot || lifecycle === null) {
