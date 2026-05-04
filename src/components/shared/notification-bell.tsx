@@ -13,6 +13,11 @@ import {
   Crown,
   Gift,
   Video,
+  Megaphone,
+  BookPlus,
+  Sparkles,
+  UserPlus,
+  CheckCircle2,
 } from "lucide-react";
 import {
   Popover,
@@ -43,13 +48,19 @@ import { cn } from "@/lib/utils";
 type NotifType =
   | "dm_message"
   | "chat_mention"
+  | "announcement"
+  | "new_course"
   | "session_booked"
   | "session_reminder"
   | "session_live"
   | "session_cancelled"
   | "session_updated"
   | "pro_expiring"
-  | "referral_rewarded";
+  | "pro_renewed"
+  | "pro_expired"
+  | "referral_signup"
+  | "referral_rewarded"
+  | "welcome";
 
 interface NotificationRow {
   id: string;
@@ -396,25 +407,37 @@ function NotificationRowItem({
 const ICON_BY_TYPE: Record<NotifType, React.ComponentType<{ className?: string }>> = {
   dm_message: MessageSquare,
   chat_mention: AtSign,
+  announcement: Megaphone,
+  new_course: BookPlus,
   session_booked: CalendarIcon,
   session_reminder: Clock,
   session_live: Video,
   session_cancelled: XCircle,
   session_updated: Pencil,
   pro_expiring: Crown,
+  pro_renewed: CheckCircle2,
+  pro_expired: XCircle,
+  referral_signup: UserPlus,
   referral_rewarded: Gift,
+  welcome: Sparkles,
 };
 
 const TONE_BY_TYPE: Record<NotifType, "primary" | "amber" | "destructive" | "muted"> = {
   dm_message: "primary",
   chat_mention: "primary",
+  announcement: "amber",
+  new_course: "primary",
   session_booked: "primary",
   session_reminder: "amber",
   session_live: "destructive", // red dot draws the eye for live
   session_cancelled: "destructive",
   session_updated: "amber",
   pro_expiring: "amber",
+  pro_renewed: "primary",
+  pro_expired: "destructive",
+  referral_signup: "primary",
   referral_rewarded: "amber",
+  welcome: "primary",
 };
 
 /**
@@ -508,6 +531,35 @@ function renderTitleBody(
       return {
         title: ns.referralRewardedTitle,
         body: ns.referralRewardedBody,
+      };
+    case "announcement":
+      return {
+        title: sub(ns.announcementTitle, {
+          sender: get("sender_name"),
+          channel: get("channel_name") || "—",
+        }),
+        body: get("preview")
+          ? sub(ns.announcementBody, { preview: get("preview") })
+          : null,
+      };
+    case "new_course":
+      return {
+        title: sub(ns.newCourseTitle, { title: get("title") }),
+        body: ns.newCourseBody,
+      };
+    case "pro_renewed":
+      return { title: ns.proRenewedTitle, body: ns.proRenewedBody };
+    case "pro_expired":
+      return { title: ns.proExpiredTitle, body: ns.proExpiredBody };
+    case "referral_signup":
+      return {
+        title: sub(ns.referralSignupTitle, { name: get("name") || "Someone" }),
+        body: ns.referralSignupBody,
+      };
+    case "welcome":
+      return {
+        title: ns.welcomeTitle,
+        body: ns.welcomeBody,
       };
     default:
       return { title: "", body: null };

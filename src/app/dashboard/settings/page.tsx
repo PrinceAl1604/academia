@@ -48,10 +48,16 @@ const tabs = [
 type Tab = (typeof tabs)[number]["id"];
 
 interface NotificationPrefs {
+  // Email preferences (used by cron — kept as-is for compatibility)
   course_updates: boolean;
   new_courses: boolean;
   weekly_digest: boolean;
   promotional: boolean;
+  // In-app notifications: array of muted notification types. The
+  // create_notification SQL helper checks this and short-circuits
+  // before inserting, so muted notifications never hit the table or
+  // the bell badge.
+  muted_types?: string[];
 }
 
 const DEFAULT_NOTIF: NotificationPrefs = {
@@ -59,7 +65,45 @@ const DEFAULT_NOTIF: NotificationPrefs = {
   new_courses: true,
   weekly_digest: false,
   promotional: false,
+  muted_types: [],
 };
+
+/**
+ * Notification categories — group several DB types under one toggle
+ * for a sane UX (no one wants 9 individual switches for "session
+ * booked" / "session reminder" / "session live" / etc.).
+ */
+const NOTIF_CATEGORIES: Array<{
+  id: string;
+  labelKey: string;
+  types: string[];
+}> = [
+  { id: "dm", labelKey: "typeLabelDmMessage", types: ["dm_message"] },
+  { id: "mention", labelKey: "typeLabelChatMention", types: ["chat_mention"] },
+  { id: "announcement", labelKey: "typeLabelAnnouncement", types: ["announcement"] },
+  { id: "new_course", labelKey: "typeLabelNewCourse", types: ["new_course"] },
+  {
+    id: "session",
+    labelKey: "typeLabelSession",
+    types: [
+      "session_booked",
+      "session_reminder",
+      "session_live",
+      "session_cancelled",
+      "session_updated",
+    ],
+  },
+  {
+    id: "pro",
+    labelKey: "typeLabelPro",
+    types: ["pro_expiring", "pro_renewed", "pro_expired"],
+  },
+  {
+    id: "referral",
+    labelKey: "typeLabelReferral",
+    types: ["referral_signup", "referral_rewarded"],
+  },
+];
 
 export default function SettingsPage() {
   const { user, userName, isPro, proExpiresAt, daysUntilExpiry, isExpiringSoon, logout, referralCode } = useAuth();
@@ -148,6 +192,43 @@ export default function SettingsPage() {
     async (key: keyof NotificationPrefs) => {
       if (!user) return;
       const updated = { ...notifPrefs, [key]: !notifPrefs[key] };
+      setNotifPrefs(updated);
+      setNotifSaving(true);
+      setNotifSaved(false);
+      await supabase
+        .from("users")
+        .update({ notification_preferences: updated })
+        .eq("id", user.id);
+      setNotifSaving(false);
+      setNotifSaved(true);
+      setTimeout(() => setNotifSaved(false), 2000);
+    },
+    [user, notifPrefs]
+  );
+
+  /**
+   * Toggle an in-app notification category. Each category maps to one
+   * or more notification `type` values (defined in NOTIF_CATEGORIES).
+   * "Enabled" = NONE of the types are muted; "Disabled" = ALL of the
+   * types are muted. The trigger function reads muted_types and
+   * short-circuits before inserting — so muted categories never even
+   * generate a notification row.
+   */
+  const handleToggleCategory = useCallback(
+    async (types: string[]) => {
+      if (!user) return;
+      const currentMuted = new Set(notifPrefs.muted_types ?? []);
+      const allMuted = types.every((tt) => currentMuted.has(tt));
+      // Flip: if all muted, unmute all; otherwise mute all.
+      if (allMuted) {
+        types.forEach((tt) => currentMuted.delete(tt));
+      } else {
+        types.forEach((tt) => currentMuted.add(tt));
+      }
+      const updated: NotificationPrefs = {
+        ...notifPrefs,
+        muted_types: Array.from(currentMuted),
+      };
       setNotifPrefs(updated);
       setNotifSaving(true);
       setNotifSaved(false);
@@ -523,6 +604,53 @@ export default function SettingsPage() {
                       onCheckedChange={() => handleToggleNotif("promotional")}
                       disabled={!notifLoaded}
                     />
+                  </div>
+                </div>
+
+                {/* ─── In-app notifications (per-type mute) ──────
+                     The toggles above govern EMAIL preferences (used by
+                     the daily cron). The toggles below govern IN-APP
+                     bell notifications. Stored as muted_types[] in the
+                     same notification_preferences jsonb — checked by
+                     the create_notification SQL helper before insert. */}
+                <Separator className="my-6" />
+                <div>
+                  <h4 className="text-sm font-medium text-foreground mb-1">
+                    {t.notifications?.preferencesTitle ||
+                      "In-app notifications"}
+                  </h4>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    {t.notifications?.preferencesSubtitle ||
+                      "Choose which notifications you want to receive in the app."}
+                  </p>
+                  <div className="space-y-4">
+                    {NOTIF_CATEGORIES.map((cat) => {
+                      const muted = (notifPrefs.muted_types ?? []);
+                      const allMuted = cat.types.every((tt) =>
+                        muted.includes(tt)
+                      );
+                      const enabled = !allMuted;
+                      const labelKey = cat.labelKey as keyof typeof t.notifications;
+                      const label =
+                        (t.notifications &&
+                          (t.notifications[labelKey] as string | undefined)) ||
+                        cat.id;
+                      return (
+                        <div
+                          key={cat.id}
+                          className="flex items-center justify-between gap-4"
+                        >
+                          <Label className="text-sm font-normal text-foreground">
+                            {label}
+                          </Label>
+                          <Switch
+                            checked={enabled}
+                            onCheckedChange={() => handleToggleCategory(cat.types)}
+                            disabled={!notifLoaded}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </Card>

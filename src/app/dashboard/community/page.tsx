@@ -116,23 +116,11 @@ interface ChatMessage {
   reply_count?: number;
 }
 
-interface ChatMention {
-  id: string;
-  message_id: string;
-  mentioned_user_id: string;
-  channel_id: string;
-  is_read: boolean;
-  created_at: string;
-  // Embeds (from the SELECT join) — used to render the dropdown row
-  // without a second query per mention.
-  message?: {
-    content: string;
-    user_id: string;
-    is_deleted: boolean;
-    user?: { name: string };
-  };
-  channel?: { name: string; type: Channel["type"] };
-}
+// ChatMention interface previously powered the in-community @-bell
+// dropdown — both the surface and this type are now gone. The chat
+// composer's @-typeahead operates on a simpler local shape and
+// inserts directly into chat_mentions without needing a TS interface.
+
 
 /* ─── Constants ───────────────────────────────────────────── */
 
@@ -296,10 +284,9 @@ export default function CommunityPage() {
   >([]);
   const replyInputRef = useRef<HTMLInputElement>(null);
 
-  /* ─── Unread mentions feed ──────────────────────────────── */
-  // Latest unread pings for the current user across every channel. Drives
-  // the bell-icon count + dropdown feed in the topbar.
-  const [unreadMentions, setUnreadMentions] = useState<ChatMention[]>([]);
+  // unreadMentions state removed alongside the in-community @-bell.
+  // Mentions are now surfaced exclusively through the topbar
+  // notifications bell.
 
   /* ─── Pagination state ──────────────────────────────────── */
   const [hasMore, setHasMore] = useState(true);
@@ -1028,62 +1015,11 @@ export default function CommunityPage() {
     [mentionableUsers]
   );
 
-  /* ─── Load unread mentions + subscribe to new ones ────────── */
-  useEffect(() => {
-    if (!user) return;
-
-    // Initial load: fetch the 20 most recent unread mentions with their
-    // embedded message + channel data so we can render the dropdown in one
-    // pass (no N+1 queries per mention row).
-    (async () => {
-      const { data } = await supabase
-        .from("chat_mentions")
-        .select(
-          "*, message:chat_messages(content, user_id, is_deleted, user:users(name)), channel:chat_channels(name, type)"
-        )
-        .eq("mentioned_user_id", user.id)
-        .eq("is_read", false)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      setUnreadMentions(((data as ChatMention[]) ?? []));
-    })();
-
-    // Realtime: server-side filter on mentioned_user_id so we don't
-    // receive every INSERT on chat_mentions and drop it on the client.
-    const channel = supabase
-      .channel(`chat_mentions_${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "chat_mentions",
-          filter: `mentioned_user_id=eq.${user.id}`,
-        },
-        async (payload) => {
-          const inserted = payload.new as ChatMention;
-          // Hydrate with the embedded data the initial load expects.
-          const { data } = await supabase
-            .from("chat_mentions")
-            .select(
-              "*, message:chat_messages(content, user_id, is_deleted, user:users(name)), channel:chat_channels(name, type)"
-            )
-            .eq("id", inserted.id)
-            .single();
-          if (!data) return;
-          setUnreadMentions((prev) => {
-            if (prev.some((m) => m.id === inserted.id)) return prev;
-            return [data as ChatMention, ...prev].slice(0, 20);
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-    // PERF: user.id (string) not user (object).
-  }, [user?.id]);
+  // Mentions feed + its realtime subscription removed — the topbar
+  // notifications bell now surfaces the same events via the
+  // chat_mentions DB trigger that mirrors into the unified
+  // notifications feed. One subscription instead of two. The
+  // chat_mentions table itself stays (still powers the @-typeahead).
 
   // Clamp the highlighted index whenever the filtered list shrinks beneath
   // the current cursor (otherwise Arrow+Enter could select a stale row).
@@ -1551,41 +1487,10 @@ export default function CommunityPage() {
     }
   };
 
-  /* ─── Mention feed handlers ─────────────────────────────── */
-  /**
-   * Open a mentioned message: switch to its channel, mark the mention row
-   * read, and drop it from local state. Scroll-to-message across a
-   * pagination window is intentionally out of scope here — the common
-   * case (recent ping in the current window) works; older pings just
-   * land the user in the channel at the bottom.
-   */
-  const openMention = async (mention: ChatMention) => {
-    if (mention.channel_id !== activeChannelId) {
-      setActiveChannelId(mention.channel_id);
-      setShowPinned(false);
-      setInput("");
-      setEditingId(null);
-      setEditDraft("");
-    }
-    setUnreadMentions((prev) => prev.filter((m) => m.id !== mention.id));
-    await supabase
-      .from("chat_mentions")
-      .update({ is_read: true })
-      .eq("id", mention.id);
-  };
-
-  const markAllMentionsRead = async () => {
-    if (!user || unreadMentions.length === 0) return;
-    const ids = unreadMentions.map((m) => m.id);
-    setUnreadMentions([]);
-    // Batch UPDATE — RLS scopes the mutation to rows the user owns anyway,
-    // but we still predicate on mentioned_user_id for defense in depth.
-    await supabase
-      .from("chat_mentions")
-      .update({ is_read: true })
-      .in("id", ids)
-      .eq("mentioned_user_id", user.id);
-  };
+  // Mention-feed handlers (openMention, markAllMentionsRead) removed
+  // alongside the in-community @-bell. Mention click-throughs now
+  // happen from the topbar notifications bell, which navigates to
+  // the community page via the notification's `link` field.
 
   /* ─── Reactions ──────────────────────────────────────────── */
   const toggleReaction = async (msg: ChatMessage, emoji: string) => {
@@ -2024,106 +1929,10 @@ export default function CommunityPage() {
               </Button>
             )}
 
-            {/* Mentions bell */}
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 relative"
-                    aria-label={
-                      isEn
-                        ? `${unreadMentions.length} unread mentions`
-                        : `${unreadMentions.length} mentions non lues`
-                    }
-                  />
-                }
-              >
-                <Bell
-                  className={cn(
-                    "h-4 w-4",
-                    unreadMentions.length > 0
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  )}
-                />
-                {unreadMentions.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground tabular-nums">
-                    {unreadMentions.length > 9 ? "9+" : unreadMentions.length}
-                  </span>
-                )}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80 p-0">
-                <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <AtSign className="h-3 w-3" />
-                    {isEn ? "Mentions" : "Mentions"}
-                  </p>
-                  {unreadMentions.length > 0 && (
-                    <button
-                      onClick={markAllMentionsRead}
-                      className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline"
-                    >
-                      <CheckCheck className="h-3 w-3" />
-                      {isEn ? "Mark all read" : "Tout marquer lu"}
-                    </button>
-                  )}
-                </div>
-
-                {unreadMentions.length === 0 ? (
-                  <div className="px-3 py-8 text-center text-xs text-muted-foreground/70">
-                    <AtSign className="h-6 w-6 mx-auto mb-2 opacity-40" />
-                    {isEn ? "No new mentions" : "Aucune nouvelle mention"}
-                  </div>
-                ) : (
-                  <div className="max-h-80 overflow-y-auto">
-                    {unreadMentions.map((mention) => {
-                      const chName = mention.channel
-                        ? mention.channel.type === "general"
-                          ? t.community?.general || "General"
-                          : mention.channel.type === "announcements"
-                          ? t.community?.announcements || "Announcements"
-                          : mention.channel.name
-                        : "…";
-                      const author = mention.message?.user?.name || "User";
-                      // Tombstones still exist as mentions but shouldn't
-                      // leak the deleted content.
-                      const snippet = mention.message?.is_deleted
-                        ? isEn
-                          ? "(message deleted)"
-                          : "(message supprimé)"
-                        : (mention.message?.content ?? "").slice(0, 120);
-                      return (
-                        <DropdownMenuItem
-                          key={mention.id}
-                          onClick={() => openMention(mention)}
-                          className="flex flex-col items-start gap-0.5 px-3 py-2 cursor-pointer border-b border-border/40 last:border-b-0"
-                        >
-                          <div className="flex items-center gap-1.5 w-full text-[11px]">
-                            <span className="font-semibold text-foreground">
-                              {author}
-                            </span>
-                            <span className="text-muted-foreground/70">
-                              {isEn ? "in" : "dans"}
-                            </span>
-                            <span className="font-medium text-muted-foreground truncate">
-                              #{chName}
-                            </span>
-                            <span className="ml-auto shrink-0 text-muted-foreground/70">
-                              {formatTime(mention.created_at)}
-                            </span>
-                          </div>
-                          <p className="text-xs text-foreground/90 line-clamp-2 break-words">
-                            {snippet}
-                          </p>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </div>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* In-community @-mentions bell removed — duplicate of the
+                 topbar notifications bell, which now surfaces the same
+                 mention rows via the chat_mentions trigger that mirrors
+                 into the unified notifications feed. */}
 
             {/* Online indicator (mobile-friendly) */}
             <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1">
