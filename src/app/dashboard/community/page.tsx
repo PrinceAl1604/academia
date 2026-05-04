@@ -46,13 +46,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
@@ -243,7 +236,7 @@ export default function CommunityPage() {
    * page mount + when realtime fires for new participation rows
    * (e.g. someone DMs you for the first time). */
   const [dmThreads, setDmThreads] = useState<DmThread[]>([]);
-  const [newDmOpen, setNewDmOpen] = useState(false);
+  const [composeMode, setComposeMode] = useState(false);
   const [dmSearchQuery, setDmSearchQuery] = useState("");
   const [dmSearchResults, setDmSearchResults] = useState<
     Array<{ id: string; name: string; email: string; role: string | null; subscription_tier: string }>
@@ -537,19 +530,23 @@ export default function CommunityPage() {
    * for anything substantive. */
   const runUserSearch = useCallback(
     async (query: string) => {
-      const q = query.trim();
-      if (!q || !user) {
+      if (!user) {
         setDmSearchResults([]);
         return;
       }
-      // Search by name OR email. Exclude current user. Limit 8 for
-      // a tight dropdown. Admin always shows up first if name matches.
-      const { data } = await supabase
+      const q = query.trim();
+      // Empty query → return top suggested users so the compose
+      // panel populates immediately, no typing required. Non-empty
+      // query → ilike search. Both cases capped at 12 for the
+      // inline list (was 8 in the old modal).
+      let req = supabase
         .from("users")
         .select("id, name, email, role, subscription_tier")
-        .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
-        .neq("id", user.id)
-        .limit(8);
+        .neq("id", user.id);
+      if (q) {
+        req = req.or(`name.ilike.%${q}%,email.ilike.%${q}%`);
+      }
+      const { data } = await req.limit(12);
       // Sort: admin first, then Pro members, then alphabetical
       const sorted = (data ?? []).sort(
         (a: { role: string | null; subscription_tier: string; name: string },
@@ -566,11 +563,13 @@ export default function CommunityPage() {
     [user]
   );
 
-  // Debounced search trigger
+  // Debounced search trigger — only runs while compose is open so we
+  // don't burn a query on every keystroke when the panel isn't visible.
   useEffect(() => {
+    if (!composeMode) return;
     const timer = setTimeout(() => runUserSearch(dmSearchQuery), 200);
     return () => clearTimeout(timer);
-  }, [dmSearchQuery, runUserSearch]);
+  }, [composeMode, dmSearchQuery, runUserSearch]);
 
   const handleStartDm = useCallback(
     async (otherUserId: string) => {
@@ -593,7 +592,7 @@ export default function CommunityPage() {
         setChannels(allChannels as Channel[]);
       }
       setActiveChannelId(data as string);
-      setNewDmOpen(false);
+      setComposeMode(false);
       setDmSearchQuery("");
       setDmSearchResults([]);
       setStartingDm(false);
@@ -1151,6 +1150,11 @@ export default function CommunityPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 
   const switchChannel = (channelId: string) => {
+    // If we were in compose mode, picking a channel from the sidebar
+    // exits compose. composeMode + activeChannelId can co-exist on
+    // re-entry but a user clicking a channel clearly wants to leave
+    // the compose UI.
+    setComposeMode(false);
     if (channelId === activeChannelId) return;
     setActiveChannelId(channelId);
     setShowPinned(false);
@@ -1795,7 +1799,7 @@ export default function CommunityPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setNewDmOpen(true);
+                  setComposeMode(true);
                   setDmSearchQuery("");
                   setDmSearchResults([]);
                   setDmError(null);
@@ -1818,7 +1822,7 @@ export default function CommunityPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setNewDmOpen(true);
+                    setComposeMode(true);
                     setDmSearchQuery("");
                     setDmSearchResults([]);
                     setDmError(null);
@@ -1937,6 +1941,153 @@ export default function CommunityPage() {
 
       {/* ─── Chat Area ──────────────────────────────────────── */}
       <div className="flex flex-1 flex-col min-w-0">
+        {composeMode ? (
+          /* ─── Inline DM Compose ──────────────────────────────
+               Replaces the old modal popover. Owns the chat area
+               while active: header (close + title) → search input
+               → suggested-or-matching users list. Picking a user
+               calls handleStartDm which transitions back to the
+               normal chat with that DM channel active. */
+          <>
+            <div className="border-b border-border">
+              <div className="max-w-3xl mx-auto w-full flex items-center gap-2 px-4 py-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 text-muted-foreground/70"
+                  onClick={() => {
+                    setComposeMode(false);
+                    setDmSearchQuery("");
+                    setDmSearchResults([]);
+                    setDmError(null);
+                  }}
+                  aria-label={isEn ? "Close" : "Fermer"}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                <h1 className="text-base font-semibold tracking-tight text-foreground">
+                  {t.community?.newDmTitle ||
+                    (isEn ? "New direct message" : "Nouveau message")}
+                </h1>
+              </div>
+            </div>
+
+            <div className="border-b border-border">
+              <div className="max-w-3xl mx-auto w-full px-4 py-3">
+                <div className="relative">
+                  <SearchIcon className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
+                  <Input
+                    value={dmSearchQuery}
+                    onChange={(e) => setDmSearchQuery(e.target.value)}
+                    placeholder={
+                      t.community?.newDmSearchPlaceholder ||
+                      (isEn
+                        ? "Search people…"
+                        : "Rechercher quelqu'un…")
+                    }
+                    className="pl-9"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              <div className="max-w-3xl mx-auto w-full px-4 py-3">
+                {dmSearchResults.length === 0 ? (
+                  <p className="text-xs text-muted-foreground/70 text-center py-12">
+                    {dmSearchQuery.trim()
+                      ? t.community?.newDmEmptyResults ||
+                        (isEn
+                          ? "No matching members."
+                          : "Aucun membre correspondant.")
+                      : isEn
+                      ? "No members yet."
+                      : "Aucun membre pour l'instant."}
+                  </p>
+                ) : (
+                  <>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50 px-2 pb-2">
+                      <span className="opacity-50">/</span>{" "}
+                      {dmSearchQuery.trim()
+                        ? isEn
+                          ? "Results"
+                          : "Résultats"
+                        : isEn
+                        ? "Suggested"
+                        : "Suggestions"}
+                    </p>
+                    <div className="space-y-0.5">
+                      {dmSearchResults.map((u) => {
+                        const isAdminUser = u.role === "admin";
+                        const isProUser = u.subscription_tier === "pro";
+                        const initials = (u.name || u.email || "?")
+                          .split(/[\s@]+/)
+                          .map((s) => s[0])
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .join("")
+                          .toUpperCase();
+                        return (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => handleStartDm(u.id)}
+                            disabled={startingDm}
+                            className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-muted/40 transition-colors disabled:opacity-50"
+                          >
+                            <Avatar className="h-9 w-9 shrink-0">
+                              <AvatarFallback
+                                className={cn(
+                                  "text-xs font-medium",
+                                  isAdminUser
+                                    ? "bg-amber-500/15 text-amber-500"
+                                    : userTintClass(u.id)
+                                )}
+                              >
+                                {initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium text-foreground truncate">
+                                  {u.name || u.email.split("@")[0]}
+                                </p>
+                                {isAdminUser && (
+                                  <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-500">
+                                    <Crown className="h-2.5 w-2.5" />
+                                    {t.community?.dmAdminBadge || "Host"}
+                                  </span>
+                                )}
+                                {!isAdminUser && isProUser && (
+                                  <Badge className="bg-primary/15 text-primary text-[9px] px-1.5 py-0">
+                                    Pro
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="font-mono text-[10px] text-muted-foreground/70 truncate">
+                                {u.email}
+                              </p>
+                            </div>
+                            {startingDm && (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground/70 shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+                {dmError && (
+                  <p className="text-xs text-destructive px-2 pt-3">
+                    {dmError}
+                  </p>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+        <>
         {/* ─── Chat Header ──────────────────────────────────────
              Border spans full-width for visual continuity, but the
              header content tracks the message column's max-w-3xl
@@ -2923,113 +3074,9 @@ export default function CommunityPage() {
             </p>
           </div>
         )}
+        </>
+        )}
       </div>
-
-      {/* ─── New DM Dialog ─────────────────────────────────────
-           User search → click row → calls get_or_create_dm RPC →
-           switches active channel to the new (or existing) thread.
-           Pro-gating happens server-side in the RPC; client errors
-           bubble up via dmError. */}
-      <Dialog open={newDmOpen} onOpenChange={setNewDmOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {t.community?.newDmTitle || "Start a conversation"}
-            </DialogTitle>
-            <DialogDescription>
-              {t.community?.newDmSubtitle ||
-                "Pick a Pro member or message the host directly."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
-              <Input
-                value={dmSearchQuery}
-                onChange={(e) => setDmSearchQuery(e.target.value)}
-                placeholder={
-                  t.community?.newDmSearchPlaceholder ||
-                  "Search by name or email…"
-                }
-                className="pl-9"
-                autoFocus
-              />
-            </div>
-            <div className="max-h-72 overflow-y-auto -mx-1 px-1 space-y-0.5">
-              {dmSearchQuery.trim() && dmSearchResults.length === 0 ? (
-                <p className="text-xs text-muted-foreground/70 text-center py-6">
-                  {t.community?.newDmEmptyResults ||
-                    "No matching members."}
-                </p>
-              ) : (
-                dmSearchResults.map((u) => {
-                  const isAdminUser = u.role === "admin";
-                  const isProUser = u.subscription_tier === "pro";
-                  const initials = (u.name || u.email || "?")
-                    .split(/[\s@]+/)
-                    .map((s) => s[0])
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase();
-                  return (
-                    <button
-                      key={u.id}
-                      type="button"
-                      onClick={() => handleStartDm(u.id)}
-                      disabled={startingDm}
-                      className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-muted/40 transition-colors disabled:opacity-50"
-                    >
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback
-                          className={cn(
-                            "text-xs",
-                            isAdminUser &&
-                              "bg-amber-500/15 text-amber-500"
-                          )}
-                        >
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {u.name || u.email.split("@")[0]}
-                          </p>
-                          {isAdminUser && (
-                            <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-500">
-                              <Crown className="h-2.5 w-2.5" />
-                              {t.community?.dmAdminBadge || "Host"}
-                            </span>
-                          )}
-                          {!isAdminUser && isProUser && (
-                            <Badge className="bg-primary/15 text-primary text-[9px] px-1.5 py-0">
-                              Pro
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="font-mono text-[10px] text-muted-foreground/70 truncate">
-                          {u.email}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-            {dmError && (
-              <p className="text-xs text-destructive">{dmError}</p>
-            )}
-            {startingDm && (
-              <p className="text-xs text-muted-foreground/70 text-center">
-                <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
-                {t.community?.dmStartingConversation ||
-                  "Starting conversation…"}
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
