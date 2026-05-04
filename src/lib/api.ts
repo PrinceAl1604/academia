@@ -68,14 +68,20 @@ export interface LessonRow {
  * so values are always accurate regardless of stored column state.
  */
 export async function getCourses(): Promise<CourseRow[]> {
+  // PERF: previously joined courses → modules → lessons just to
+  // compute total_lessons + duration_hours on every page load.
+  // Slow + scaled badly. Those columns are now kept fresh server-
+  // side by triggers on lessons + modules (see
+  // course_counters_backfill_and_triggers migration), so we read
+  // them directly. Single-table query with two FK joins instead
+  // of a 3-level nested aggregation.
   const { data, error } = await supabase
     .from("courses")
     .select(
       `
       *,
       category:categories(*),
-      instructor:instructors(*),
-      modules(id, lessons(id, duration_minutes))
+      instructor:instructors(*)
     `
     )
     .eq("is_published", true)
@@ -85,22 +91,12 @@ export async function getCourses(): Promise<CourseRow[]> {
     console.error("Error fetching courses:", error);
     return [];
   }
-
-  // Compute totals from actual lesson data, overriding stale stored values
-  return (data ?? []).map((course) => {
-    const modules = (course as unknown as { modules: { lessons: { id: string; duration_minutes: number }[] }[] }).modules ?? [];
-    const allLessons = modules.flatMap((m) => m.lessons ?? []);
-    const totalLessons = allLessons.length;
-    const totalMinutes = allLessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
-    const durationHours = Math.round((totalMinutes / 60) * 10) / 10;
-    // Strip modules from the response (CourseRow doesn't include them)
-    const { modules: _, ...rest } = course as Record<string, unknown>;
-    return { ...rest, total_lessons: totalLessons, duration_hours: durationHours } as CourseRow;
-  });
+  return (data ?? []) as CourseRow[];
 }
 
 /**
  * Get ALL courses (including unpublished) for admin.
+ * Same perf optimization as getCourses() — uses stored counters.
  */
 export async function getAllCourses(): Promise<CourseRow[]> {
   const { data, error } = await supabase
@@ -109,8 +105,7 @@ export async function getAllCourses(): Promise<CourseRow[]> {
       `
       *,
       category:categories(*),
-      instructor:instructors(*),
-      modules(id, lessons(id, duration_minutes))
+      instructor:instructors(*)
     `
     )
     .order("created_at", { ascending: false });
@@ -119,16 +114,7 @@ export async function getAllCourses(): Promise<CourseRow[]> {
     console.error("Error fetching all courses:", error);
     return [];
   }
-
-  return (data ?? []).map((course) => {
-    const modules = (course as unknown as { modules: { lessons: { id: string; duration_minutes: number }[] }[] }).modules ?? [];
-    const allLessons = modules.flatMap((m) => m.lessons ?? []);
-    const totalLessons = allLessons.length;
-    const totalMinutes = allLessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
-    const durationHours = Math.round((totalMinutes / 60) * 10) / 10;
-    const { modules: _, ...rest } = course as Record<string, unknown>;
-    return { ...rest, total_lessons: totalLessons, duration_hours: durationHours } as CourseRow;
-  });
+  return (data ?? []) as CourseRow[];
 }
 
 /**
