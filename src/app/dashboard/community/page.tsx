@@ -573,7 +573,11 @@ export default function CommunityPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+    // PERF: depend on user.id (string) not user (object). Token
+    // refreshes / profile updates produce a new user reference but
+    // the same id — without this, the WebSocket would tear down
+    // and re-establish on every refresh, churning network + state.
+  }, [user?.id]);
 
   /* ─── Load unread counts ────────────────────────────────── */
   const loadUnreadCounts = useCallback(async () => {
@@ -943,7 +947,9 @@ export default function CommunityPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, markAsRead]);
+    // PERF: user.id (string) not user (object) — see DM realtime
+    // useEffect above for rationale.
+  }, [user?.id, markAsRead]);
 
   /* ─── Presence ──────────────────────────────────────────── */
   useEffect(() => {
@@ -966,7 +972,9 @@ export default function CommunityPage() {
     return () => {
       supabase.removeChannel(presence);
     };
-  }, [user, userName]);
+    // PERF: user.id (string) not user (object). userName is a derived
+    // string so its dep stability is fine.
+  }, [user?.id, userName]);
 
   /* ─── Mention roster ────────────────────────────────────── */
   // One fetch per mount. If the platform grows past a few hundred users,
@@ -1074,7 +1082,8 @@ export default function CommunityPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+    // PERF: user.id (string) not user (object).
+  }, [user?.id]);
 
   // Clamp the highlighted index whenever the filtered list shrinks beneath
   // the current cursor (otherwise Arrow+Enter could select a stale row).

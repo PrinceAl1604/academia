@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell,
@@ -61,53 +61,104 @@ interface NotificationRow {
 }
 
 const PAGE_LIMIT = 20;
+// Cache the unread count in localStorage so the badge renders
+// instantly on next page load instead of waiting for a network call.
+const COUNT_CACHE_KEY = "brightroots_notif_unread_v1";
 
 export function NotificationBell() {
   const { user, isAuthenticated } = useAuth();
+  const userId = user?.id;
   const { t, language } = useLanguage();
   const router = useRouter();
+
+  // Hydrate badge from cache for instant first paint. Refreshed
+  // from the server below, then kept live by realtime.
+  const [unreadCount, setUnreadCount] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const raw = window.localStorage.getItem(COUNT_CACHE_KEY);
+      const n = raw ? parseInt(raw, 10) : 0;
+      return Number.isFinite(n) && n >= 0 ? n : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [items, setItems] = useState<NotificationRow[]>([]);
+  const [itemsLoaded, setItemsLoaded] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const unreadCount = useMemo(
-    () => items.filter((n) => !n.read_at).length,
-    [items]
-  );
+  // Persist count to localStorage so next mount paints instantly
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(COUNT_CACHE_KEY, String(unreadCount));
+    } catch {
+      // ignore
+    }
+  }, [unreadCount]);
 
-  /* ─── Initial load ───────────────────────────────────────── */
-  const loadNotifications = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
+  /* ─── Eager load: just the count ─────────────────────────────
+   * One head-only query for the badge — much cheaper than fetching
+   * 20 full rows on every page mount × every navigation. The full
+   * list lazy-loads when the popover actually opens. */
+  const loadCount = useCallback(async () => {
+    if (!userId) return;
+    const { count } = await supabase
       .from("notifications")
-      .select("id, type, payload, link, read_at, created_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(PAGE_LIMIT);
-    if (data) setItems(data as NotificationRow[]);
-  }, [user]);
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .is("read_at", null);
+    setUnreadCount(count ?? 0);
+  }, [userId]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    loadNotifications();
-  }, [isAuthenticated, loadNotifications]);
+    loadCount();
+  }, [isAuthenticated, loadCount]);
 
-  /* ─── Realtime — new rows prepend, updates patch in place ── */
+  /* ─── Lazy load: full list when popover opens ────────────── */
+  const loadItems = useCallback(async () => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("notifications")
+      .select("id, type, payload, link, read_at, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(PAGE_LIMIT);
+    if (data) {
+      setItems(data as NotificationRow[]);
+      setItemsLoaded(true);
+    }
+  }, [userId]);
+
   useEffect(() => {
-    if (!user) return;
+    if (open && !itemsLoaded) {
+      loadItems();
+    }
+  }, [open, itemsLoaded, loadItems]);
+
+  /* ─── Realtime — keep count + (loaded) list fresh ─────────────
+   * Depends on userId (string), NOT user (object). The user object
+   * gets a new reference on every token refresh / profile fetch,
+   * which would tear down + rebuild the WebSocket every time. The
+   * id is a stable primitive — the channel persists for the session. */
+  useEffect(() => {
+    if (!userId) return;
     const channel = supabase
-      .channel(`notifications_${user.id}`)
+      .channel(`notifications_${userId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
           const row = payload.new as NotificationRow;
+          setUnreadCount((c) => c + 1);
           setItems((prev) => {
-            // Dedupe (Realtime can fire multiple times in some setups)
+            if (prev.length === 0) return prev; // not loaded yet
             if (prev.some((n) => n.id === row.id)) return prev;
             return [row, ...prev].slice(0, PAGE_LIMIT);
           });
@@ -119,12 +170,21 @@ export function NotificationBell() {
           event: "UPDATE",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          const row = payload.new as NotificationRow;
+          const newRow = payload.new as NotificationRow;
+          const oldRow = payload.old as Partial<NotificationRow>;
+          // Track count change (read state)
+          const wasUnread = !oldRow.read_at;
+          const isUnread = !newRow.read_at;
+          if (wasUnread && !isUnread) {
+            setUnreadCount((c) => Math.max(0, c - 1));
+          } else if (!wasUnread && isUnread) {
+            setUnreadCount((c) => c + 1);
+          }
           setItems((prev) =>
-            prev.map((n) => (n.id === row.id ? row : n))
+            prev.map((n) => (n.id === newRow.id ? newRow : n))
           );
         }
       )
@@ -132,12 +192,13 @@ export function NotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [userId]);
 
   /* ─── Actions ────────────────────────────────────────────── */
   const handleClickRow = useCallback(
     async (n: NotificationRow) => {
-      if (!n.read_at && user) {
+      if (!n.read_at && userId) {
+        setUnreadCount((c) => Math.max(0, c - 1)); // optimistic
         await supabase
           .from("notifications")
           .update({ read_at: new Date().toISOString() })
@@ -155,21 +216,22 @@ export function NotificationBell() {
         router.push(n.link);
       }
     },
-    [router, user]
+    [router, userId]
   );
 
   const handleMarkAllRead = useCallback(async () => {
-    if (!user || unreadCount === 0) return;
+    if (!userId || unreadCount === 0) return;
     const nowIso = new Date().toISOString();
+    setUnreadCount(0); // optimistic
     await supabase
       .from("notifications")
       .update({ read_at: nowIso })
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .is("read_at", null);
     setItems((prev) =>
       prev.map((n) => (n.read_at ? n : { ...n, read_at: nowIso }))
     );
-  }, [user, unreadCount]);
+  }, [userId, unreadCount]);
 
   if (!isAuthenticated) return null;
 
@@ -223,9 +285,16 @@ export function NotificationBell() {
           )}
         </div>
 
-        {/* List */}
+        {/* List — lazy loaded on first popover open */}
         <div className="max-h-[420px] overflow-y-auto divide-y divide-border/40">
-          {items.length === 0 ? (
+          {!itemsLoaded ? (
+            <div className="flex items-center justify-center py-10">
+              <div
+                className="h-5 w-5 animate-spin rounded-full border-2 border-muted border-t-primary"
+                aria-label="Loading"
+              />
+            </div>
+          ) : items.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-10 px-6">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground/70">
                 <Bell className="h-5 w-5" />

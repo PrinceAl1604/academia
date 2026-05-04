@@ -256,6 +256,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setHasOnboarded(cached.hasOnboarded);
         setReferralCode(cached.referralCode);
         setLoading(false);
+        // PERF: skip the background refresh entirely if the cache is
+        // less than 5 minutes old. Saves ~150-300ms of network on
+        // every page navigation for active users. Stale cache
+        // updates will catch up on the NEXT page load past the TTL.
+        const PROFILE_FRESH_MS = 5 * 60 * 1000;
+        if (Date.now() - cached.cachedAt < PROFILE_FRESH_MS) {
+          return; // cache is fresh; no network call needed
+        }
         // Background refresh — discrepancies update state via setters.
         // We don't await; perceived load is already complete.
         loadUserProfile(session.user.id).catch(() => {});
