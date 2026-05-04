@@ -448,6 +448,38 @@ export const translations = {
       dmCannotMessage: "Couldn't open that conversation.",
     },
 
+    // Notifications — type+payload model. Each `*Title`/`*Body` takes
+    // {placeholder} substitutions resolved client-side from payload.
+    notifications: {
+      title: "Notifications",
+      empty: "You're all caught up.",
+      markAllRead: "Mark all as read",
+      viewAll: "View all",
+      timeJustNow: "just now",
+      timeMinutesAgo: "{n}m ago",
+      timeHoursAgo: "{n}h ago",
+      timeDaysAgo: "{n}d ago",
+      // Per-type strings
+      dmMessageTitle: "New message from {sender}",
+      dmMessageBody: "{preview}",
+      chatMentionTitle: "{sender} mentioned you",
+      chatMentionBody: "in #{channel} — {preview}",
+      sessionBookedTitle: "Session booked",
+      sessionBookedBody: "{title} · {when}",
+      sessionReminderTitle: "Tomorrow: {title}",
+      sessionReminderBody: "{when} · {duration} min",
+      sessionLiveTitle: "{title} is live now",
+      sessionLiveBody: "The host has opened the room — join in.",
+      sessionCancelledTitle: "Session cancelled",
+      sessionCancelledBody: "{title} was cancelled. Your monthly cap was freed.",
+      sessionUpdatedTitle: "Session updated",
+      sessionUpdatedBody: "{title} has been changed.",
+      proExpiringTitle: "Pro expires in {days} days",
+      proExpiringBody: "Renew to keep unlimited course access.",
+      referralRewardedTitle: "You earned a free month",
+      referralRewardedBody: "A friend you invited just upgraded.",
+    },
+
     // Pro upsell
     pro: {
       membership: "Pro membership",
@@ -1190,6 +1222,36 @@ export const translations = {
       dmAdminBadge: "Hôte",
       dmStartingConversation: "Ouverture de la conversation…",
       dmCannotMessage: "Impossible d'ouvrir cette conversation.",
+    },
+
+    notifications: {
+      title: "Notifications",
+      empty: "Vous êtes à jour.",
+      markAllRead: "Tout marquer comme lu",
+      viewAll: "Tout voir",
+      timeJustNow: "à l'instant",
+      timeMinutesAgo: "il y a {n}min",
+      timeHoursAgo: "il y a {n}h",
+      timeDaysAgo: "il y a {n}j",
+      dmMessageTitle: "Nouveau message de {sender}",
+      dmMessageBody: "{preview}",
+      chatMentionTitle: "{sender} vous a mentionné",
+      chatMentionBody: "dans #{channel} — {preview}",
+      sessionBookedTitle: "Session réservée",
+      sessionBookedBody: "{title} · {when}",
+      sessionReminderTitle: "Demain : {title}",
+      sessionReminderBody: "{when} · {duration} min",
+      sessionLiveTitle: "{title} est en direct",
+      sessionLiveBody: "L'hôte a ouvert la salle — rejoignez.",
+      sessionCancelledTitle: "Session annulée",
+      sessionCancelledBody:
+        "{title} a été annulée. Votre plafond mensuel a été libéré.",
+      sessionUpdatedTitle: "Session modifiée",
+      sessionUpdatedBody: "{title} a été modifiée.",
+      proExpiringTitle: "Pro expire dans {days} jours",
+      proExpiringBody: "Renouvelez pour garder l'accès illimité aux cours.",
+      referralRewardedTitle: "Vous avez gagné un mois gratuit",
+      referralRewardedBody: "Un ami que vous avez invité vient de passer Pro.",
     },
 
     // Pro upsell

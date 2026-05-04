@@ -85,6 +85,21 @@ export async function POST(req: Request) {
       joinUrl: `${APP_URL}/dashboard/sessions/${slot.id}`,
       bookingId, // stable UID for the .ics so calendar updates merge correctly
     });
+
+    // In-app notification (non-fatal — booking is already saved).
+    // Service-role insert bypasses RLS; user_id targets the booker.
+    await admin.from("notifications").insert({
+      user_id: access.user.id,
+      type: "session_booked",
+      payload: {
+        slot_id: slot.id,
+        title: slot.title,
+        starts_at: slot.starts_at,
+        duration_minutes: slot.duration_minutes,
+        session_type: slot.type,
+      },
+      link: `/dashboard/sessions/${slot.id}`,
+    });
   } catch (err) {
     // Non-fatal — log and continue. The booking already exists.
     console.error("notify-booking email failed:", err);

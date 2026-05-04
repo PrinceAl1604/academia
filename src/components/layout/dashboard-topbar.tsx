@@ -1,15 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  Bell,
   Menu,
   Search,
   Settings,
@@ -28,8 +22,6 @@ import {
   Compass,
   BookOpen,
   MessageSquare,
-  UserPlus,
-  BookPlus,
   HelpCircle,
   LogOut,
   PanelLeftClose,
@@ -43,14 +35,7 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { useSidebar } from "@/lib/sidebar-context";
 import { Logo } from "@/components/shared/logo";
 import { ExpiryBanner } from "@/components/shared/expiry-banner";
-import { supabase } from "@/lib/supabase";
-
-interface Notification {
-  id: string;
-  type: "new_student" | "new_course";
-  message: string;
-  time: string;
-}
+import { NotificationBell } from "@/components/shared/notification-bell";
 
 /**
  * Resolve a human-readable page title from the current pathname.
@@ -104,8 +89,6 @@ function usePageTitle(): string {
 export function DashboardTopbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const pathname = usePathname();
   const router = useRouter();
   const {
@@ -148,53 +131,6 @@ export function DashboardTopbar() {
     { label: t.subscription.title || "Subscription", href: "/dashboard/subscription", icon: CreditCard },
     { label: t.settings.title || "Settings", href: "/dashboard/settings", icon: Settings },
   ];
-
-  // Load notifications and compute unread count
-  useEffect(() => {
-    async function loadNotifications() {
-      const lastSeen = localStorage.getItem("notif_last_seen") || "1970-01-01";
-      if (isAdmin) {
-        const { data } = await supabase
-          .from("users")
-          .select("id, name, email, created_at")
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        const items = (data ?? []).map((u) => ({
-          id: u.id,
-          type: "new_student" as const,
-          message: `${u.name || u.email} joined`,
-          time: new Date(u.created_at).toLocaleDateString(),
-          _raw: u.created_at,
-        }));
-        setNotifications(items);
-        setUnreadCount(items.filter((n) => n._raw > lastSeen).length);
-      } else {
-        const { data } = await supabase
-          .from("courses")
-          .select("id, title, created_at")
-          .eq("is_published", true)
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        const items = (data ?? []).map((c) => ({
-          id: c.id,
-          type: "new_course" as const,
-          message: `New course: ${c.title}`,
-          time: new Date(c.created_at).toLocaleDateString(),
-          _raw: c.created_at,
-        }));
-        setNotifications(items);
-        setUnreadCount(items.filter((n) => n._raw > lastSeen).length);
-      }
-    }
-    if (isAuthenticated) loadNotifications();
-  }, [isAdmin, isAuthenticated]);
-
-  const markNotificationsRead = () => {
-    localStorage.setItem("notif_last_seen", new Date().toISOString());
-    setUnreadCount(0);
-  };
 
   return (
     <>
@@ -335,49 +271,10 @@ export function DashboardTopbar() {
             <LanguageToggle />
           </div>
 
-          {/* Notifications */}
-          {isAuthenticated && (
-            <Popover onOpenChange={(open) => { if (open) markNotificationsRead(); }}>
-              <PopoverTrigger render={<Button variant="ghost" size="icon" className="relative h-9 w-9" aria-label="Notifications" />}>
-                <Bell className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
-                )}
-              </PopoverTrigger>
-              <PopoverContent className="w-[calc(100vw-1rem)] sm:w-80 p-0" align="end" sideOffset={8}>
-                <div className="border-b border-border/60 px-4 py-3">
-                  <p className="text-sm font-semibold text-foreground">
-                    Notifications
-                  </p>
-                </div>
-                <div className="max-h-64 overflow-y-auto divide-y divide-border/40">
-                  {notifications.length === 0 ? (
-                    <p className="p-4 text-sm text-muted-foreground text-center">
-                      {t.nav.signIn === "Sign In" ? "No notifications" : "Aucune notification"}
-                    </p>
-                  ) : (
-                    notifications.map((n) => (
-                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0 mt-0.5">
-                          {n.type === "new_student" ? (
-                            <UserPlus className="h-4 w-4 text-blue-400" />
-                          ) : (
-                            <BookPlus className="h-4 w-4 text-primary" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground">{n.message}</p>
-                          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
-                            {n.time}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
+          {/* Notifications — real per-user feed (was a fake "latest
+               students/courses" dropdown). Component owns its own
+               state, realtime, and mark-read. */}
+          <NotificationBell />
 
           {/* User menu — avatar dropdown.
               Replaces the previous sidebar-bottom profile section.

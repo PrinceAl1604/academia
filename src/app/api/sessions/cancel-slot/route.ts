@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
   const { data: activeBookings } = await admin
     .from("session_bookings")
-    .select("id, users!inner(email, name)")
+    .select("id, user_id, users!inner(email, name)")
     .eq("slot_id", slotId)
     .is("cancelled_at", null);
 
@@ -80,22 +80,42 @@ export async function POST(req: Request) {
 
   // Best-effort notify. We don't fail the whole request if Resend
   // hiccups on one user — log it and keep going so the others get
-  // their email.
+  // their email. In-app notification fires alongside the email; if
+  // email is delayed/blocked, the user still sees it on their bell.
+  const slotTitle = (slot as { title: string }).title;
+  const slotStartsAt = (slot as { starts_at: string }).starts_at;
   let notified = 0;
   const errors: string[] = [];
   for (const row of activeBookings ?? []) {
     const u = (row as unknown as { users: { email: string; name: string } })
       .users;
+    const userId = (row as { user_id: string }).user_id;
     try {
       await sendSlotCancelledEmail({
         to: u.email,
         name: u.name,
-        sessionTitle: (slot as { title: string }).title,
-        startsAtIso: (slot as { starts_at: string }).starts_at,
+        sessionTitle: slotTitle,
+        startsAtIso: slotStartsAt,
       });
       notified++;
     } catch (err) {
       errors.push(`${u.email}: ${String(err)}`);
+    }
+    // In-app notification — separate try/catch so an email failure
+    // doesn't skip the bell entry.
+    try {
+      await admin.from("notifications").insert({
+        user_id: userId,
+        type: "session_cancelled",
+        payload: {
+          slot_id: slotId,
+          title: slotTitle,
+          starts_at: slotStartsAt,
+        },
+        link: "/dashboard/sessions",
+      });
+    } catch (err) {
+      errors.push(`notif ${u.email}: ${String(err)}`);
     }
   }
 

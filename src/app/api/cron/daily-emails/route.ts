@@ -52,7 +52,7 @@ export async function GET(req: Request) {
 
     const { data: expiringSoon } = await supabase
       .from("users")
-      .select("email, name, pro_expires_at, notification_preferences")
+      .select("id, email, name, pro_expires_at, notification_preferences")
       .eq("subscription_tier", "pro")
       .neq("role", "admin")
       .gte("pro_expires_at", dayStart.toISOString())
@@ -68,6 +68,21 @@ export async function GET(req: Request) {
         results.reminders++;
       } catch (err) {
         results.errors.push(`reminder:${user.email}:${String(err)}`);
+      }
+      // In-app bell — runs alongside email so users who don't open
+      // their inbox still get the prompt next time they open the app.
+      try {
+        await supabase.from("notifications").insert({
+          user_id: user.id,
+          type: "pro_expiring",
+          payload: {
+            days_left: 3,
+            expires_at: user.pro_expires_at,
+          },
+          link: "/dashboard/subscription",
+        });
+      } catch (err) {
+        results.errors.push(`notif_expiring:${user.email}:${String(err)}`);
       }
     }
   } catch (err) {
@@ -148,7 +163,7 @@ export async function GET(req: Request) {
     const { data: pendingReminders } = await supabase
       .from("session_bookings")
       .select(
-        "id, session_slots!inner(id, title, starts_at, duration_minutes, type, status), users!inner(email, name)"
+        "id, user_id, session_slots!inner(id, title, starts_at, duration_minutes, type, status), users!inner(email, name)"
       )
       .is("cancelled_at", null)
       .is("reminder_sent_at", null)
@@ -192,6 +207,26 @@ export async function GET(req: Request) {
       } catch (err) {
         results.errors.push(
           `session_reminder:${user.email}:${String(err)}`
+        );
+      }
+      // In-app notification — pairs with the email so users who don't
+      // open their inbox still see "you have a session tomorrow" on
+      // their next app visit.
+      try {
+        await supabase.from("notifications").insert({
+          user_id: (row as { user_id: string }).user_id,
+          type: "session_reminder",
+          payload: {
+            slot_id: slot.id,
+            title: slot.title,
+            starts_at: slot.starts_at,
+            duration_minutes: slot.duration_minutes,
+          },
+          link: `/dashboard/sessions/${slot.id}`,
+        });
+      } catch (err) {
+        results.errors.push(
+          `notif_session_reminder:${user.email}:${String(err)}`
         );
       }
     }
