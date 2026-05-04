@@ -38,6 +38,7 @@ import {
   Plus,
   Search as SearchIcon,
   Crown,
+  BellOff,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -332,6 +333,54 @@ export default function CommunityPage() {
   // so we still show the section to everyone, just gate the "+ New"
   // button behind Pro/admin status.
   const canStartDm = isAdmin || isPro;
+
+  /* ─── Per-channel mute state ────────────────────────────────
+   * Tracks which channels the current user has muted. Read once
+   * on mount + kept live by realtime. Used to (a) render a muted
+   * indicator on the sidebar row and (b) drive the mute/unmute
+   * toggle action. The chat_mention + announcement triggers honor
+   * this server-side too — muted channels never create notifs. */
+  const [mutedChannels, setMutedChannels] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("chat_channel_mutes")
+        .select("channel_id")
+        .eq("user_id", user.id);
+      setMutedChannels(
+        new Set((data ?? []).map((r: { channel_id: string }) => r.channel_id))
+      );
+    })();
+  }, [user?.id]);
+
+  const toggleChannelMute = useCallback(
+    async (channelId: string) => {
+      if (!user) return;
+      const isMuted = mutedChannels.has(channelId);
+      // Optimistic update so the icon flips instantly
+      setMutedChannels((prev) => {
+        const next = new Set(prev);
+        if (isMuted) next.delete(channelId);
+        else next.add(channelId);
+        return next;
+      });
+      if (isMuted) {
+        await supabase
+          .from("chat_channel_mutes")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("channel_id", channelId);
+      } else {
+        await supabase.from("chat_channel_mutes").insert({
+          user_id: user.id,
+          channel_id: channelId,
+        });
+      }
+    },
+    [user, mutedChannels]
+  );
 
   const totalUnread = useMemo(
     () => Array.from(unreadCounts.values()).reduce((a, b) => a + b, 0),
@@ -1632,6 +1681,7 @@ export default function CommunityPage() {
             const isActive = ch.id === activeChannelId;
             const unread = unreadCounts.get(ch.id) || 0;
             const isAnnouncements = ch.type === "announcements";
+            const isMuted = mutedChannels.has(ch.id);
             return (
               <button
                 key={ch.id}
@@ -1642,7 +1692,8 @@ export default function CommunityPage() {
                     "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
                   isActive
                     ? "bg-sidebar-accent text-foreground"
-                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                  isMuted && !isActive && "opacity-60"
                 )}
               >
                 <span
@@ -1663,6 +1714,12 @@ export default function CommunityPage() {
                     ? t.community?.announcements || "Announcements"
                     : ch.name}
                 </span>
+                {isMuted && (
+                  <BellOff
+                    className="h-3 w-3 text-muted-foreground/70 shrink-0"
+                    aria-label={t.community?.channelMuted || "Muted"}
+                  />
+                )}
                 {unread > 0 && (
                   <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground tabular-nums px-1">
                     {unread > 99 ? "99+" : unread}
@@ -1926,6 +1983,34 @@ export default function CommunityPage() {
               >
                 <Pin className="h-3.5 w-3.5" />
                 {pinnedMessages.length}
+              </Button>
+            )}
+
+            {/* Per-channel mute toggle. When muted, mention + announcement
+                 notifications skip this channel server-side; user still
+                 sees the messages when they visit. */}
+            {activeChannel && activeChannel.type !== "direct" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => toggleChannelMute(activeChannel.id)}
+                title={
+                  mutedChannels.has(activeChannel.id)
+                    ? t.community?.channelUnmute || "Unmute"
+                    : t.community?.channelMute || "Mute notifications"
+                }
+                aria-label={
+                  mutedChannels.has(activeChannel.id)
+                    ? t.community?.channelUnmute || "Unmute"
+                    : t.community?.channelMute || "Mute notifications"
+                }
+              >
+                {mutedChannels.has(activeChannel.id) ? (
+                  <BellOff className="h-3.5 w-3.5 text-amber-500" />
+                ) : (
+                  <Bell className="h-3.5 w-3.5" />
+                )}
               </Button>
             )}
 
