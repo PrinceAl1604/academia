@@ -24,13 +24,22 @@ import { useLanguage } from "@/lib/i18n/language-context";
 
 const SW_PATH = "/sw.js";
 
-function urlBase64ToUint8Array(base64: string): Uint8Array {
+/**
+ * Decode a URL-safe base64 VAPID key into a fresh ArrayBuffer that
+ * the push subscribe API will accept. Returns a freshly-allocated
+ * ArrayBuffer (NOT a view onto the Uint8Array's buffer) so the type
+ * matches BufferSource exactly under strict TS — recent TS versions
+ * type Uint8Array as Uint8Array<ArrayBufferLike> which doesn't
+ * narrow cleanly to ArrayBuffer.
+ */
+function urlBase64ToBuffer(base64: string): ArrayBuffer {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
   const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
   const raw = window.atob(b64);
-  const out = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-  return out;
+  const buf = new ArrayBuffer(raw.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < raw.length; i++) view[i] = raw.charCodeAt(i);
+  return buf;
 }
 
 export function PushNotificationsToggle() {
@@ -93,7 +102,7 @@ export function PushNotificationsToggle() {
       const reg = await navigator.serviceWorker.register(SW_PATH);
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublic),
+        applicationServerKey: urlBase64ToBuffer(vapidPublic),
       });
       const subJson = sub.toJSON() as {
         endpoint?: string;
