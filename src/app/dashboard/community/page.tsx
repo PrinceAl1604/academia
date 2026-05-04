@@ -129,6 +129,35 @@ const GENERAL_CHANNEL_ID = "00000000-0000-0000-0000-000000000001";
 const MESSAGES_PER_PAGE = 50;
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "🔥", "🎉", "💡", "👏", "🙏"];
 
+/* ─── Avatar color hashing ────────────────────────────────
+ * Deterministic palette pick per user id. A monochrome wall of
+ * "first letter on grey" was the previous look — fine for chat
+ * mechanics, mute on identity. Hashing the id into one of N
+ * tinted backgrounds gives instant visual recognition ("ah, the
+ * teal one is replying again") without uploading photos.
+ *
+ * Admins still override with the red "admin" tint downstream —
+ * authority signal beats per-user differentiation. */
+const AVATAR_TINTS = [
+  "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+  "bg-violet-500/15 text-violet-700 dark:text-violet-300",
+  "bg-rose-500/15 text-rose-700 dark:text-rose-300",
+  "bg-teal-500/15 text-teal-700 dark:text-teal-300",
+  "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
+  "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300",
+];
+
+function userTintClass(id?: string | null): string {
+  if (!id) return AVATAR_TINTS[0];
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  }
+  return AVATAR_TINTS[Math.abs(hash) % AVATAR_TINTS.length];
+}
+
 /* ─── Channel Icon ────────────────────────────────────────── */
 
 function ChannelIcon({
@@ -228,7 +257,8 @@ export default function CommunityPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
-  const [onlineCount, setOnlineCount] = useState(0);
+  const [onlineUsers, setOnlineUsers] = useState<{ id: string; name: string }[]>([]);
+  const onlineCount = onlineUsers.length;
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<ChatMessage[]>([]);
   const [showPinned, setShowPinned] = useState(false);
@@ -997,7 +1027,22 @@ export default function CommunityPage() {
 
     presence
       .on("presence", { event: "sync" }, () => {
-        setOnlineCount(Object.keys(presence.presenceState()).length);
+        const state = presence.presenceState() as Record<
+          string,
+          { user_id: string; name: string }[]
+        >;
+        const list: { id: string; name: string }[] = [];
+        for (const key of Object.keys(state)) {
+          const meta = state[key]?.[0];
+          if (meta) list.push({ id: meta.user_id, name: meta.name || "User" });
+        }
+        // Sort own user first, then alphabetical — keeps tooltip stable.
+        list.sort((a, b) => {
+          if (a.id === user.id) return -1;
+          if (b.id === user.id) return 1;
+          return a.name.localeCompare(b.name);
+        });
+        setOnlineUsers(list);
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
@@ -1657,12 +1702,20 @@ export default function CommunityPage() {
       >
         {/* Sidebar header */}
         <div className="flex items-center justify-between px-3 py-3 border-b border-border">
-          <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            / {t.community?.channels || "Channels"}
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
+            <span className="opacity-50">/</span>{" "}
+            {t.community?.channels || "Channels"}
           </h2>
-          <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5">
+          <div
+            className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5"
+            title={
+              onlineUsers.length > 0
+                ? onlineUsers.map((u) => u.name).join(", ")
+                : undefined
+            }
+          >
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            <span className="text-[10px] font-medium text-primary">
+            <span className="text-[10px] font-medium text-primary tabular-nums">
               {onlineCount}
             </span>
           </div>
@@ -1734,8 +1787,9 @@ export default function CommunityPage() {
                but the "+ New" button is gated to Pro/admin via
                canStartDm. Empty state nudges initiation. */}
           <div className="pt-3 pb-1 px-2.5 flex items-center justify-between">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-              / {t.community?.directMessages || "Direct messages"}
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
+              <span className="opacity-50">/</span>{" "}
+              {t.community?.directMessages || "Direct messages"}
             </p>
             {canStartDm && (
               <button
@@ -1756,8 +1810,26 @@ export default function CommunityPage() {
           </div>
 
           {dmThreads.length === 0 ? (
-            <div className="px-3 py-2 text-[11px] text-muted-foreground/60 leading-relaxed">
-              {t.community?.noDmsYet || "No direct messages yet."}
+            <div className="px-3 py-2 space-y-1.5">
+              <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+                {t.community?.noDmsYet || "No direct messages yet."}
+              </p>
+              {canStartDm && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewDmOpen(true);
+                    setDmSearchQuery("");
+                    setDmSearchResults([]);
+                    setDmError(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-md text-[11px] font-medium text-primary hover:underline underline-offset-2"
+                >
+                  <Plus className="h-3 w-3" />
+                  {t.community?.newMessage ||
+                    (isEn ? "Start a conversation" : "Démarrer une conversation")}
+                </button>
+              )}
             </div>
           ) : (
             dmThreads.map((dm) => {
@@ -1788,8 +1860,9 @@ export default function CommunityPage() {
                     <AvatarFallback
                       className={cn(
                         "text-[10px] font-medium",
-                        isAdminThread &&
-                          "bg-amber-500/15 text-amber-500"
+                        isAdminThread
+                          ? "bg-amber-500/15 text-amber-500"
+                          : userTintClass(dm.other_user_id)
                       )}
                     >
                       {initials}
@@ -1818,8 +1891,9 @@ export default function CommunityPage() {
           {courseChannels.length > 0 && (
             <>
               <div className="pt-3 pb-1 px-2.5">
-                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-                  / {t.community?.courseChannels || "Courses"}
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
+                  <span className="opacity-50">/</span>{" "}
+                  {t.community?.courseChannels || "Courses"}
                 </p>
               </div>
               {courseChannels.map((ch) => {
@@ -1829,6 +1903,7 @@ export default function CommunityPage() {
                   <button
                     key={ch.id}
                     onClick={() => switchChannel(ch.id)}
+                    title={ch.name}
                     className={cn(
                       "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-2 text-left transition-colors",
                       isActive &&
@@ -1862,8 +1937,13 @@ export default function CommunityPage() {
 
       {/* ─── Chat Area ──────────────────────────────────────── */}
       <div className="flex flex-1 flex-col min-w-0">
-        {/* ─── Chat Header ────────────────────────────────────── */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        {/* ─── Chat Header ──────────────────────────────────────
+             Border spans full-width for visual continuity, but the
+             header content tracks the message column's max-w-3xl
+             so the sidebar toggle, channel name, and online
+             indicator stay aligned with the conversation below. */}
+        <div className="border-b border-border">
+        <div className="max-w-3xl mx-auto w-full flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5 min-w-0">
             {/* Toggle sidebar */}
             <Button
@@ -1906,8 +1986,9 @@ export default function CommunityPage() {
                       <AvatarFallback
                         className={cn(
                           "text-xs font-medium",
-                          isAdminThread &&
-                            "bg-amber-500/15 text-amber-500"
+                          isAdminThread
+                            ? "bg-amber-500/15 text-amber-500"
+                            : userTintClass(dm.other_user_id)
                         )}
                       >
                         {initials}
@@ -2019,14 +2100,33 @@ export default function CommunityPage() {
                  mention rows via the chat_mentions trigger that mirrors
                  into the unified notifications feed. */}
 
-            {/* Online indicator (mobile-friendly) */}
-            <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1">
+            {/* Online indicator — title shows full roster on hover.
+                 Singular/plural forms use the proper localized
+                 strings ("1 personne en ligne" vs "3 personnes en
+                 ligne") so the count is unambiguous, not "1 en
+                 ligne" which leaves users guessing what 1 means. */}
+            <div
+              className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1"
+              title={
+                onlineUsers.length > 0
+                  ? onlineUsers.map((u) => u.name).join(", ")
+                  : undefined
+              }
+            >
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-medium text-primary">
-                {onlineCount} {isEn ? "online" : "en ligne"}
+              <span className="text-xs font-medium text-primary tabular-nums">
+                {onlineCount}{" "}
+                {isEn
+                  ? onlineCount === 1
+                    ? "person online"
+                    : "people online"
+                  : onlineCount === 1
+                  ? "personne en ligne"
+                  : "personnes en ligne"}
               </span>
             </div>
           </div>
+        </div>
         </div>
 
         {/* ─── Pinned Messages Panel ──────────────────────────── */}
@@ -2057,18 +2157,24 @@ export default function CommunityPage() {
           </div>
         )}
 
-        {/* ─── Messages Area ──────────────────────────────────── */}
+        {/* ─── Messages Area ────────────────────────────────────
+             Outer scrolls full-width (so the scrollbar hugs the
+             viewport edge). Inner column is constrained to
+             max-w-3xl ≈ 768px and centered — gives the conversation
+             a comfortable measure on wide screens instead of
+             stranding it against the left edge. */}
         <div
           ref={chatContainerRef}
-          className="flex-1 overflow-y-auto px-1 py-4 space-y-1"
+          className="flex-1 overflow-y-auto"
           onScroll={handleScroll}
         >
+        <div className="max-w-3xl mx-auto w-full px-4 py-4 space-y-1 min-h-full flex flex-col">
           {loading ? (
-            <div className="flex h-full items-center justify-center">
+            <div className="flex flex-1 items-center justify-center">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/70" />
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/70">
+            <div className="flex flex-1 flex-col items-center justify-center text-muted-foreground/70">
               <div className="mb-4">
                 <Illustration name="chat-empty" alt="" size="md" />
               </div>
@@ -2136,10 +2242,16 @@ export default function CommunityPage() {
                     "group flex items-start gap-2.5 px-2 py-1 rounded-lg transition-colors hover:bg-muted/40",
                     msg.is_pinned &&
                       !msg.is_deleted &&
-                      "bg-amber-50/40 dark:bg-amber-900/10"
+                      "bg-amber-50/40 dark:bg-amber-900/10",
+                    // Tombstones: dim the entire row (avatar, name,
+                    // body) so they don't compete with live messages
+                    // for attention but stay readable for context.
+                    msg.is_deleted && "opacity-50"
                   )}
                 >
-                  {/* Avatar */}
+                  {/* Avatar — hash-tinted by user id so the same
+                       person is always the same color in the feed.
+                       Admins override with the red authority tint. */}
                   <div className="w-8 shrink-0">
                     {showAvatar && (
                       <Avatar className="h-8 w-8">
@@ -2148,7 +2260,7 @@ export default function CommunityPage() {
                             "text-[11px] font-semibold",
                             isMsgAdmin
                               ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                              : "bg-muted text-foreground/90"
+                              : userTintClass(msg.user_id)
                           )}
                         >
                           {getInitials(msg.user?.name || "")}
@@ -2277,7 +2389,7 @@ export default function CommunityPage() {
                         expandedThreads.has(msg.id)) && (
                         <button
                           onClick={() => toggleThread(msg)}
-                          className="mt-1 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                          className="mt-1 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors tabular-nums"
                           aria-expanded={expandedThreads.has(msg.id)}
                         >
                           <MessageSquare className="h-3 w-3" />
@@ -2290,15 +2402,12 @@ export default function CommunityPage() {
                               ? `${msg.reply_count ?? 0} replies`
                               : `${msg.reply_count ?? 0} réponses`}
                           </span>
-                          <span className="text-[10px] text-muted-foreground/70">
-                            {expandedThreads.has(msg.id)
-                              ? isEn
-                                ? "(hide)"
-                                : "(masquer)"
-                              : isEn
-                              ? "(show)"
-                              : "(afficher)"}
-                          </span>
+                          <ChevronDown
+                            className={cn(
+                              "h-3 w-3 transition-transform text-primary/70",
+                              expandedThreads.has(msg.id) && "rotate-180"
+                            )}
+                          />
                         </button>
                       )}
 
@@ -2331,7 +2440,7 @@ export default function CommunityPage() {
                                       "text-[9px] font-semibold",
                                       isReplyAdmin
                                         ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400"
-                                        : "bg-muted text-foreground/90"
+                                        : userTintClass(reply.user_id)
                                     )}
                                   >
                                     {getInitials(reply.user?.name || "")}
@@ -2685,6 +2794,7 @@ export default function CommunityPage() {
           )}
           <div ref={bottomRef} />
         </div>
+        </div>
 
         {/* ─── Scroll to bottom ───────────────────────────────── */}
         {showScrollBtn && (
@@ -2701,7 +2811,8 @@ export default function CommunityPage() {
 
         {/* ─── Input Area ─────────────────────────────────────── */}
         {canPost ? (
-          <div className="relative border-t border-border px-4 pt-3 pb-2">
+          <div className="border-t border-border">
+          <div className="relative max-w-3xl mx-auto w-full px-4 pt-3 pb-2">
             {showEmoji && (
               <div className="flex gap-1 mb-2 flex-wrap">
                 {QUICK_EMOJIS.map((emoji) => (
@@ -2799,6 +2910,7 @@ export default function CommunityPage() {
                 )}
               </Button>
             </div>
+          </div>
           </div>
         ) : (
           <div className="border-t border-border px-4 py-3">
