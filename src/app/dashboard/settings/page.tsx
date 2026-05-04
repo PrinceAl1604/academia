@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { PushNotificationsToggle } from "@/components/shared/push-notifications-toggle";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -609,6 +610,15 @@ export default function SettingsPage() {
                   {t.notifications?.preferencesSubtitle ||
                     "Choose how you want to be notified for each category."}
                 </p>
+
+                {/* Push subscription toggle — system-level pushes when
+                     the tab is closed. Only shown if the browser
+                     supports the Web Push API (component renders nothing
+                     otherwise). */}
+                <div className="mb-6">
+                  <PushNotificationsToggle />
+                </div>
+
 
                 {/* ─── 2-column matrix: Email · In-app ──────────
                      Each category has up to two switches. Categories
