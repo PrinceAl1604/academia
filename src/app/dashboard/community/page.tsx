@@ -432,19 +432,24 @@ export default function CommunityPage() {
       }
     });
 
-    const threads: DmThread[] = (participants ?? []).map(
-      (p: {
+    // Supabase's generated types model FK joins as arrays even when
+    // it's effectively 1:1 (no !inner hint here). Cast through
+    // unknown so we can read .user as a single object — at runtime
+    // the nested embed is always one row per participant join.
+    const threads: DmThread[] = (participants ?? []).map((row) => {
+      const r = row as unknown as {
         channel_id: string;
         user_id: string;
         user: { id: string; name: string; role: string | null };
-      }) => ({
-        channel_id: p.channel_id,
-        other_user_id: p.user.id,
-        other_name: p.user.name,
-        other_role: p.user.role,
-        last_message_at: lastByChannel.get(p.channel_id) ?? null,
-      })
-    );
+      };
+      return {
+        channel_id: r.channel_id,
+        other_user_id: r.user.id,
+        other_name: r.user.name,
+        other_role: r.user.role,
+        last_message_at: lastByChannel.get(r.channel_id) ?? null,
+      };
+    });
     // Sort by recency (admin pinned at top would be nice; skipped
     // for v1 — admin appears wherever last activity puts them).
     threads.sort((a, b) => {
