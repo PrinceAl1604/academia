@@ -20,6 +20,7 @@ const geistMono = Geist_Mono({
 import { LanguageProvider } from "@/lib/i18n/language-context";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProgressProvider } from "@/lib/progress-context";
+import { AppToaster } from "@/components/shared/toaster";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -111,6 +112,10 @@ export default function RootLayout({
             <ProgressProvider>{children}</ProgressProvider>
           </AuthProvider>
         </LanguageProvider>
+        {/* Sonner toast container — emits floating banners for live
+             events (DM arrived, session went live, etc.) when the
+             notification popover is closed. */}
+        <AppToaster />
       </body>
     </html>
   );

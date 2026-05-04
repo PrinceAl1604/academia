@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Bell,
   MessageSquare,
@@ -97,6 +98,22 @@ export function NotificationBell() {
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [open, setOpen] = useState(false);
+  // Ref mirror of `open` so the realtime INSERT handler (a closure
+  // captured at subscribe time) can read the CURRENT popover state
+  // when deciding whether to fire a toast.
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
+  // Bell mounts before the auth state stabilizes — so realtime might
+  // replay buffered events from before the user even logged in. We
+  // skip toasts during the first ~2s after mount to avoid that
+  // catch-up flood. Same trick avoids replaying on tab refocus.
+  const armedAtRef = useRef<number>(Date.now());
+  useEffect(() => {
+    armedAtRef.current = Date.now();
+  }, [userId]);
 
   // Persist count to localStorage so next mount paints instantly
   useEffect(() => {
@@ -173,6 +190,46 @@ export function NotificationBell() {
             if (prev.some((n) => n.id === row.id)) return prev;
             return [row, ...prev].slice(0, PAGE_LIMIT);
           });
+
+          // ─── Toast for live events ────────────────────────────
+          // Skip if popover is open (user already sees it) or if
+          // the row is older than 5s (catch-up replay on reconnect /
+          // tab refocus — already old, don't pop a toast for it).
+          // Also skip during first 2s after mount (replay flood).
+          const ageMs = Date.now() - new Date(row.created_at).getTime();
+          const sinceArmedMs = Date.now() - armedAtRef.current;
+          if (openRef.current || ageMs > 5000 || sinceArmedMs < 2000) {
+            return;
+          }
+
+          const { title, body } = renderTitleBody(row, t);
+          const toastId = `notif-${row.id}`;
+          // Session-live gets a special "Join now" CTA — most
+          // important live event, deserves the action button.
+          if (row.type === "session_live") {
+            toast(title, {
+              id: toastId,
+              description: body ?? undefined,
+              action: {
+                label: t.sessions?.adminJoinRoom || "Join",
+                onClick: () => router.push(row.link ?? "/dashboard/sessions"),
+              },
+            });
+          } else {
+            // Generic toast — click banner navigates via the
+            // notification's link.
+            toast(title, {
+              id: toastId,
+              description: body ?? undefined,
+              onAutoClose: () => {},
+              action: row.link
+                ? {
+                    label: t.notifications?.viewAll || "Open",
+                    onClick: () => router.push(row.link!),
+                  }
+                : undefined,
+            });
+          }
         }
       )
       .on(
