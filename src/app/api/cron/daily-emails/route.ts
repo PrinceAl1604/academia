@@ -12,6 +12,22 @@ const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app";
 
 /**
+ * True iff the user has muted this email category in their
+ * notification_preferences. Centralized helper so every cron block
+ * can short-circuit consistently.
+ */
+function emailMuted(
+  prefs: unknown,
+  category: string
+): boolean {
+  if (!prefs || typeof prefs !== "object") return false;
+  const p = prefs as { muted_email_categories?: string[] };
+  return Array.isArray(p.muted_email_categories)
+    ? p.muted_email_categories.includes(category)
+    : false;
+}
+
+/**
  * GET /api/cron/daily-emails
  * Runs daily via Vercel Cron. Handles:
  *  1. Renewal reminders (3 days before Pro expires)
@@ -59,15 +75,21 @@ export async function GET(req: Request) {
       .lte("pro_expires_at", dayEnd.toISOString());
 
     for (const user of expiringSoon ?? []) {
-      try {
-        await sendRenewalReminderEmail({
-          to: user.email,
-          name: user.name,
-          daysLeft: 3,
-        });
-        results.reminders++;
-      } catch (err) {
-        results.errors.push(`reminder:${user.email}:${String(err)}`);
+      // Skip email if user muted the "pro" email category. In-app
+      // notification still fires below (separate mute path).
+      if (emailMuted(user.notification_preferences, "pro")) {
+        // no-op email
+      } else {
+        try {
+          await sendRenewalReminderEmail({
+            to: user.email,
+            name: user.name,
+            daysLeft: 3,
+          });
+          results.reminders++;
+        } catch (err) {
+          results.errors.push(`reminder:${user.email}:${String(err)}`);
+        }
       }
       // In-app bell — runs alongside email so users who don't open
       // their inbox still get the prompt next time they open the app.
@@ -95,23 +117,31 @@ export async function GET(req: Request) {
 
     const { data: justExpired } = await supabase
       .from("users")
-      .select("id, email, name, pro_expires_at")
+      .select("id, email, name, pro_expires_at, notification_preferences")
       .eq("subscription_tier", "pro")
       .neq("role", "admin")
       .gte("pro_expires_at", twentyFourHoursAgo.toISOString())
       .lte("pro_expires_at", now.toISOString());
 
     for (const user of justExpired ?? []) {
+      // Email subject to muted_email_categories — but the DB
+      // downgrade below ALWAYS happens regardless of email pref.
+      if (!emailMuted(user.notification_preferences, "pro")) {
+        try {
+          await sendProExpiredEmail({ to: user.email, name: user.name });
+          results.expired++;
+        } catch (err) {
+          results.errors.push(`expired:${user.email}:${String(err)}`);
+        }
+      }
+      // Downgrade always runs
       try {
-        await sendProExpiredEmail({ to: user.email, name: user.name });
-        // Downgrade to free
         await supabase
           .from("users")
           .update({ subscription_tier: "free" })
           .eq("email", user.email);
-        results.expired++;
       } catch (err) {
-        results.errors.push(`expired:${user.email}:${String(err)}`);
+        results.errors.push(`downgrade:${user.email}:${String(err)}`);
       }
       // In-app pro_expired notification — pairs with the email so
       // users who don't open inbox see the prompt next app visit.
@@ -179,7 +209,7 @@ export async function GET(req: Request) {
     const { data: pendingReminders } = await supabase
       .from("session_bookings")
       .select(
-        "id, user_id, session_slots!inner(id, title, starts_at, duration_minutes, type, status), users!inner(email, name)"
+        "id, user_id, session_slots!inner(id, title, starts_at, duration_minutes, type, status), users!inner(email, name, notification_preferences)"
       )
       .is("cancelled_at", null)
       .is("reminder_sent_at", null)
@@ -201,29 +231,41 @@ export async function GET(req: Request) {
         users: { email: string; name: string };
       }).session_slots;
       const user = (row as unknown as {
-        users: { email: string; name: string };
+        users: {
+          email: string;
+          name: string;
+          notification_preferences?: unknown;
+        };
       }).users;
 
+      // Skip email if user muted "session" emails. Reminder mark
+      // still fires below so we don't keep retrying.
+      if (!emailMuted(user.notification_preferences, "session")) {
+        try {
+          await sendSessionReminderEmail({
+            to: user.email,
+            name: user.name,
+            sessionTitle: slot.title,
+            startsAtIso: slot.starts_at,
+            durationMinutes: slot.duration_minutes,
+            type: slot.type,
+            joinUrl: `${APP_URL}/dashboard/sessions/${slot.id}`,
+            bookingId: (row as { id: string }).id,
+          });
+          results.sessionReminders++;
+        } catch (err) {
+          results.errors.push(
+            `session_reminder:${user.email}:${String(err)}`
+          );
+        }
+      }
       try {
-        await sendSessionReminderEmail({
-          to: user.email,
-          name: user.name,
-          sessionTitle: slot.title,
-          startsAtIso: slot.starts_at,
-          durationMinutes: slot.duration_minutes,
-          type: slot.type,
-          joinUrl: `${APP_URL}/dashboard/sessions/${slot.id}`,
-          bookingId: (row as { id: string }).id,
-        });
         await supabase
           .from("session_bookings")
           .update({ reminder_sent_at: new Date().toISOString() })
           .eq("id", (row as { id: string }).id);
-        results.sessionReminders++;
       } catch (err) {
-        results.errors.push(
-          `session_reminder:${user.email}:${String(err)}`
-        );
+        results.errors.push(`reminder_mark:${user.email}:${String(err)}`);
       }
       // In-app notification — pairs with the email so users who don't
       // open their inbox still see "you have a session tomorrow" on

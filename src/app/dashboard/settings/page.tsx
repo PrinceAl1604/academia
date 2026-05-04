@@ -48,16 +48,20 @@ const tabs = [
 type Tab = (typeof tabs)[number]["id"];
 
 interface NotificationPrefs {
-  // Email preferences (used by cron — kept as-is for compatibility)
+  // Legacy email keys — still read by some cron paths (renewal,
+  // nudge). Kept for backward-compat; new dual-matrix UI also writes
+  // to muted_email_categories[].
   course_updates: boolean;
   new_courses: boolean;
   weekly_digest: boolean;
   promotional: boolean;
-  // In-app notifications: array of muted notification types. The
-  // create_notification SQL helper checks this and short-circuits
-  // before inserting, so muted notifications never hit the table or
-  // the bell badge.
+  // In-app notifications: array of muted notification TYPE strings.
+  // The create_notification SQL helper short-circuits if a row's
+  // type is in here.
   muted_types?: string[];
+  // Email notifications: array of muted CATEGORY ids (e.g. "session",
+  // "pro"). Cron paths check this before sending.
+  muted_email_categories?: string[];
 }
 
 const DEFAULT_NOTIF: NotificationPrefs = {
@@ -66,42 +70,62 @@ const DEFAULT_NOTIF: NotificationPrefs = {
   weekly_digest: false,
   promotional: false,
   muted_types: [],
+  muted_email_categories: [],
 };
 
 /**
- * Notification categories — group several DB types under one toggle
- * for a sane UX (no one wants 9 individual switches for "session
- * booked" / "session reminder" / "session live" / etc.).
+ * Unified notification categories — each renders as one row in the
+ * settings matrix with two switches (Email + In-app). When a channel
+ * doesn't apply (e.g. no email for DMs yet), the row shows "—".
+ *
+ *  - inAppTypes: notification rows with these types get muted server-
+ *    side via muted_types[] and the create_notification helper.
+ *  - emailCategory: a stable id stored in muted_email_categories[].
+ *    The cron consults this before sending the corresponding email.
  */
 const NOTIF_CATEGORIES: Array<{
   id: string;
   labelKey: string;
-  types: string[];
+  inAppTypes?: string[];
+  emailCategory?: string;
 }> = [
-  { id: "dm", labelKey: "typeLabelDmMessage", types: ["dm_message"] },
-  { id: "mention", labelKey: "typeLabelChatMention", types: ["chat_mention"] },
-  { id: "announcement", labelKey: "typeLabelAnnouncement", types: ["announcement"] },
-  { id: "new_course", labelKey: "typeLabelNewCourse", types: ["new_course"] },
+  { id: "dm", labelKey: "typeLabelDmMessage", inAppTypes: ["dm_message"] },
+  { id: "mention", labelKey: "typeLabelChatMention", inAppTypes: ["chat_mention"] },
+  {
+    id: "announcement",
+    labelKey: "typeLabelAnnouncement",
+    inAppTypes: ["announcement"],
+    emailCategory: "announcement",
+  },
+  {
+    id: "new_course",
+    labelKey: "typeLabelNewCourse",
+    inAppTypes: ["new_course"],
+    emailCategory: "new_course",
+  },
   {
     id: "session",
     labelKey: "typeLabelSession",
-    types: [
+    inAppTypes: [
       "session_booked",
       "session_reminder",
       "session_live",
       "session_cancelled",
       "session_updated",
     ],
+    emailCategory: "session",
   },
   {
     id: "pro",
     labelKey: "typeLabelPro",
-    types: ["pro_expiring", "pro_renewed", "pro_expired"],
+    inAppTypes: ["pro_expiring", "pro_renewed", "pro_expired"],
+    emailCategory: "pro",
   },
   {
     id: "referral",
     labelKey: "typeLabelReferral",
-    types: ["referral_signup", "referral_rewarded"],
+    inAppTypes: ["referral_signup", "referral_rewarded"],
+    emailCategory: "referral",
   },
 ];
 
@@ -207,19 +231,16 @@ export default function SettingsPage() {
   );
 
   /**
-   * Toggle an in-app notification category. Each category maps to one
-   * or more notification `type` values (defined in NOTIF_CATEGORIES).
-   * "Enabled" = NONE of the types are muted; "Disabled" = ALL of the
-   * types are muted. The trigger function reads muted_types and
-   * short-circuits before inserting — so muted categories never even
-   * generate a notification row.
+   * Toggle an in-app notification category. Maps to one or more
+   * notification type strings; flips them all in muted_types[].
+   * The create_notification SQL helper short-circuits any muted
+   * type before inserting.
    */
-  const handleToggleCategory = useCallback(
+  const handleToggleInApp = useCallback(
     async (types: string[]) => {
       if (!user) return;
       const currentMuted = new Set(notifPrefs.muted_types ?? []);
       const allMuted = types.every((tt) => currentMuted.has(tt));
-      // Flip: if all muted, unmute all; otherwise mute all.
       if (allMuted) {
         types.forEach((tt) => currentMuted.delete(tt));
       } else {
@@ -228,6 +249,38 @@ export default function SettingsPage() {
       const updated: NotificationPrefs = {
         ...notifPrefs,
         muted_types: Array.from(currentMuted),
+      };
+      setNotifPrefs(updated);
+      setNotifSaving(true);
+      setNotifSaved(false);
+      await supabase
+        .from("users")
+        .update({ notification_preferences: updated })
+        .eq("id", user.id);
+      setNotifSaving(false);
+      setNotifSaved(true);
+      setTimeout(() => setNotifSaved(false), 2000);
+    },
+    [user, notifPrefs]
+  );
+
+  /**
+   * Toggle an email notification category. Stored as a category id
+   * (e.g. "session", "pro") in muted_email_categories[]. Cron paths
+   * check this before sending the corresponding email batch.
+   */
+  const handleToggleEmail = useCallback(
+    async (category: string) => {
+      if (!user) return;
+      const currentMuted = new Set(notifPrefs.muted_email_categories ?? []);
+      if (currentMuted.has(category)) {
+        currentMuted.delete(category);
+      } else {
+        currentMuted.add(category);
+      }
+      const updated: NotificationPrefs = {
+        ...notifPrefs,
+        muted_email_categories: Array.from(currentMuted),
       };
       setNotifPrefs(updated);
       setNotifSaving(true);
@@ -552,105 +605,146 @@ export default function SettingsPage() {
                 </div>
                 <Separator className="my-4" />
 
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="dark:text-muted-foreground/70">{t.settings.courseUpdates}</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {t.settings.courseUpdatesDesc}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifPrefs.course_updates}
-                      onCheckedChange={() => handleToggleNotif("course_updates")}
-                      disabled={!notifLoaded}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="dark:text-muted-foreground/70">{t.settings.newCourses}</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {t.settings.newCoursesDesc}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifPrefs.new_courses}
-                      onCheckedChange={() => handleToggleNotif("new_courses")}
-                      disabled={!notifLoaded}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="dark:text-muted-foreground/70">{t.settings.weeklyDigest}</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {t.settings.weeklyDigestDesc}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifPrefs.weekly_digest}
-                      onCheckedChange={() => handleToggleNotif("weekly_digest")}
-                      disabled={!notifLoaded}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="dark:text-muted-foreground/70">{t.settings.promotional}</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {t.settings.promotionalDesc}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notifPrefs.promotional}
-                      onCheckedChange={() => handleToggleNotif("promotional")}
-                      disabled={!notifLoaded}
-                    />
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {t.notifications?.preferencesSubtitle ||
+                    "Choose how you want to be notified for each category."}
+                </p>
 
-                {/* ─── In-app notifications (per-type mute) ──────
-                     The toggles above govern EMAIL preferences (used by
-                     the daily cron). The toggles below govern IN-APP
-                     bell notifications. Stored as muted_types[] in the
-                     same notification_preferences jsonb — checked by
-                     the create_notification SQL helper before insert. */}
-                <Separator className="my-6" />
-                <div>
-                  <h4 className="text-sm font-medium text-foreground mb-1">
-                    {t.notifications?.preferencesTitle ||
-                      "In-app notifications"}
-                  </h4>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    {t.notifications?.preferencesSubtitle ||
-                      "Choose which notifications you want to receive in the app."}
-                  </p>
-                  <div className="space-y-4">
+                {/* ─── 2-column matrix: Email · In-app ──────────
+                     Each category has up to two switches. Categories
+                     where one channel doesn't apply (e.g. DMs have no
+                     email today) render "—" in that column.
+
+                     Storage:
+                       - muted_types[] for in-app (checked by the
+                         create_notification SQL helper)
+                       - muted_email_categories[] for email (checked
+                         by the daily-emails cron before each send)
+                     Backwards-compatible with the old course_updates /
+                     promotional / weekly_digest / new_courses booleans
+                     — they're still written for the older cron paths. */}
+                <div className="rounded-lg border border-border/60 overflow-hidden">
+                  {/* Header row */}
+                  <div className="grid grid-cols-[1fr_80px_80px] items-center gap-3 px-4 py-2 border-b border-border/60 bg-muted/30">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                      {t.nav.signIn === "Sign In" ? "Type" : "Type"}
+                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground text-center">
+                      Email
+                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground text-center">
+                      {t.nav.signIn === "Sign In" ? "In-app" : "App"}
+                    </span>
+                  </div>
+
+                  <div className="divide-y divide-border/60">
                     {NOTIF_CATEGORIES.map((cat) => {
-                      const muted = (notifPrefs.muted_types ?? []);
-                      const allMuted = cat.types.every((tt) =>
-                        muted.includes(tt)
-                      );
-                      const enabled = !allMuted;
-                      const labelKey = cat.labelKey as keyof typeof t.notifications;
+                      const inAppMuted = notifPrefs.muted_types ?? [];
+                      const emailMuted =
+                        notifPrefs.muted_email_categories ?? [];
+                      const inAppOn = cat.inAppTypes
+                        ? !cat.inAppTypes.every((tt) =>
+                            inAppMuted.includes(tt)
+                          )
+                        : null;
+                      const emailOn = cat.emailCategory
+                        ? !emailMuted.includes(cat.emailCategory)
+                        : null;
+                      const labelKey =
+                        cat.labelKey as keyof typeof t.notifications;
                       const label =
                         (t.notifications &&
-                          (t.notifications[labelKey] as string | undefined)) ||
+                          (t.notifications[labelKey] as
+                            | string
+                            | undefined)) ||
                         cat.id;
                       return (
                         <div
                           key={cat.id}
-                          className="flex items-center justify-between gap-4"
+                          className="grid grid-cols-[1fr_80px_80px] items-center gap-3 px-4 py-3"
                         >
                           <Label className="text-sm font-normal text-foreground">
                             {label}
                           </Label>
-                          <Switch
-                            checked={enabled}
-                            onCheckedChange={() => handleToggleCategory(cat.types)}
-                            disabled={!notifLoaded}
-                          />
+                          <div className="flex justify-center">
+                            {emailOn !== null && cat.emailCategory ? (
+                              <Switch
+                                checked={emailOn}
+                                onCheckedChange={() =>
+                                  handleToggleEmail(cat.emailCategory!)
+                                }
+                                disabled={!notifLoaded}
+                              />
+                            ) : (
+                              <span className="text-muted-foreground/40">
+                                —
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex justify-center">
+                            {inAppOn !== null && cat.inAppTypes ? (
+                              <Switch
+                                checked={inAppOn}
+                                onCheckedChange={() =>
+                                  handleToggleInApp(cat.inAppTypes!)
+                                }
+                                disabled={!notifLoaded}
+                              />
+                            ) : (
+                              <span className="text-muted-foreground/40">
+                                —
+                              </span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
+
+                    {/* Email-only categories (no in-app equivalent) */}
+                    <div className="grid grid-cols-[1fr_80px_80px] items-center gap-3 px-4 py-3">
+                      <div>
+                        <Label className="text-sm font-normal text-foreground">
+                          {t.settings.weeklyDigest}
+                        </Label>
+                        <p className="text-xs text-muted-foreground/70 mt-0.5">
+                          {t.settings.weeklyDigestDesc}
+                        </p>
+                      </div>
+                      <div className="flex justify-center">
+                        <Switch
+                          checked={notifPrefs.weekly_digest}
+                          onCheckedChange={() =>
+                            handleToggleNotif("weekly_digest")
+                          }
+                          disabled={!notifLoaded}
+                        />
+                      </div>
+                      <span className="text-center text-muted-foreground/40">
+                        —
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-[1fr_80px_80px] items-center gap-3 px-4 py-3">
+                      <div>
+                        <Label className="text-sm font-normal text-foreground">
+                          {t.settings.promotional}
+                        </Label>
+                        <p className="text-xs text-muted-foreground/70 mt-0.5">
+                          {t.settings.promotionalDesc}
+                        </p>
+                      </div>
+                      <div className="flex justify-center">
+                        <Switch
+                          checked={notifPrefs.promotional}
+                          onCheckedChange={() =>
+                            handleToggleNotif("promotional")
+                          }
+                          disabled={!notifLoaded}
+                        />
+                      </div>
+                      <span className="text-center text-muted-foreground/40">
+                        —
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Card>
