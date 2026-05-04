@@ -19,17 +19,20 @@ const ProgressContext = createContext<ProgressContextValue>({
 export function ProgressProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [progress, setProgress] = useState<Record<string, number>>({});
+  const userId = user?.id;
 
+  // Stabilize on user.id, not the user OBJECT — Supabase rebuilds the
+  // user object on every token refresh (every ~hour) which would
+  // otherwise re-fetch progress for every course on every refresh.
   const refresh = useCallback(() => {
-    if (!user) return;
-    getUserCourseProgress(user.id).then(setProgress);
-  }, [user]);
+    if (!userId) return;
+    getUserCourseProgress(userId).then(setProgress);
+  }, [userId]);
 
-  // Fetch on login / user change
   useEffect(() => {
-    if (user) refresh();
+    if (userId) refresh();
     else setProgress({});
-  }, [user, refresh]);
+  }, [userId, refresh]);
 
   return (
     <ProgressContext.Provider value={{ progress, refresh }}>

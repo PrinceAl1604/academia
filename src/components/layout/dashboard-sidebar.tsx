@@ -21,6 +21,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSidebar } from "@/lib/sidebar-context";
+import { supabase } from "@/lib/supabase";
 import { ReferralModal } from "@/components/shared/referral-modal";
 import { Logo } from "@/components/shared/logo";
 import { Symbol } from "@/components/shared/symbol";
@@ -49,7 +50,11 @@ export function DashboardSidebar() {
   const [referralOpen, setReferralOpen] = useState(false);
   const [unreadChat, setUnreadChat] = useState(0);
 
-  // Poll unread chat count every 30s
+  // Unread chat count: one initial fetch, then refresh on Realtime
+  // INSERT events on chat_messages. Beats polling every 30s — the
+  // count updates instantly when a new message lands AND we don't
+  // burn an HTTP round-trip every 30 seconds for every signed-in
+  // user, regardless of activity.
   const fetchUnread = useCallback(async () => {
     try {
       const res = await fetch("/api/chat/unread");
@@ -65,9 +70,36 @@ export function DashboardSidebar() {
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchUnread();
-    const interval = setInterval(fetchUnread, 30_000);
-    return () => clearInterval(interval);
+
+    const channel = supabase
+      .channel("sidebar_unread_chat")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "chat_messages" },
+        () => fetchUnread()
+      )
+      .subscribe();
+
+    // Recompute when the user navigates to the community page (they
+    // may have just read messages and we want the badge to drop).
+    const onFocus = () => fetchUnread();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [isAuthenticated, fetchUnread]);
+
+  // When the user lands on community/* the server-side endpoint
+  // re-evaluates last-read markers; force a quick refresh on path
+  // change so the badge clears without waiting on the next event.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (pathname.startsWith("/dashboard/community")) {
+      fetchUnread();
+    }
+  }, [pathname, isAuthenticated, fetchUnread]);
 
   // ─── Navigation (grouped) ────────────────────────────────────
   type NavItem = {

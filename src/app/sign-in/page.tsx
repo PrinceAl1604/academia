@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { primeProfileCacheForUser } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { FullLogo } from "@/components/shared/full-logo";
 import { LanguageToggle } from "@/components/shared/language-toggle";
@@ -39,11 +40,17 @@ function SignInForm() {
       setError(error.message);
       setLoading(false);
     } else {
+      // Pre-warm the localStorage profile cache BEFORE redirecting so
+      // the destination renders from cache (≈50ms) instead of waiting
+      // on a profile round-trip (≈300ms). Failures are non-fatal —
+      // AuthProvider will fall back to its normal load path.
+      if (data.user) {
+        await primeProfileCacheForUser(data.user.id).catch(() => {});
+      }
       const explicit = searchParams.get("redirect");
       if (explicit) {
         router.push(explicit);
       } else {
-        // Send admins to /admin, students to home
         const role = data.user?.user_metadata?.role;
         router.push(role === "admin" ? "/admin" : "/");
       }

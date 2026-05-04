@@ -69,6 +69,36 @@ function writeProfileCache(profile: Omit<CachedProfile, "cachedAt">) {
   }
 }
 
+/**
+ * Pre-warm the profile cache from outside AuthProvider. Used by the
+ * sign-in flow so the redirect lands on a page that hydrates from
+ * cache instead of waiting on a profile round-trip.
+ */
+export async function primeProfileCacheForUser(userId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("role, subscription_tier, pro_expires_at, has_onboarded, referral_code")
+    .eq("id", userId)
+    .single();
+  if (error || !data) return;
+  const userRole = ((data.role as Role) || "user");
+  let resolvedPlan: Plan = "free";
+  if (data.subscription_tier === "pro" && data.pro_expires_at) {
+    const expiresAt = new Date(data.pro_expires_at);
+    resolvedPlan = expiresAt > new Date() || userRole === "admin" ? "pro" : "free";
+  } else if (data.subscription_tier === "pro") {
+    resolvedPlan = "pro";
+  }
+  writeProfileCache({
+    userId,
+    role: userRole,
+    plan: resolvedPlan,
+    proExpiresAt: data.pro_expires_at || null,
+    hasOnboarded: data.has_onboarded ?? true,
+    referralCode: data.referral_code || null,
+  });
+}
+
 function clearProfileCache() {
   if (typeof window === "undefined") return;
   try {
@@ -282,9 +312,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         if (cancelled) return;
         // INITIAL_SESSION fires on subscribe and duplicates the
-        // bootstrap above — skip it. Only react to actual auth
-        // changes (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, etc.).
+        // bootstrap above — skip it. TOKEN_REFRESHED happens hourly
+        // and only swaps the JWT — role/plan/onboarded values can't
+        // change just because a token rotated, so reading the user
+        // table again would be pure waste. USER_UPDATED is the
+        // explicit signal that user_metadata changed, so we DO let
+        // that one through.
         if (event === "INITIAL_SESSION") return;
+        if (event === "TOKEN_REFRESHED") {
+          setUser(session?.user ?? null);
+          return;
+        }
         setUser(session?.user ?? null);
         if (session?.user) {
           await loadUserProfile(session.user.id);
@@ -333,12 +371,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, [router]);
 
+  // PERF: stabilize on the few fields we actually read, NOT the full
+  // user object — Supabase rebuilds `user` on every TOKEN_REFRESHED
+  // event (~hourly), and a `[user]` dep would re-trigger every memo
+  // and child re-render in the tree.
   const userName = useMemo(
     () =>
       user?.user_metadata?.full_name ||
       user?.email?.split("@")[0] ||
       null,
-    [user]
+    [user?.user_metadata?.full_name, user?.email]
+  );
+
+  // Same trick for the user object exposed via context — only swap
+  // identity when user.id, role-in-metadata, name, or email change.
+  // Stops downstream consumers from re-rendering on every token tick.
+  const stableUser = useMemo(
+    () => user,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user?.id, user?.email, user?.user_metadata?.role, user?.user_metadata?.full_name]
   );
 
   // Memoize expensive calculations
@@ -360,11 +411,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [daysUntilExpiry, role]
   );
 
-  // Memoize context value to prevent unnecessary re-renders of consumers
+  // Memoize context value to prevent unnecessary re-renders of consumers.
+  // Note: `user` is replaced with `stableUser` so token refreshes don't
+  // churn the whole tree.
   const contextValue = useMemo<AuthContextType>(
     () => ({
-      user,
-      isAuthenticated: !!user,
+      user: stableUser,
+      isAuthenticated: !!stableUser,
       isAdmin: role === "admin",
       role,
       plan: isExpired ? "free" : plan,
@@ -380,7 +433,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       markOnboarded,
       logout,
     }),
-    [user, role, plan, userName, loading, proExpiresAt, daysUntilExpiry, isExpiringSoon, isExpired, hasOnboarded, referralCode, markOnboarded, logout]
+    [stableUser, role, plan, userName, loading, proExpiresAt, daysUntilExpiry, isExpiringSoon, isExpired, hasOnboarded, referralCode, markOnboarded, logout]
   );
 
   return (
