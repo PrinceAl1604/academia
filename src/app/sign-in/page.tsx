@@ -42,10 +42,14 @@ function SignInForm() {
     } else {
       // Pre-warm the localStorage profile cache BEFORE redirecting so
       // the destination renders from cache (≈50ms) instead of waiting
-      // on a profile round-trip (≈300ms). Failures are non-fatal —
-      // AuthProvider will fall back to its normal load path.
+      // on a profile round-trip (≈300ms). Bounded with a 1s timeout
+      // so a slow/unreachable Supabase can never block the redirect —
+      // AuthProvider will pick up the slack on the destination page.
       if (data.user) {
-        await primeProfileCacheForUser(data.user.id).catch(() => {});
+        await Promise.race([
+          primeProfileCacheForUser(data.user.id).catch(() => {}),
+          new Promise((r) => setTimeout(r, 1000)),
+        ]);
       }
       const explicit = searchParams.get("redirect");
       if (explicit) {

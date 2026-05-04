@@ -4,49 +4,51 @@ import { createServerClient } from "@supabase/ssr";
 /**
  * Middleware — runs on every matched request before the page renders.
  *
- * Perf-critical path. Two observations drove the current shape:
+ * Auth model: only /sign-in, /sign-up, /reset-password are reachable
+ * without a session. Everything else under the matcher (including
+ * the catalog at "/") requires auth — logged-out visitors are
+ * redirected to /sign-in so we can layer in a proper marketing
+ * landing page later without conflating it with the student home.
  *
+ * Perf shape: cookie-sniff first, getUser() only when needed.
  *  1. `supabase.auth.getUser()` is a NETWORK call to Supabase auth.
- *     On a cold edge it costs 50–200ms. We only want to pay that
- *     when there's actually a session to verify.
- *  2. Auth routes (/sign-in, /sign-up, /reset-password) and the home
- *     page are visited far more often without a session than with
- *     one. For those, presence of an sb-*-auth-token cookie is a
- *     sufficient gate — no cookie means no session, redirect logic
- *     is a no-op, return immediately.
- *
- * So: cookie-sniff first, getUser() only when needed.
+ *     On a cold edge it costs 50–200ms.
+ *  2. Presence of an sb-*-auth-token cookie is a sufficient gate
+ *     for the most common case (no cookie ⇒ no session). We only
+ *     pay for getUser() when there's actually a token to verify.
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next({ request });
 
-  const isProtectedRoute =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/courses/") ||
-    pathname === "/onboarding";
+  // Auth pages — anyone can reach them (signed in or not).
   const isAuthRoute =
     pathname === "/sign-in" ||
     pathname === "/sign-up" ||
     pathname === "/reset-password";
+
+  // Everything else under the matcher requires auth. The catalog
+  // at "/" used to be public; now it's the post-login student home.
+  // Logged-out visitors are sent to /sign-in so we can build a
+  // proper landing page later without conflating the two.
+  const isProtectedRoute = !isAuthRoute;
 
   // Cheap cookie sniff: does the visitor look authenticated at all?
   const hasSessionCookie = request.cookies
     .getAll()
     .some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"));
 
-  // Fast path 1: unauthenticated visitor on a public/auth route — no
-  // work needed, no network call.
-  if (!hasSessionCookie && (isAuthRoute || pathname === "/")) {
+  // Fast path 1: logged-out visitor on an auth page — let them in,
+  // no network call.
+  if (!hasSessionCookie && isAuthRoute) {
     return response;
   }
 
-  // Fast path 2: unauthenticated visitor on a protected route —
-  // redirect locally, no network call.
+  // Fast path 2: logged-out visitor on a protected page — redirect
+  // locally, no network call. Includes "/" now.
   if (!hasSessionCookie && isProtectedRoute) {
     const signInUrl = new URL("/sign-in", request.url);
-    signInUrl.searchParams.set("redirect", pathname);
+    if (pathname !== "/") signInUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(signInUrl);
   }
 
@@ -80,7 +82,7 @@ export async function middleware(request: NextRequest) {
   if (!user) {
     if (isProtectedRoute) {
       const signInUrl = new URL("/sign-in", request.url);
-      signInUrl.searchParams.set("redirect", pathname);
+      if (pathname !== "/") signInUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(signInUrl);
     }
     return response;

@@ -365,7 +365,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProExpiresAt(null);
     setHasOnboarded(true);
     setReferralCode(null);
-    router.push("/");
+    // Land on /sign-in — "/" is now the post-login student home, so
+    // sending freshly-logged-out users there would just bounce them
+    // through middleware back to /sign-in anyway.
+    router.push("/sign-in");
     supabase.auth.signOut().catch(() => {
       // intentionally swallowed — local state already cleared
     });
