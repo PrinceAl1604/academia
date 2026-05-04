@@ -430,6 +430,22 @@ export const translations = {
       beFirst: "Be the first to say hello!",
       announcementsEmpty: "No announcements yet",
       announcementsOnly: "Only admins can post in this channel",
+      // Direct messages
+      directMessages: "Direct messages",
+      newMessage: "New message",
+      newDmTitle: "Start a conversation",
+      newDmSubtitle:
+        "Pick a Pro member or message the host directly.",
+      newDmSearchPlaceholder: "Search by name or email…",
+      newDmEmptyResults: "No matching members.",
+      noDmsYet: "No direct messages yet.",
+      dmProGate:
+        "Direct messages are a Pro benefit. Upgrade to start a conversation.",
+      dmProGateUpgrade: "Upgrade to Pro",
+      dmYouAndOther: "You and {name}",
+      dmAdminBadge: "Host",
+      dmStartingConversation: "Starting conversation…",
+      dmCannotMessage: "Couldn't open that conversation.",
     },
 
     // Pro upsell
@@ -1159,6 +1175,21 @@ export const translations = {
       beFirst: "Soyez le premier à dire bonjour !",
       announcementsEmpty: "Aucune annonce pour le moment",
       announcementsOnly: "Seuls les administrateurs peuvent publier ici",
+      directMessages: "Messages directs",
+      newMessage: "Nouveau message",
+      newDmTitle: "Démarrer une conversation",
+      newDmSubtitle:
+        "Choisissez un membre Pro ou écrivez directement à l'hôte.",
+      newDmSearchPlaceholder: "Rechercher par nom ou e-mail…",
+      newDmEmptyResults: "Aucun membre correspondant.",
+      noDmsYet: "Aucun message direct pour l'instant.",
+      dmProGate:
+        "Les messages directs sont un avantage Pro. Passez à Pro pour démarrer une conversation.",
+      dmProGateUpgrade: "Passer à Pro",
+      dmYouAndOther: "Vous et {name}",
+      dmAdminBadge: "Hôte",
+      dmStartingConversation: "Ouverture de la conversation…",
+      dmCannotMessage: "Impossible d'ouvrir cette conversation.",
     },
 
     // Pro upsell

@@ -35,6 +35,9 @@ import {
   MessageSquare,
   CornerDownRight,
   X,
+  Plus,
+  Search as SearchIcon,
+  Crown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -42,6 +45,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
@@ -57,10 +67,26 @@ import {
 
 interface Channel {
   id: string;
-  type: "general" | "announcements" | "course";
+  type: "general" | "announcements" | "course" | "direct";
   name: string;
   course_id: string | null;
   created_at: string;
+}
+
+/* ─── DM thread row (sidebar) ─────────────────────────────────
+ * Joins a direct-type chat_channel with the OTHER participant's
+ * user info — that's what we render in the DM list. The current
+ * user's own participant row is filtered out client-side.
+ */
+interface DmThread {
+  channel_id: string;
+  other_user_id: string;
+  other_name: string;
+  other_role: string | null;
+  // Most-recent message timestamp drives sort order (most recent first).
+  // null when the thread has no messages yet — sort to the top under
+  // "active" threads via a 1970 fallback.
+  last_message_at: string | null;
 }
 
 interface ChatReaction {
@@ -180,7 +206,7 @@ function groupReactions(
 /* ═══════════════════════════════════════════════════════════ */
 
 export default function CommunityPage() {
-  const { user, isAdmin, userName } = useAuth();
+  const { user, isAdmin, isPro, userName } = useAuth();
   const { t, language } = useLanguage();
   const isEn = language === "en";
 
@@ -191,6 +217,21 @@ export default function CommunityPage() {
     new Map()
   );
   const [showSidebar, setShowSidebar] = useState(true);
+
+  /* ─── Direct messages state ─────────────────────────────────
+   * dmThreads is a sidebar-list view of the current user's DM
+   * channels — joined with the OTHER participant's name/role so
+   * each row can render an avatar + display name. Refreshed on
+   * page mount + when realtime fires for new participation rows
+   * (e.g. someone DMs you for the first time). */
+  const [dmThreads, setDmThreads] = useState<DmThread[]>([]);
+  const [newDmOpen, setNewDmOpen] = useState(false);
+  const [dmSearchQuery, setDmSearchQuery] = useState("");
+  const [dmSearchResults, setDmSearchResults] = useState<
+    Array<{ id: string; name: string; email: string; role: string | null; subscription_tier: string }>
+  >([]);
+  const [startingDm, setStartingDm] = useState(false);
+  const [dmError, setDmError] = useState<string | null>(null);
 
   /* ─── Chat state ────────────────────────────────────────── */
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -289,14 +330,21 @@ export default function CommunityPage() {
 
   const canPost = isAdmin || activeChannel?.type !== "announcements";
 
+  // Public channels rendered in the top "/ Channels" sidebar group.
+  // Excludes course channels (own group below) AND direct channels
+  // (own "/ Direct messages" group, rendered with avatars not hashes).
   const coreChannels = useMemo(
-    () => channels.filter((c) => c.type !== "course"),
+    () => channels.filter((c) => c.type !== "course" && c.type !== "direct"),
     [channels]
   );
   const courseChannels = useMemo(
     () => channels.filter((c) => c.type === "course"),
     [channels]
   );
+  // Free users can't initiate DMs but they can RECEIVE from admin —
+  // so we still show the section to everyone, just gate the "+ New"
+  // button behind Pro/admin status.
+  const canStartDm = isAdmin || isPro;
 
   const totalUnread = useMemo(
     () => Array.from(unreadCounts.values()).reduce((a, b) => a + b, 0),
@@ -340,6 +388,187 @@ export default function CommunityPage() {
       }
     })();
   }, [user, isAdmin]);
+
+  /* ─── Load DM threads ───────────────────────────────────────
+   * For every direct channel the user participates in, fetch the
+   * OTHER participant's profile + the channel's last-message
+   * timestamp. RLS already gates which channels we can see, so we
+   * don't need a redundant participation filter here. */
+  const loadDmThreads = useCallback(async () => {
+    if (!user) return;
+
+    // 1. Get the channel IDs of DMs we're in (via channels state —
+    //    already RLS-filtered for us).
+    const dmChannelIds = channels
+      .filter((c) => c.type === "direct")
+      .map((c) => c.id);
+    if (dmChannelIds.length === 0) {
+      setDmThreads([]);
+      return;
+    }
+
+    // 2. Pull all participant rows for those channels — RLS lets us
+    //    see them because we're in the channel. Then filter to "the
+    //    other person" client-side.
+    const { data: participants } = await supabase
+      .from("chat_dm_participants")
+      .select("channel_id, user_id, user:users(id, name, role)")
+      .in("channel_id", dmChannelIds)
+      .neq("user_id", user.id);
+
+    // 3. Pull the most recent message per channel for sort ordering.
+    //    Fetch a flat list and reduce client-side; the volume per
+    //    user is small (DMs are 1:1, list won't have hundreds).
+    const { data: lastMsgs } = await supabase
+      .from("chat_messages")
+      .select("channel_id, created_at")
+      .in("channel_id", dmChannelIds)
+      .order("created_at", { ascending: false });
+
+    const lastByChannel = new Map<string, string>();
+    (lastMsgs ?? []).forEach((m: { channel_id: string; created_at: string }) => {
+      if (!lastByChannel.has(m.channel_id)) {
+        lastByChannel.set(m.channel_id, m.created_at);
+      }
+    });
+
+    const threads: DmThread[] = (participants ?? []).map(
+      (p: {
+        channel_id: string;
+        user_id: string;
+        user: { id: string; name: string; role: string | null };
+      }) => ({
+        channel_id: p.channel_id,
+        other_user_id: p.user.id,
+        other_name: p.user.name,
+        other_role: p.user.role,
+        last_message_at: lastByChannel.get(p.channel_id) ?? null,
+      })
+    );
+    // Sort by recency (admin pinned at top would be nice; skipped
+    // for v1 — admin appears wherever last activity puts them).
+    threads.sort((a, b) => {
+      const aTs = a.last_message_at ?? "1970";
+      const bTs = b.last_message_at ?? "1970";
+      return bTs.localeCompare(aTs);
+    });
+    setDmThreads(threads);
+  }, [user, channels]);
+
+  useEffect(() => {
+    loadDmThreads();
+  }, [loadDmThreads]);
+
+  /* ─── New DM dialog: user search + RPC handler ─────────────
+   * Keeps search debounce tiny (200ms) since we filter locally on
+   * the user table (small to medium). Falls back to client-side
+   * substring match — Postgres `ilike` is server-side so we hit DB
+   * for anything substantive. */
+  const runUserSearch = useCallback(
+    async (query: string) => {
+      const q = query.trim();
+      if (!q || !user) {
+        setDmSearchResults([]);
+        return;
+      }
+      // Search by name OR email. Exclude current user. Limit 8 for
+      // a tight dropdown. Admin always shows up first if name matches.
+      const { data } = await supabase
+        .from("users")
+        .select("id, name, email, role, subscription_tier")
+        .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
+        .neq("id", user.id)
+        .limit(8);
+      // Sort: admin first, then Pro members, then alphabetical
+      const sorted = (data ?? []).sort(
+        (a: { role: string | null; subscription_tier: string; name: string },
+         b: { role: string | null; subscription_tier: string; name: string }) => {
+          if (a.role === "admin" && b.role !== "admin") return -1;
+          if (b.role === "admin" && a.role !== "admin") return 1;
+          if (a.subscription_tier === "pro" && b.subscription_tier !== "pro") return -1;
+          if (b.subscription_tier === "pro" && a.subscription_tier !== "pro") return 1;
+          return a.name.localeCompare(b.name);
+        }
+      );
+      setDmSearchResults(sorted);
+    },
+    [user]
+  );
+
+  // Debounced search trigger
+  useEffect(() => {
+    const timer = setTimeout(() => runUserSearch(dmSearchQuery), 200);
+    return () => clearTimeout(timer);
+  }, [dmSearchQuery, runUserSearch]);
+
+  const handleStartDm = useCallback(
+    async (otherUserId: string) => {
+      setStartingDm(true);
+      setDmError(null);
+      const { data, error } = await supabase.rpc("get_or_create_dm", {
+        other_user_id: otherUserId,
+      });
+      if (error || !data) {
+        setDmError(t.community?.dmCannotMessage || "Couldn't open conversation");
+        setStartingDm(false);
+        return;
+      }
+      // Channel may not yet be in our channels list (just created).
+      // Refetch channels so the DM thread renders + we can switch to it.
+      const { data: allChannels } = await supabase
+        .from("chat_channels")
+        .select("*");
+      if (allChannels) {
+        setChannels(allChannels as Channel[]);
+      }
+      setActiveChannelId(data as string);
+      setNewDmOpen(false);
+      setDmSearchQuery("");
+      setDmSearchResults([]);
+      setStartingDm(false);
+    },
+    [t.community]
+  );
+
+  /* ─── DM realtime — new participations + new messages ───────
+   * When someone DMs us for the first time, a participant row is
+   * inserted for our user_id. The chat_dm_participants table is in
+   * the realtime publication, so we listen for that and refresh. */
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`dm_participants_${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_dm_participants",
+          filter: `user_id=eq.${user.id}`,
+        },
+        async () => {
+          // New DM thread for us — refetch the channels list so the
+          // new direct channel shows up, then DM threads will reload
+          // via the channels effect dependency.
+          const { data: allChannels } = await supabase
+            .from("chat_channels")
+            .select("*");
+          if (allChannels) {
+            setChannels((prev) => {
+              const existing = new Set(prev.map((c) => c.id));
+              const additions = (allChannels as Channel[]).filter(
+                (c) => !existing.has(c.id)
+              );
+              return additions.length > 0 ? [...prev, ...additions] : prev;
+            });
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   /* ─── Load unread counts ────────────────────────────────── */
   const loadUnreadCounts = useCallback(async () => {
@@ -1524,6 +1753,91 @@ export default function CommunityPage() {
             );
           })}
 
+          {/* ─── Direct messages section ──────────────────────
+               Always rendered (free users can RECEIVE from admin)
+               but the "+ New" button is gated to Pro/admin via
+               canStartDm. Empty state nudges initiation. */}
+          <div className="pt-3 pb-1 px-2.5 flex items-center justify-between">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
+              / {t.community?.directMessages || "Direct messages"}
+            </p>
+            {canStartDm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNewDmOpen(true);
+                  setDmSearchQuery("");
+                  setDmSearchResults([]);
+                  setDmError(null);
+                }}
+                title={t.community?.newMessage || "New message"}
+                aria-label={t.community?.newMessage || "New message"}
+                className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground/70 hover:bg-sidebar-accent hover:text-foreground transition-colors"
+              >
+                <Plus className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+
+          {dmThreads.length === 0 ? (
+            <div className="px-3 py-2 text-[11px] text-muted-foreground/60 leading-relaxed">
+              {t.community?.noDmsYet || "No direct messages yet."}
+            </div>
+          ) : (
+            dmThreads.map((dm) => {
+              const isActive = dm.channel_id === activeChannelId;
+              const unread = unreadCounts.get(dm.channel_id) || 0;
+              const isAdminThread = dm.other_role === "admin";
+              const initials = (dm.other_name || "?")
+                .split(/\s+/)
+                .map((s) => s[0])
+                .filter(Boolean)
+                .slice(0, 2)
+                .join("")
+                .toUpperCase();
+              return (
+                <button
+                  key={dm.channel_id}
+                  onClick={() => switchChannel(dm.channel_id)}
+                  className={cn(
+                    "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-2 text-left transition-colors",
+                    isActive &&
+                      "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
+                    isActive
+                      ? "bg-sidebar-accent text-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+                  )}
+                >
+                  <Avatar className="h-6 w-6 shrink-0">
+                    <AvatarFallback
+                      className={cn(
+                        "text-[10px] font-medium",
+                        isAdminThread &&
+                          "bg-amber-500/15 text-amber-500"
+                      )}
+                    >
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="flex-1 text-sm font-medium truncate">
+                    {dm.other_name}
+                  </span>
+                  {isAdminThread && (
+                    <Crown
+                      className="h-3 w-3 text-amber-500 shrink-0"
+                      aria-label={t.community?.dmAdminBadge || "Host"}
+                    />
+                  )}
+                  {unread > 0 && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground tabular-nums px-1">
+                      {unread > 99 ? "99+" : unread}
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          )}
+
           {/* Course channels */}
           {courseChannels.length > 0 && (
             <>
@@ -1593,7 +1907,54 @@ export default function CommunityPage() {
                 sidebar) + bigger channel name as the page anchor. The
                 title was previously text-sm font-bold which read as
                 "secondary text" rather than "page title." */}
-            {activeChannel && (
+            {activeChannel && activeChannel.type === "direct" ? (
+              // DM header: avatar + peer name + Host badge if admin.
+              // Different visual model from public channels — DMs are
+              // about the person, not the topic.
+              (() => {
+                const dm = dmThreads.find(
+                  (d) => d.channel_id === activeChannel.id
+                );
+                if (!dm) return null;
+                const isAdminThread = dm.other_role === "admin";
+                const initials = (dm.other_name || "?")
+                  .split(/\s+/)
+                  .map((s) => s[0])
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase();
+                return (
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarFallback
+                        className={cn(
+                          "text-xs font-medium",
+                          isAdminThread &&
+                            "bg-amber-500/15 text-amber-500"
+                        )}
+                      >
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <h1 className="text-base font-semibold tracking-tight text-foreground truncate flex items-center gap-1.5">
+                        {dm.other_name}
+                        {isAdminThread && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-500">
+                            <Crown className="h-2.5 w-2.5" />
+                            {t.community?.dmAdminBadge || "Host"}
+                          </span>
+                        )}
+                      </h1>
+                      <p className="text-[11px] text-muted-foreground/70">
+                        {(t.community?.directMessages || "Direct messages").toLowerCase()}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : activeChannel ? (
               <div className="flex items-center gap-2 min-w-0">
                 <span
                   className={cn(
@@ -1632,7 +1993,7 @@ export default function CommunityPage() {
                   )}
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -2543,6 +2904,112 @@ export default function CommunityPage() {
           </div>
         )}
       </div>
+
+      {/* ─── New DM Dialog ─────────────────────────────────────
+           User search → click row → calls get_or_create_dm RPC →
+           switches active channel to the new (or existing) thread.
+           Pro-gating happens server-side in the RPC; client errors
+           bubble up via dmError. */}
+      <Dialog open={newDmOpen} onOpenChange={setNewDmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {t.community?.newDmTitle || "Start a conversation"}
+            </DialogTitle>
+            <DialogDescription>
+              {t.community?.newDmSubtitle ||
+                "Pick a Pro member or message the host directly."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
+              <Input
+                value={dmSearchQuery}
+                onChange={(e) => setDmSearchQuery(e.target.value)}
+                placeholder={
+                  t.community?.newDmSearchPlaceholder ||
+                  "Search by name or email…"
+                }
+                className="pl-9"
+                autoFocus
+              />
+            </div>
+            <div className="max-h-72 overflow-y-auto -mx-1 px-1 space-y-0.5">
+              {dmSearchQuery.trim() && dmSearchResults.length === 0 ? (
+                <p className="text-xs text-muted-foreground/70 text-center py-6">
+                  {t.community?.newDmEmptyResults ||
+                    "No matching members."}
+                </p>
+              ) : (
+                dmSearchResults.map((u) => {
+                  const isAdminUser = u.role === "admin";
+                  const isProUser = u.subscription_tier === "pro";
+                  const initials = (u.name || u.email || "?")
+                    .split(/[\s@]+/)
+                    .map((s) => s[0])
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase();
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => handleStartDm(u.id)}
+                      disabled={startingDm}
+                      className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-muted/40 transition-colors disabled:opacity-50"
+                    >
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarFallback
+                          className={cn(
+                            "text-xs",
+                            isAdminUser &&
+                              "bg-amber-500/15 text-amber-500"
+                          )}
+                        >
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {u.name || u.email.split("@")[0]}
+                          </p>
+                          {isAdminUser && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-500">
+                              <Crown className="h-2.5 w-2.5" />
+                              {t.community?.dmAdminBadge || "Host"}
+                            </span>
+                          )}
+                          {!isAdminUser && isProUser && (
+                            <Badge className="bg-primary/15 text-primary text-[9px] px-1.5 py-0">
+                              Pro
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="font-mono text-[10px] text-muted-foreground/70 truncate">
+                          {u.email}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+            {dmError && (
+              <p className="text-xs text-destructive">{dmError}</p>
+            )}
+            {startingDm && (
+              <p className="text-xs text-muted-foreground/70 text-center">
+                <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
+                {t.community?.dmStartingConversation ||
+                  "Starting conversation…"}
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
