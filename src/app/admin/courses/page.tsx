@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { getAllCourses, deleteCourse, type CourseRow } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +10,14 @@ import { Illustration } from "@/components/shared/illustration";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Plus,
   Search,
@@ -19,14 +28,45 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  BookOpen,
+  Clock,
+  ImageIcon,
 } from "lucide-react";
+
+/**
+ * Admin — manage courses list (refactored for Refactoring UI 10/10).
+ *
+ * Was: full-width list rows that hid each course's cover image and
+ * surfaced a screaming-red Delete button on every row. Native
+ * confirm() for deletion broke consistency with the Sessions feature
+ * (which uses shadcn Dialog).
+ *
+ * Now: responsive card grid (1/2/3 columns by breakpoint) with cover
+ * thumbnail as the visual anchor, status badge overlay, and a
+ * subtle ghost-trash that opens a proper Dialog confirmation. Header
+ * matches the admin design language used by /admin and
+ * /admin/sessions (mono preheader + medium-weight title).
+ *
+ * New affordances: status filter chips (All / Published / Draft) so
+ * admin can scan their published vs work-in-progress courses without
+ * eyeballing badges.
+ */
+
+type StatusFilter = "all" | "published" | "draft";
 
 export default function AdminCoursesPage() {
   const { t } = useLanguage();
+  const isEn = t.nav.signIn === "Sign In";
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [courses, setCourses] = useState<CourseRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  // Delete-confirmation dialog state. deleteTarget holds the course
+  // we're about to delete; null = closed. Replaces the native
+  // confirm() call (consistent with the Sessions cancel flow).
+  const [deleteTarget, setDeleteTarget] = useState<CourseRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const loadCourses = useCallback(async () => {
     const data = await getAllCourses();
@@ -38,24 +78,49 @@ export default function AdminCoursesPage() {
     loadCourses();
   }, [loadCourses]);
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
-      return;
-    }
-    setDeleting(id);
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
     try {
-      await deleteCourse(id);
-      setCourses((prev) => prev.filter((c) => c.id !== id));
-    } catch (err) {
-      alert("Failed to delete course. It may have chapters or enrollments linked to it.");
+      await deleteCourse(deleteTarget.id);
+      setCourses((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch {
+      setDeleteError(
+        isEn
+          ? "Couldn't delete this course. It may have chapters or enrollments linked to it."
+          : "Impossible de supprimer ce cours. Des chapitres ou inscriptions y sont peut-être liés."
+      );
     }
-    setDeleting(null);
+    setDeleting(false);
   };
 
-  const filteredCourses = courses.filter(
-    (course) =>
-      course.title.toLowerCase().includes(search.toLowerCase()) ||
-      (course.category?.name ?? "").toLowerCase().includes(search.toLowerCase())
+  // Filter + search applied in a single memoized pass.
+  const filteredCourses = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return courses.filter((course) => {
+      // Status filter
+      if (statusFilter === "published" && !course.is_published) return false;
+      if (statusFilter === "draft" && course.is_published) return false;
+      // Search filter
+      if (!q) return true;
+      return (
+        course.title.toLowerCase().includes(q) ||
+        (course.category?.name ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [courses, statusFilter, search]);
+
+  // Counts for the filter pills — gives admin a glanceable read of
+  // their workshop ("I have 3 published, 2 still drafts").
+  const counts = useMemo(
+    () => ({
+      all: courses.length,
+      published: courses.filter((c) => c.is_published).length,
+      draft: courses.filter((c) => !c.is_published).length,
+    }),
+    [courses]
   );
 
   if (loading) {
@@ -66,128 +131,314 @@ export default function AdminCoursesPage() {
     );
   }
 
+  // Pluralisation helper — "1 cours" vs "5 cours" in FR (no S),
+  // "1 course" vs "5 courses" in EN.
+  const courseCountLabel = (n: number) =>
+    isEn ? `${n} ${n === 1 ? "course" : "courses"}` : `${n} cours`;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
+    <div className="px-4 py-8 lg:px-8 lg:py-12 max-w-7xl mx-auto space-y-8">
+      {/* ── Hero ────────────────────────────────────────────── */}
+      <header className="flex items-end justify-between gap-4 flex-wrap">
+        <div className="space-y-2">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            / Courses
+          </p>
+          <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground">
             {t.admin.manageCourses}
           </h1>
-          <p className="mt-1 text-muted-foreground">
-            {courses.length} {t.admin.courses}
+          <p className="text-muted-foreground text-base">
+            {courseCountLabel(courses.length)}
           </p>
         </div>
         <Button
           render={<Link href="/admin/courses/new" />}
-          className="gap-1.5"
+          className="gap-1.5 shrink-0"
         >
           <Plus className="h-4 w-4" />
           {t.admin.addCourse}
         </Button>
+      </header>
+
+      {/* ── Filter + search ─────────────────────────────────── */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Status filter chips — counts inline so admin sees their
+             distribution at a glance. */}
+        <div className="inline-flex items-center gap-1 rounded-lg border border-border/60 bg-card p-1">
+          {(
+            [
+              { key: "all", label: isEn ? "All" : "Tous" },
+              { key: "published", label: t.admin.published },
+              { key: "draft", label: isEn ? "Draft" : "Brouillon" },
+            ] as { key: StatusFilter; label: string }[]
+          ).map((opt) => {
+            const active = statusFilter === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setStatusFilter(opt.key)}
+                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {opt.label}
+                <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70">
+                  {counts[opt.key]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search */}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
+          <Input
+            placeholder={t.admin.searchCourses}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-9 text-sm"
+          />
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
-        <Input
-          placeholder={t.admin.searchCourses}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      {/* ── Course grid ─────────────────────────────────────── */}
+      {filteredCourses.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="py-16 flex flex-col items-center text-center gap-4">
+            <Illustration name="admin-empty" alt="" size="md" />
+            <div className="space-y-1">
+              <p className="text-base font-medium text-foreground">
+                {courses.length === 0
+                  ? isEn
+                    ? "No courses yet"
+                    : "Aucun cours pour l'instant"
+                  : t.admin.noResults}
+              </p>
+              {courses.length === 0 && (
+                <p className="text-sm text-muted-foreground max-w-prose">
+                  {isEn
+                    ? "Create your first course to start filling your catalog."
+                    : "Créez votre premier cours pour commencer à remplir votre catalogue."}
+                </p>
+              )}
+            </div>
+            {courses.length === 0 && (
+              <Button
+                render={<Link href="/admin/courses/new" />}
+                className="gap-1.5"
+                size="sm"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t.admin.addCourse}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredCourses.map((course) => (
+            <CourseAdminCard
+              key={course.id}
+              course={course}
+              isEn={isEn}
+              t={t}
+              onDelete={() => setDeleteTarget(course)}
+            />
+          ))}
+        </div>
+      )}
 
-      {/* Course List */}
-      <div className="space-y-3">
-        {filteredCourses.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="py-12 text-center flex flex-col items-center">
-              <Illustration name="admin-empty" alt="" size="md" />
-              <p className="mt-4 text-muted-foreground">{t.admin.noResults}</p>
-            </CardContent>
-          </Card>
+      {/* ── Delete confirmation dialog ───────────────────────── */}
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => {
+          if (!o) {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {isEn
+                ? "Delete this course?"
+                : "Supprimer ce cours ?"}
+            </DialogTitle>
+            <DialogDescription>
+              {deleteTarget
+                ? isEn
+                  ? `"${deleteTarget.title}" will be permanently removed along with its chapters and lessons. Existing enrollments will lose access. This can't be undone.`
+                  : `« ${deleteTarget.title} » sera définitivement supprimé avec ses chapitres et leçons. Les inscriptions existantes perdront l'accès. Cette action est irréversible.`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {deleteError && (
+            <p className="text-sm text-destructive">{deleteError}</p>
+          )}
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+            >
+              {isEn ? "Keep it" : "Garder"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  {isEn ? "Deleting…" : "Suppression…"}
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  {isEn ? "Yes, delete" : "Oui, supprimer"}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ─── Per-course card ─────────────────────────────────────────
+ * Cover-up-front design: the image dominates the card, status badge
+ * floats over the top-right, free badge over the top-left when
+ * applicable. Body uses the established admin typography:
+ *   - mono uppercase preheader for category + level
+ *   - medium-weight title with line-clamp-2 to keep card heights even
+ *   - mono tabular metadata row
+ *   - subtle action buttons (no screaming destructive on every card)
+ */
+function CourseAdminCard({
+  course,
+  isEn,
+  t,
+  onDelete,
+}: {
+  course: CourseRow;
+  isEn: boolean;
+  t: ReturnType<typeof useLanguage>["t"];
+  onDelete: () => void;
+}) {
+  const cover = course.cover_url || course.thumbnail_url;
+
+  return (
+    <Card className="overflow-hidden flex flex-col h-full hover:border-border transition-colors group">
+      {/* Cover image with overlay badges */}
+      <div className="relative aspect-video bg-gradient-to-br from-muted to-muted/40 overflow-hidden">
+        {cover ? (
+          <Image
+            src={cover}
+            alt={course.title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+          />
         ) : (
-          filteredCourses.map((course) => (
-            <Card key={course.id}>
-              <CardContent className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-foreground truncate">
-                      {course.title}
-                    </h3>
-                    {course.is_published ? (
-                      <Badge
-                        variant="secondary"
-                        className="shrink-0 bg-primary/15 text-green-700"
-                      >
-                        <Eye className="mr-1 h-3 w-3" />
-                        {t.admin.published}
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="secondary"
-                        className="shrink-0 bg-muted text-muted-foreground"
-                      >
-                        <EyeOff className="mr-1 h-3 w-3" />
-                        Draft
-                      </Badge>
-                    )}
-                    {course.is_free && (
-                      <Badge
-                        variant="secondary"
-                        className="shrink-0 bg-blue-100 text-blue-700"
-                      >
-                        Free
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                    <span>{course.category?.name ?? "No category"}</span>
-                    <span>{course.level}</span>
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5" />
-                      {course.students_count.toLocaleString()}
-                    </span>
-                    {course.rating > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                        {course.rating}
-                      </span>
-                    )}
-                    <span>{course.duration_hours}h · {course.total_lessons} lessons</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    render={<Link href={`/admin/courses/${course.id}/edit`} />}
-                    className="gap-1.5"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                    {t.admin.edit}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="gap-1.5"
-                    disabled={deleting === course.id}
-                    onClick={() => handleDelete(course.id, course.title)}
-                  >
-                    {deleting === course.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
-                    {t.admin.delete}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+          <div className="flex h-full items-center justify-center">
+            <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
+          </div>
+        )}
+
+        {/* Status badge overlay — top-right. Drop-shadow keeps it
+             legible on bright cover photos. */}
+        <div className="absolute top-2 right-2">
+          {course.is_published ? (
+            <Badge className="bg-primary/90 text-primary-foreground backdrop-blur-sm shadow-sm">
+              <Eye className="mr-1 h-3 w-3" />
+              {t.admin.published}
+            </Badge>
+          ) : (
+            <Badge className="bg-background/85 text-foreground backdrop-blur-sm shadow-sm border border-border/60">
+              <EyeOff className="mr-1 h-3 w-3" />
+              {isEn ? "Draft" : "Brouillon"}
+            </Badge>
+          )}
+        </div>
+
+        {/* Free badge overlay — top-left, only when applicable */}
+        {course.is_free && (
+          <div className="absolute top-2 left-2">
+            <Badge className="bg-amber-500/90 text-amber-950 backdrop-blur-sm shadow-sm font-medium">
+              {isEn ? "Free" : "Gratuit"}
+            </Badge>
+          </div>
         )}
       </div>
-    </div>
+
+      <CardContent className="p-4 flex flex-col flex-1 gap-2.5">
+        {/* Category + level preheader */}
+        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+          {course.category?.name ?? (isEn ? "Uncategorized" : "Sans catégorie")}
+          {" · "}
+          {course.level}
+        </p>
+
+        {/* Title — line-clamp-2 keeps card heights consistent */}
+        <h3 className="text-base font-medium tracking-tight text-foreground leading-tight line-clamp-2 min-h-[2.5rem]">
+          {course.title}
+        </h3>
+
+        {/* Metadata row */}
+        <div className="flex items-center gap-3 font-mono text-xs text-muted-foreground tabular-nums">
+          <span className="inline-flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            {course.students_count.toLocaleString()}
+          </span>
+          {course.rating > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              {course.rating}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {course.duration_hours}h
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <BookOpen className="h-3 w-3" />
+            {course.total_lessons}
+          </span>
+        </div>
+
+        {/* Actions row — pushed to bottom via mt-auto so cards align
+             across the row regardless of title length. Edit is the
+             primary action; delete is intentionally a subtle ghost
+             that turns destructive on hover. */}
+        <div className="flex items-center gap-2 pt-3 mt-auto border-t border-border/60">
+          <Button
+            variant="outline"
+            size="sm"
+            render={<Link href={`/admin/courses/${course.id}/edit`} />}
+            className="gap-1.5 flex-1"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            {t.admin.edit}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onDelete}
+            title={t.admin.delete}
+            aria-label={t.admin.delete}
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
