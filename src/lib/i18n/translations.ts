@@ -446,6 +446,10 @@ export const translations = {
       dmAdminBadge: "Host",
       dmStartingConversation: "Starting conversation…",
       dmCannotMessage: "Couldn't open that conversation.",
+      // Per-channel mute
+      channelMute: "Mute notifications",
+      channelUnmute: "Unmute",
+      channelMuted: "Muted",
     },
 
     // Notifications — type+payload model. Each `*Title`/`*Body` takes
@@ -506,10 +510,6 @@ export const translations = {
       typeLabelSession: "Live sessions (booked / reminder / live / cancelled)",
       typeLabelPro: "Subscription updates",
       typeLabelReferral: "Referral activity",
-      // Per-channel mute
-      channelMute: "Mute notifications",
-      channelUnmute: "Unmute",
-      channelMuted: "Muted",
     },
 
     // Pro upsell
@@ -1254,6 +1254,9 @@ export const translations = {
       dmAdminBadge: "Hôte",
       dmStartingConversation: "Ouverture de la conversation…",
       dmCannotMessage: "Impossible d'ouvrir cette conversation.",
+      channelMute: "Couper les notifications",
+      channelUnmute: "Réactiver",
+      channelMuted: "Coupé",
     },
 
     notifications: {
@@ -1310,9 +1313,6 @@ export const translations = {
       typeLabelSession: "Sessions live (réservation / rappel / live / annulation)",
       typeLabelPro: "Mises à jour d'abonnement",
       typeLabelReferral: "Activité de parrainage",
-      channelMute: "Couper les notifications",
-      channelUnmute: "Réactiver",
-      channelMuted: "Coupé",
     },
 
     // Pro upsell
