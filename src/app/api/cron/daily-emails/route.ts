@@ -95,7 +95,7 @@ export async function GET(req: Request) {
 
     const { data: justExpired } = await supabase
       .from("users")
-      .select("email, name, pro_expires_at")
+      .select("id, email, name, pro_expires_at")
       .eq("subscription_tier", "pro")
       .neq("role", "admin")
       .gte("pro_expires_at", twentyFourHoursAgo.toISOString())
@@ -112,6 +112,22 @@ export async function GET(req: Request) {
         results.expired++;
       } catch (err) {
         results.errors.push(`expired:${user.email}:${String(err)}`);
+      }
+      // In-app pro_expired notification — pairs with the email so
+      // users who don't open inbox see the prompt next app visit.
+      // Routes through the create_notification helper which honors
+      // muted_types preferences.
+      try {
+        await supabase.rpc("create_notification", {
+          p_user_id: user.id,
+          p_type: "pro_expired",
+          p_payload: {
+            expires_at: user.pro_expires_at,
+          },
+          p_link: "/dashboard/subscription",
+        });
+      } catch (err) {
+        results.errors.push(`notif_expired:${user.email}:${String(err)}`);
       }
     }
   } catch (err) {

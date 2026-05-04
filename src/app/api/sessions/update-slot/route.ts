@@ -133,22 +133,24 @@ export async function POST(req: Request) {
   if (startTimeChanged || otherChanged) {
     const { data: activeBookings } = await admin
       .from("session_bookings")
-      .select("id, users!inner(email, name)")
+      .select("id, user_id, users!inner(email, name)")
       .eq("slot_id", slotId)
       .is("cancelled_at", null);
 
+    const newTitle =
+      body.title !== undefined ? body.title.trim() : ex.title;
     let notified = 0;
     const errors: string[] = [];
     for (const row of activeBookings ?? []) {
       const u = (row as unknown as { users: { email: string; name: string } })
         .users;
       const bookingId = (row as { id: string }).id;
+      const userId = (row as { user_id: string }).user_id;
       try {
         await sendSlotUpdatedEmail({
           to: u.email,
           name: u.name,
-          sessionTitle:
-            body.title !== undefined ? body.title.trim() : ex.title,
+          sessionTitle: newTitle,
           oldStartsAtIso: ex.starts_at,
           newStartsAtIso: newStartsAt,
           durationMinutes:
@@ -163,6 +165,26 @@ export async function POST(req: Request) {
         notified++;
       } catch (err) {
         errors.push(`${u.email}: ${String(err)}`);
+      }
+      // In-app notification — paired with email so users see the
+      // change in their bell even if they haven't opened the email.
+      // Routes through the create_notification helper which honors
+      // muted_types preferences.
+      try {
+        await admin.rpc("create_notification", {
+          p_user_id: userId,
+          p_type: "session_updated",
+          p_payload: {
+            slot_id: slotId,
+            title: newTitle,
+            old_starts_at: ex.starts_at,
+            new_starts_at: newStartsAt,
+            rescheduled: startTimeChanged,
+          },
+          p_link: `/dashboard/sessions/${slotId}`,
+        });
+      } catch (err) {
+        errors.push(`notif ${u.email}: ${String(err)}`);
       }
     }
     return NextResponse.json({
