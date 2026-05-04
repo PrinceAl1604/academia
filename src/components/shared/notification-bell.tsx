@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -383,6 +384,18 @@ export function NotificationBell() {
             ))
           )}
         </div>
+        {/* Footer: link to full history page */}
+        {items.length > 0 && (
+          <div className="border-t border-border/60 px-4 py-2.5">
+            <Link
+              href="/dashboard/notifications"
+              onClick={() => setOpen(false)}
+              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t.notifications?.viewAll || "View all"} →
+            </Link>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
