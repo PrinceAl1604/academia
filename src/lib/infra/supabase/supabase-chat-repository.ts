@@ -42,14 +42,12 @@ export class SupabaseChatRepository implements ChatRepository {
   async listDmThreads(currentUserId: string): Promise<DmThread[]> {
     const { data } = await supabase
       .from("chat_dm_participants")
-      .select(
-        "channel_id, user_id, channel:chat_channels(id, name, type), user:users(id, name, role)"
-      )
+      .select("channel_id, user_id, user:users(id, name, role)")
       .neq("user_id", currentUserId);
     if (!data) return [];
 
     const channelIds = data.map((r) => r.channel_id);
-    let lastByChannel = new Map<string, string>();
+    const lastByChannel = new Map<string, string>();
     if (channelIds.length > 0) {
       const { data: lasts } = await supabase
         .from("chat_messages")
@@ -69,16 +67,24 @@ export class SupabaseChatRepository implements ChatRepository {
       }
     }
 
-    return (data as Array<{
-      channel_id: string;
-      user: { id: string; name: string; role: string | null };
-    }>).map((r) => ({
-      channel_id: r.channel_id,
-      other_user_id: r.user.id,
-      other_name: r.user.name,
-      other_role: r.user.role,
-      last_message_at: lastByChannel.get(r.channel_id) ?? null,
-    }));
+    // Supabase's generated types model FK joins as arrays even when
+    // the relationship is effectively 1:1. Cast each row through
+    // unknown so we can read .user as a single object — at runtime
+    // the nested embed is always one row per participant join.
+    return (data ?? []).map((row) => {
+      const r = row as unknown as {
+        channel_id: string;
+        user_id: string;
+        user: { id: string; name: string; role: string | null };
+      };
+      return {
+        channel_id: r.channel_id,
+        other_user_id: r.user.id,
+        other_name: r.user.name,
+        other_role: r.user.role,
+        last_message_at: lastByChannel.get(r.channel_id) ?? null,
+      };
+    });
   }
 
   async listMessages(channelId: string, limit: number): Promise<ChatMessage[]> {
