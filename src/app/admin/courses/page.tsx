@@ -147,13 +147,17 @@ export default function AdminCoursesPage() {
           <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground">
             {t.admin.manageCourses}
           </h1>
-          <p className="text-muted-foreground text-base">
+          {/* Subtitle uses mono + tabular-nums + lower contrast — same
+              visual language as the section preheader above it, so the
+              page header reads as one cohesive block instead of
+              "title + competing body paragraph". */}
+          <p className="font-mono text-xs text-muted-foreground/70 tabular-nums">
             {courseCountLabel(courses.length)}
           </p>
         </div>
         <Button
           render={<Link href="/admin/courses/new" />}
-          className="gap-1.5 shrink-0"
+          className="gap-1.5 shrink-0 shadow-sm shadow-primary/20"
         >
           <Plus className="h-4 w-4" />
           {t.admin.addCourse}
@@ -180,12 +184,16 @@ export default function AdminCoursesPage() {
                 onClick={() => setStatusFilter(opt.key)}
                 className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   active
-                    ? "bg-muted text-foreground"
+                    ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {opt.label}
-                <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70">
+                <span
+                  className={`font-mono text-[10px] tabular-nums ${
+                    active ? "text-primary/70" : "text-muted-foreground/70"
+                  }`}
+                >
                   {counts[opt.key]}
                 </span>
               </button>
@@ -239,7 +247,7 @@ export default function AdminCoursesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredCourses.map((course) => (
             <CourseAdminCard
               key={course.id}
@@ -335,16 +343,18 @@ function CourseAdminCard({
   const cover = course.cover_url || course.thumbnail_url;
 
   return (
-    <Card className="overflow-hidden flex flex-col h-full hover:border-border transition-colors group">
-      {/* Cover image with overlay badges */}
+    <Card className="overflow-hidden flex flex-col h-full transition-all duration-200 group hover:border-border hover:shadow-md hover:-translate-y-0.5">
+      {/* Cover image with overlay badges. The image gets a subtle
+          group-hover scale to telegraph "this card is interactive" —
+          same affordance Figma/Linear/Vercel use on card grids. */}
       <div className="relative aspect-video bg-gradient-to-br from-muted to-muted/40 overflow-hidden">
         {cover ? (
           <Image
             src={cover}
             alt={course.title}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full items-center justify-center">
@@ -391,12 +401,17 @@ function CourseAdminCard({
           {course.title}
         </h3>
 
-        {/* Metadata row */}
+        {/* Metadata row. Each cell hides when the value is zero —
+            empty cells (0 students, 0 rating) are noise that competes
+            with the duration + lesson-count signals that always
+            matter. Time + lesson count anchor the row regardless. */}
         <div className="flex items-center gap-3 font-mono text-xs text-muted-foreground tabular-nums">
-          <span className="inline-flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            {course.students_count.toLocaleString()}
-          </span>
+          {course.students_count > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {course.students_count.toLocaleString()}
+            </span>
+          )}
           {course.rating > 0 && (
             <span className="inline-flex items-center gap-1">
               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
