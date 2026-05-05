@@ -178,7 +178,12 @@ export function DashboardTopbar() {
               </div>
               {!isAuthenticated && (
                 <div className="flex flex-col gap-2 px-3">
-                  <Button variant="outline" className="w-full h-10" render={<Link href="/sign-in" />}>
+                  {/* Routed through /api/auth/sign-out so any stale
+                       sb-*-auth-token cookies (left over from a prior
+                       partial logout) are wiped server-side before we
+                       hit /sign-in. The endpoint is idempotent — for
+                       genuinely-signed-out users it's a no-op redirect. */}
+                  <Button variant="outline" className="w-full h-10" render={<a href="/api/auth/sign-out" />}>
                     {t.nav.signIn}
                   </Button>
                   <Button className="w-full h-10" render={<Link href="/sign-up" />}>
@@ -438,10 +443,12 @@ export function DashboardTopbar() {
             </DropdownMenu>
           )}
 
-          {/* Sign in/up (unauthenticated, desktop only — mobile uses sheet) */}
+          {/* Sign in/up (unauthenticated, desktop only — mobile uses sheet).
+               Sign-in routed through /api/auth/sign-out — see mobile sheet
+               version above for rationale. */}
           {!isAuthenticated && (
             <div className="hidden lg:flex items-center gap-2">
-              <Button variant="ghost" className="h-9 text-sm" render={<Link href="/sign-in" />}>
+              <Button variant="ghost" className="h-9 text-sm" render={<a href="/api/auth/sign-out" />}>
                 {t.nav.signIn}
               </Button>
               <Button className="h-9 text-sm" render={<Link href="/sign-up" />}>

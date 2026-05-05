@@ -374,11 +374,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    // Optimistic state clear so the UI updates instantly. The actual
-    // network signOut fires in the background — users perceive logout
-    // as immediate even though the JWT revocation takes 200-500ms.
-    // If signOut() fails the worst case is a stale local session that
-    // will fail-and-redirect on the next API call, which is fine.
+    // Optimistic state clear so the UI updates instantly.
     clearProfileCache();
     lastActiveBeaconSent.current = false;
     setUser(null);
@@ -387,13 +383,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProExpiresAt(null);
     setHasOnboarded(true);
     setReferralCode(null);
-    // Land on /sign-in — "/" is now the post-login student home, so
+
+    // CRITICAL: must AWAIT signOut() before navigating. The browser
+    // client clears the sb-*-auth-token cookies as part of signOut.
+    // If we navigate first, middleware sees the still-valid cookie,
+    // verifies the user, and redirects /sign-in → / (the "authed
+    // user on auth route" rule). The user gets stuck on the catalog
+    // with logged-out client state and no way to reach /sign-in.
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Network failure — fall through to the manual cookie wipe
+      // below so the user isn't trapped if Supabase is unreachable.
+    }
+
+    // Belt-and-suspenders: clear any lingering sb-* cookies on the
+    // current document. Covers cases where signOut() resolved but
+    // the cookie clear didn't propagate, or signOut threw before
+    // the network call completed.
+    if (typeof document !== "undefined") {
+      const expire = "expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      document.cookie.split(";").forEach((c) => {
+        const eq = c.indexOf("=");
+        const name = (eq > -1 ? c.substr(0, eq) : c).trim();
+        if (name.startsWith("sb-")) {
+          document.cookie = `${name}=;${expire}`;
+        }
+      });
+    }
+
+    // Land on /sign-in — "/" is the post-login student home, so
     // sending freshly-logged-out users there would just bounce them
     // through middleware back to /sign-in anyway.
-    router.push("/sign-in");
-    supabase.auth.signOut().catch(() => {
-      // intentionally swallowed — local state already cleared
-    });
+    router.replace("/sign-in");
   }, [router]);
 
   // PERF: stabilize on the few fields we actually read, NOT the full
