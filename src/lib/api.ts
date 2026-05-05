@@ -1,183 +1,56 @@
+/**
+ * lib/api — back-compat shim over the new repository layer.
+ *
+ * Earlier this file was a thin wrapper around raw supabase calls
+ * scattered across the codebase. The Clean Architecture refactor
+ * moved every read/write behind a repository port; this file now
+ * re-exports the same legacy function shapes so existing imports
+ * keep compiling while we migrate consumers page-by-page.
+ *
+ * NEW code should import the repositories directly (or, even
+ * better, the use cases in lib/domain/usecases/):
+ *
+ *   import { courseRepository } from "@/lib/infra/supabase/supabase-course-repository";
+ */
 import { supabase } from "./supabase";
+import { courseRepository } from "@/lib/infra/supabase/supabase-course-repository";
+import type {
+  Course,
+  CourseDetail,
+  CourseModule,
+  Lesson,
+} from "@/lib/domain/entities/course";
 
-// ─── Course Types ───────────────────────────────────────────────────────────
+// Legacy aliases — new code should import from lib/domain/entities.
+export type {
+  Course as CourseRow,
+  Category as CategoryRow,
+  CourseModule as ModuleRow,
+  Lesson as LessonRow,
+} from "@/lib/domain/entities/course";
 
-export interface CourseRow {
-  id: string;
-  title: string;
-  slug: string;
-  description: string | null;
-  thumbnail_url: string | null;
-  level: string;
-  duration_hours: number;
-  total_lessons: number;
-  price: number;
-  is_free: boolean;
-  is_featured: boolean;
-  is_published: boolean;
-  rating: number;
-  students_count: number;
-  youtube_preview_url: string | null;
-  cover_url: string | null;
-  tags: string[];
-  created_at: string;
-  updated_at: string;
-  category: { id: string; name: string; slug: string } | null;
-  instructor: {
-    id: string;
-    name: string;
-    title: string | null;
-    bio: string | null;
-    avatar_url: string | null;
-  } | null;
+// ─── Course reads (delegated) ─────────────────────────────────
+
+export async function getCourses(): Promise<Course[]> {
+  return courseRepository.listPublished();
 }
 
-export interface CategoryRow {
-  id: string;
-  name: string;
-  slug: string;
+export async function getAllCourses(): Promise<Course[]> {
+  return courseRepository.listAll();
 }
 
-export interface ModuleRow {
-  id: string;
-  course_id: string;
-  title: string;
-  description: string | null;
-  sort_order: number;
-  lessons: LessonRow[];
-}
-
-export interface LessonRow {
-  id: string;
-  module_id: string;
-  title: string;
-  description: string | null;
-  type: "video" | "article" | "quiz";
-  youtube_url: string | null;
-  duration_minutes: number;
-  content: string | null;
-  is_free: boolean;
-  sort_order: number;
-}
-
-// ─── Fetch Functions ────────────────────────────────────────────────────────
-
-/**
- * Get all published courses with category and instructor info.
- * Computes total_lessons and duration_hours from actual module/lesson data
- * so values are always accurate regardless of stored column state.
- */
-export async function getCourses(): Promise<CourseRow[]> {
-  // PERF: previously joined courses → modules → lessons just to
-  // compute total_lessons + duration_hours on every page load.
-  // Slow + scaled badly. Those columns are now kept fresh server-
-  // side by triggers on lessons + modules (see
-  // course_counters_backfill_and_triggers migration), so we read
-  // them directly. Single-table query with two FK joins instead
-  // of a 3-level nested aggregation.
-  const { data, error } = await supabase
-    .from("courses")
-    .select(
-      `
-      *,
-      category:categories(*),
-      instructor:instructors(*)
-    `
-    )
-    .eq("is_published", true)
-    .order("sort_order", { ascending: true });
-
-  if (error) {
-    console.error("Error fetching courses:", error);
-    return [];
-  }
-  return (data ?? []) as CourseRow[];
-}
-
-/**
- * Get ALL courses (including unpublished) for admin.
- * Same perf optimization as getCourses() — uses stored counters.
- */
-export async function getAllCourses(): Promise<CourseRow[]> {
-  const { data, error } = await supabase
-    .from("courses")
-    .select(
-      `
-      *,
-      category:categories(*),
-      instructor:instructors(*)
-    `
-    )
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error fetching all courses:", error);
-    return [];
-  }
-  return (data ?? []) as CourseRow[];
-}
-
-/**
- * Get a single course by slug with modules and lessons.
- */
 export async function getCourseBySlug(
   slug: string
-): Promise<(CourseRow & { modules: ModuleRow[] }) | null> {
-  const { data: course, error } = await supabase
-    .from("courses")
-    .select(
-      `
-      *,
-      category:categories(*),
-      instructor:instructors(*)
-    `
-    )
-    .eq("slug", slug)
-    .single();
-
-  if (error || !course) return null;
-
-  // Fetch modules with lessons
-  const { data: modules } = await supabase
-    .from("modules")
-    .select(
-      `
-      *,
-      lessons(*)
-    `
-    )
-    .eq("course_id", course.id)
-    .order("sort_order", { ascending: true });
-
-  // Sort lessons within each module
-  const sortedModules = (modules ?? []).map((m: ModuleRow) => ({
-    ...m,
-    lessons: (m.lessons ?? []).sort(
-      (a: LessonRow, b: LessonRow) => a.sort_order - b.sort_order
-    ),
-  }));
-
-  return { ...course, modules: sortedModules };
+): Promise<CourseDetail | null> {
+  return courseRepository.bySlug(slug);
 }
 
-/**
- * Get all categories.
- */
-export async function getCategories(): Promise<CategoryRow[]> {
-  const { data, error } = await supabase
-    .from("categories")
-    .select("*")
-    .order("sort_order", { ascending: true });
-
-  if (error) return [];
-  return data ?? [];
+export async function getCategories() {
+  return courseRepository.listCategories();
 }
 
-// ─── Admin CRUD ─────────────────────────────────────────────────────────────
+// ─── Admin CRUD (small, low-traffic admin paths still inline) ──
 
-/**
- * Create a new course.
- */
 export async function createCourse(course: {
   title: string;
   slug: string;
@@ -198,14 +71,10 @@ export async function createCourse(course: {
     .insert(course)
     .select()
     .single();
-
   if (error) throw error;
   return data;
 }
 
-/**
- * Update an existing course.
- */
 export async function updateCourse(
   id: string,
   updates: Partial<{
@@ -232,22 +101,15 @@ export async function updateCourse(
     .eq("id", id)
     .select()
     .single();
-
   if (error) throw error;
   return data;
 }
 
-/**
- * Delete a course.
- */
 export async function deleteCourse(id: string) {
   const { error } = await supabase.from("courses").delete().eq("id", id);
   if (error) throw error;
 }
 
-/**
- * Create a module for a course.
- */
 export async function createModule(module: {
   course_id: string;
   title: string;
@@ -258,14 +120,10 @@ export async function createModule(module: {
     .insert(module)
     .select()
     .single();
-
   if (error) throw error;
   return data;
 }
 
-/**
- * Create a lesson for a module.
- */
 export async function createLesson(lesson: {
   module_id: string;
   title: string;
@@ -281,14 +139,10 @@ export async function createLesson(lesson: {
     .insert(lesson)
     .select()
     .single();
-
   if (error) throw error;
   return data;
 }
 
-/**
- * Update a module.
- */
 export async function updateModule(
   id: string,
   updates: Partial<{ title: string; sort_order: number }>
@@ -303,19 +157,12 @@ export async function updateModule(
   return data;
 }
 
-/**
- * Delete a module (and its lessons via cascade).
- */
 export async function deleteModule(id: string) {
-  // Delete lessons first
   await supabase.from("lessons").delete().eq("module_id", id);
   const { error } = await supabase.from("modules").delete().eq("id", id);
   if (error) throw error;
 }
 
-/**
- * Update a lesson.
- */
 export async function updateLesson(
   id: string,
   updates: Partial<{
@@ -338,50 +185,37 @@ export async function updateLesson(
   return data;
 }
 
-/**
- * Delete a lesson.
- */
 export async function deleteLesson(id: string) {
   const { error } = await supabase.from("lessons").delete().eq("id", id);
   if (error) throw error;
 }
 
-/**
- * Get modules with lessons for a course (admin).
- */
-export async function getModulesForCourse(courseId: string): Promise<ModuleRow[]> {
+export async function getModulesForCourse(
+  courseId: string
+): Promise<CourseModule[]> {
   const { data, error } = await supabase
     .from("modules")
     .select("*, lessons(*)")
     .eq("course_id", courseId)
     .order("sort_order", { ascending: true });
-
   if (error) return [];
-
-  return (data ?? []).map((m: ModuleRow) => ({
+  return (data ?? []).map((m: CourseModule) => ({
     ...m,
     lessons: (m.lessons ?? []).sort(
-      (a: LessonRow, b: LessonRow) => a.sort_order - b.sort_order
+      (a: Lesson, b: Lesson) => a.sort_order - b.sort_order
     ),
   }));
 }
 
-/**
- * Get all instructors.
- */
 export async function getInstructors() {
   const { data, error } = await supabase
     .from("instructors")
     .select("*")
     .order("name");
-
   if (error) return [];
   return data ?? [];
 }
 
-/**
- * Create an instructor.
- */
 export async function createInstructor(instructor: {
   name: string;
   title?: string;
@@ -392,21 +226,12 @@ export async function createInstructor(instructor: {
     .insert(instructor)
     .select()
     .single();
-
   if (error) throw error;
   return data;
 }
 
-// ─── Course Totals Sync ─────────────────────────────────────────────────
+// ─── Admin maintenance: course totals sync ─────────────────────
 
-/**
- * Recompute total_lessons and duration_hours for a course from its actual
- * modules/lessons data and update the courses row.
- * Call this after any module or lesson add/update/delete.
- */
-/**
- * Sync totals for ALL courses at once. Useful for fixing stale data.
- */
 export async function syncAllCourseTotals(): Promise<void> {
   const { data: courses } = await supabase.from("courses").select("id");
   if (!courses) return;
@@ -419,10 +244,17 @@ export async function syncCourseTotals(courseId: string): Promise<void> {
     .select("id, lessons(id, duration_minutes)")
     .eq("course_id", courseId);
 
-  const allLessons = (modules ?? []).flatMap((m: { lessons: { id: string; duration_minutes: number }[] }) => m.lessons ?? []);
+  const allLessons = (modules ?? []).flatMap(
+    (m: { lessons: { id: string; duration_minutes: number }[] }) =>
+      m.lessons ?? []
+  );
   const totalLessons = allLessons.length;
-  const totalMinutes = allLessons.reduce((sum: number, l: { duration_minutes: number }) => sum + (l.duration_minutes || 0), 0);
-  const durationHours = Math.round((totalMinutes / 60) * 10) / 10; // 1 decimal
+  const totalMinutes = allLessons.reduce(
+    (sum: number, l: { duration_minutes: number }) =>
+      sum + (l.duration_minutes || 0),
+    0
+  );
+  const durationHours = Math.round((totalMinutes / 60) * 10) / 10;
 
   await supabase
     .from("courses")
@@ -430,108 +262,32 @@ export async function syncCourseTotals(courseId: string): Promise<void> {
     .eq("id", courseId);
 }
 
-// ─── Progress Tracking ──────────────────────────────────────────────────
+// ─── Progress + enrollments (delegated) ────────────────────────
 
-/**
- * Get real course progress for a user across all published courses.
- * Returns a map of courseId → percentage (0–100).
- * Uses two queries: one for all course lesson structures, one for user completions.
- */
 export async function getUserCourseProgress(
   userId: string
 ): Promise<Record<string, number>> {
-  const [{ data: completedData }, { data: courses }] = await Promise.all([
-    supabase
-      .from("lesson_progress")
-      .select("lesson_id")
-      .eq("user_id", userId)
-      .eq("completed", true),
-    supabase
-      .from("courses")
-      .select("id, modules(id, lessons(id))")
-      .eq("is_published", true),
-  ]);
-
-  const completedSet = new Set(
-    (completedData ?? []).map((p: { lesson_id: string }) => p.lesson_id)
-  );
-
-  const progress: Record<string, number> = {};
-  for (const course of courses ?? []) {
-    const allLessons = (
-      (course as { modules: { lessons: { id: string }[] }[] }).modules ?? []
-    ).flatMap((m) => m.lessons ?? []);
-    const total = allLessons.length;
-    if (total === 0) {
-      progress[course.id] = 0;
-      continue;
-    }
-    const completed = allLessons.filter((l) => completedSet.has(l.id)).length;
-    progress[course.id] = Math.round((completed / total) * 100);
-  }
-
-  return progress;
+  return courseRepository.progressForUser(userId);
 }
 
-/**
- * Get completed lesson IDs for a user.
- */
 export async function getCompletedLessons(userId: string): Promise<string[]> {
-  const { data } = await supabase
-    .from("lesson_progress")
-    .select("lesson_id")
-    .eq("user_id", userId)
-    .eq("completed", true);
-
-  return (data ?? []).map((p) => p.lesson_id);
+  return courseRepository.completedLessons(userId);
 }
 
-/**
- * Mark a lesson as completed for a user.
- */
 export async function markLessonComplete(
   userId: string,
   lessonId: string
 ): Promise<void> {
-  await supabase.from("lesson_progress").insert({
-    user_id: userId,
-    lesson_id: lessonId,
-    completed: true,
-    completed_at: new Date().toISOString(),
-  });
+  return courseRepository.markLessonComplete(userId, lessonId);
 }
 
-/**
- * Enroll a user in a course (if not already enrolled).
- */
 export async function enrollInCourse(
   userId: string,
   courseId: string
 ): Promise<void> {
-  // Check if already enrolled
-  const { data } = await supabase
-    .from("enrollments")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("course_id", courseId)
-    .single();
-
-  if (!data) {
-    await supabase.from("enrollments").insert({
-      user_id: userId,
-      course_id: courseId,
-    });
-  }
+  return courseRepository.enroll(userId, courseId);
 }
 
-/**
- * Get enrolled courses for a user with progress.
- */
 export async function getEnrolledCourses(userId: string) {
-  const { data } = await supabase
-    .from("enrollments")
-    .select("course_id, progress, enrolled_at, completed_at")
-    .eq("user_id", userId);
-
-  return data ?? [];
+  return courseRepository.enrolledCourses(userId);
 }

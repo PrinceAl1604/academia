@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { userRepository } from "@/lib/infra/supabase/supabase-user-repository";
+import { startDm, StartDmError } from "@/lib/domain/usecases";
+import type { UserSummary } from "@/lib/domain/ports/user-repository";
 
 /**
  * Owns the inline DM compose flow. Replaces the old modal dialog
@@ -19,13 +21,7 @@ import { supabase } from "@/lib/supabase";
  * Keeps the hook ignorant of how the page tracks channels — the
  * hook's only job is "produce a channel id, hand it off."
  */
-export interface DmComposeUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string | null;
-  subscription_tier: string;
-}
+export type DmComposeUser = UserSummary;
 
 interface DmComposeOptions {
   userId: string | undefined;
@@ -63,27 +59,14 @@ export function useDmCompose(options: DmComposeOptions): DmComposeApi {
         setResults([]);
         return;
       }
-      const trimmed = q.trim();
-      let req = supabase
-        .from("users")
-        .select("id, name, email, role, subscription_tier")
-        .neq("id", userId);
-      if (trimmed) {
-        req = req.or(`name.ilike.%${trimmed}%,email.ilike.%${trimmed}%`);
-      }
-      const { data } = await req.limit(12);
-      const sorted = (data ?? []).sort(
-        (
-          a: { role: string | null; subscription_tier: string; name: string },
-          b: { role: string | null; subscription_tier: string; name: string }
-        ) => {
-          if (a.role === "admin" && b.role !== "admin") return -1;
-          if (b.role === "admin" && a.role !== "admin") return 1;
-          if (a.subscription_tier === "pro" && b.subscription_tier !== "pro") return -1;
-          if (b.subscription_tier === "pro" && a.subscription_tier !== "pro") return 1;
-          return a.name.localeCompare(b.name);
-        }
-      );
+      const data = await userRepository.search(q, userId, 12);
+      const sorted = [...data].sort((a, b) => {
+        if (a.role === "admin" && b.role !== "admin") return -1;
+        if (b.role === "admin" && a.role !== "admin") return 1;
+        if (a.subscription_tier === "pro" && b.subscription_tier !== "pro") return -1;
+        if (b.subscription_tier === "pro" && a.subscription_tier !== "pro") return 1;
+        return a.name.localeCompare(b.name);
+      });
       setResults(sorted);
     },
     [userId]
@@ -102,18 +85,16 @@ export function useDmCompose(options: DmComposeOptions): DmComposeApi {
     async (otherUserId: string) => {
       setStarting(true);
       setError(null);
-      const { data, error: rpcError } = await supabase.rpc("get_or_create_dm", {
-        other_user_id: otherUserId,
-      });
-      if (rpcError || !data) {
-        setError(translations?.cannotMessage || "Couldn't open conversation");
-        setStarting(false);
-        return;
+      try {
+        const channelId = await startDm.execute(otherUserId);
+        onConversationOpened(channelId);
+        setComposeMode(false);
+        setQuery("");
+        setResults([]);
+      } catch (err) {
+        const fallback = translations?.cannotMessage || "Couldn't open conversation";
+        setError(err instanceof StartDmError ? err.message || fallback : fallback);
       }
-      onConversationOpened(data as string);
-      setComposeMode(false);
-      setQuery("");
-      setResults([]);
       setStarting(false);
     },
     [onConversationOpened, translations?.cannotMessage]

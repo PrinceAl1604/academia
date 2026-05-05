@@ -54,6 +54,11 @@ import { useDmCompose } from "@/lib/hooks/use-dm-compose";
 import { userTintClass } from "@/lib/avatar-color";
 import { DmComposePanel } from "@/components/community/dm-compose-panel";
 import { ChatHeader } from "@/components/community/chat-header";
+import {
+  sendChatMessage,
+  markChannelRead,
+  toggleMessageReaction,
+} from "@/lib/domain/usecases";
 import { cn } from "@/lib/utils";
 import { ChatMarkdown } from "@/components/community/chat-markdown";
 import { Illustration } from "@/components/shared/illustration";
@@ -721,25 +726,17 @@ export default function CommunityPage() {
     loadMessages(activeChannelId);
   }, [activeChannelId, loadMessages]);
 
-  /* ─── Mark channel as read ──────────────────────────────── */
+  /* ─── Mark channel as read (delegated to use case) ──────── */
   const markAsRead = useCallback(
     async (channelId: string) => {
-      if (!user) return;
-      await supabase.from("chat_reads").upsert(
-        {
-          user_id: user.id,
-          channel_id: channelId,
-          last_read_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,channel_id" }
-      );
+      await markChannelRead.execute(channelId, user?.id);
       setUnreadCounts((prev) => {
         const next = new Map(prev);
         next.delete(channelId);
         return next;
       });
     },
-    [user]
+    [user?.id]
   );
 
   // Mark as read when switching channels
@@ -1152,17 +1149,22 @@ export default function CommunityPage() {
       return re.test(content);
     });
 
-    const { data: inserted } = await supabase
-      .from("chat_messages")
-      .insert({
-        user_id: user.id,
-        channel_id: activeChannelId,
+    // Use Case enforces "non-empty content" + trims; the handler
+    // catches errors so the optimistic clear above is never visible
+    // as a stuck spinner if the server rejects.
+    let insertedId: string | null = null;
+    try {
+      const inserted = await sendChatMessage.execute({
+        channelId: activeChannelId,
+        userId: user.id,
         content,
-      })
-      .select("id")
-      .single();
+      });
+      insertedId = inserted.id;
+    } catch {
+      // Surface to the user later if needed; for now just unblock UI
+    }
 
-    if (inserted?.id && activeMentions.length > 0) {
+    if (insertedId && activeMentions.length > 0) {
       // Dedupe by user_id: someone mentioned twice in the same message
       // should only produce one notification row.
       const seen = new Set<string>();
@@ -1173,7 +1175,7 @@ export default function CommunityPage() {
           return true;
         })
         .map((m) => ({
-          message_id: inserted.id as string,
+          message_id: insertedId as string,
           mentioned_user_id: m.user_id,
           channel_id: activeChannelId,
         }));
@@ -1504,18 +1506,15 @@ export default function CommunityPage() {
             : m
         )
       );
-      await supabase
-        .from("chat_reactions")
-        .delete()
-        .eq("id", existing.id);
-    } else {
-      // Let the DB assign the id; let realtime INSERT echo patch state
-      await supabase.from("chat_reactions").insert({
-        message_id: msg.id,
-        user_id: user.id,
-        emoji,
-      });
     }
+    // Use case wraps the (add | remove) decision and persists.
+    // Realtime echo will reconcile any optimistic divergence.
+    await toggleMessageReaction.execute({
+      messageId: msg.id,
+      userId: user.id,
+      emoji,
+      currentlyReacted: !!existing,
+    });
   };
 
   /* ─── Helpers ───────────────────────────────────────────── */
