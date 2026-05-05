@@ -250,6 +250,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // resolution from an old session can overwrite the new one.
     let cancelled = false;
 
+    // Safety net: never let `loading` stay true beyond 2.5s. The
+    // bootstrap path normally reaches setLoading(false) via cache hit
+    // (~50ms) or loadUserProfile (~200-400ms), but a slow users-table
+    // query (RLS planner, cold edge node, network jitter) can stretch
+    // that into multi-second territory. Gating the entire app — most
+    // visibly AdminLayout's full-screen spinner — on that one query
+    // is worse UX than rendering with default role/plan and letting
+    // the network resolution refine state in the background.
+    const loadingSafetyTimer = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 2500);
+
     // ─── PERF: stale-while-revalidate auth bootstrap ─────────────
     // Critical optimization: the previous flow awaited TWO Supabase
     // round-trips (getSession then loadUserProfile, ~500-800ms total)
@@ -267,45 +279,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // refresh returns different values, state updates and the UI
     // re-renders — typical "stale-while-revalidate" pattern.
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (cancelled) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (cancelled) return;
 
-      if (!session?.user) {
-        setLoading(false);
-        return;
-      }
-
-      setUser(session.user);
-
-      // Try cache hit — instant render path.
-      const cached = readProfileCache();
-      if (cached && cached.userId === session.user.id) {
-        setRole(cached.role);
-        setPlan(cached.plan);
-        setProExpiresAt(cached.proExpiresAt);
-        setHasOnboarded(cached.hasOnboarded);
-        setReferralCode(cached.referralCode);
-        setLoading(false);
-        // PERF: skip the background refresh entirely if the cache is
-        // less than 5 minutes old. Saves ~150-300ms of network on
-        // every page navigation for active users. Stale cache
-        // updates will catch up on the NEXT page load past the TTL.
-        const PROFILE_FRESH_MS = 5 * 60 * 1000;
-        if (Date.now() - cached.cachedAt < PROFILE_FRESH_MS) {
-          return; // cache is fresh; no network call needed
+        if (!session?.user) {
+          setLoading(false);
+          return;
         }
-        // Background refresh — discrepancies update state via setters.
-        // We don't await; perceived load is already complete.
-        loadUserProfile(session.user.id).catch(() => {});
-        return;
-      }
 
-      // Cache miss — first-time login or cleared cache. Wait for
-      // network (no choice) but at least we have the user object set
-      // so the navbar can render the avatar / email immediately.
-      await loadUserProfile(session.user.id);
-      if (cancelled) return;
-      setLoading(false);
+        setUser(session.user);
+
+        // Try cache hit — instant render path.
+        const cached = readProfileCache();
+        if (cached && cached.userId === session.user.id) {
+          setRole(cached.role);
+          setPlan(cached.plan);
+          setProExpiresAt(cached.proExpiresAt);
+          setHasOnboarded(cached.hasOnboarded);
+          setReferralCode(cached.referralCode);
+          setLoading(false);
+          // PERF: skip the background refresh entirely if the cache is
+          // less than 5 minutes old. Saves ~150-300ms of network on
+          // every page navigation for active users. Stale cache
+          // updates will catch up on the NEXT page load past the TTL.
+          const PROFILE_FRESH_MS = 5 * 60 * 1000;
+          if (Date.now() - cached.cachedAt < PROFILE_FRESH_MS) {
+            return; // cache is fresh; no network call needed
+          }
+          // Background refresh — discrepancies update state via setters.
+          // We don't await; perceived load is already complete.
+          loadUserProfile(session.user.id).catch(() => {});
+          return;
+        }
+
+        // Cache miss — first-time login or cleared cache. Wait for
+        // network (no choice) but at least we have the user object
+        // set so the navbar can render the avatar / email
+        // immediately.
+        await loadUserProfile(session.user.id);
+      } catch (err) {
+        // Never let an unhandled rejection from getSession() or
+        // loadUserProfile() leave the app stuck on the spinner. The
+        // safety timer above also catches this, but failing fast is
+        // better when the failure is deterministic.
+        console.error("[AuthProvider] bootstrap failed:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -343,6 +364,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       cancelled = true;
+      clearTimeout(loadingSafetyTimer);
       subscription.unsubscribe();
     };
   }, [loadUserProfile]);
