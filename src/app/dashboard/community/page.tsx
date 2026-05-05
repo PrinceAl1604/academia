@@ -51,6 +51,9 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
 import { useChannelPresence } from "@/lib/hooks/use-channel-presence";
 import { useDmCompose } from "@/lib/hooks/use-dm-compose";
+import { userTintClass } from "@/lib/avatar-color";
+import { DmComposePanel } from "@/components/community/dm-compose-panel";
+import { ChatHeader } from "@/components/community/chat-header";
 import { cn } from "@/lib/utils";
 import { ChatMarkdown } from "@/components/community/chat-markdown";
 import { Illustration } from "@/components/shared/illustration";
@@ -124,34 +127,9 @@ const GENERAL_CHANNEL_ID = "00000000-0000-0000-0000-000000000001";
 const MESSAGES_PER_PAGE = 50;
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "🔥", "🎉", "💡", "👏", "🙏"];
 
-/* ─── Avatar color hashing ────────────────────────────────
- * Deterministic palette pick per user id. A monochrome wall of
- * "first letter on grey" was the previous look — fine for chat
- * mechanics, mute on identity. Hashing the id into one of N
- * tinted backgrounds gives instant visual recognition ("ah, the
- * teal one is replying again") without uploading photos.
- *
- * Admins still override with the red "admin" tint downstream —
- * authority signal beats per-user differentiation. */
-const AVATAR_TINTS = [
-  "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-  "bg-violet-500/15 text-violet-700 dark:text-violet-300",
-  "bg-rose-500/15 text-rose-700 dark:text-rose-300",
-  "bg-teal-500/15 text-teal-700 dark:text-teal-300",
-  "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300",
-  "bg-fuchsia-500/15 text-fuchsia-700 dark:text-fuchsia-300",
-];
-
-function userTintClass(id?: string | null): string {
-  if (!id) return AVATAR_TINTS[0];
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  }
-  return AVATAR_TINTS[Math.abs(hash) % AVATAR_TINTS.length];
-}
+/* Avatar color hashing extracted to src/lib/avatar-color.ts so
+ * the DmComposePanel and other community components can share
+ * the same palette without duplicating the hash function. */
 
 /* ─── Channel Icon ────────────────────────────────────────── */
 
@@ -1851,338 +1829,44 @@ export default function CommunityPage() {
       {/* ─── Chat Area ──────────────────────────────────────── */}
       <div className="flex flex-1 flex-col min-w-0">
         {dmCompose.composeMode ? (
-          /* ─── Inline DM Compose ──────────────────────────────
-               Replaces the old modal popover. Owns the chat area
-               while active: header (close + title) → search input
-               → suggested-or-matching users list. Picking a user
-               calls handleStartDm which transitions back to the
-               normal chat with that DM channel active. */
-          <>
-            <div className="border-b border-border">
-              <div className="max-w-3xl mx-auto w-full flex items-center gap-2 px-4 py-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0 text-muted-foreground/70"
-                  onClick={dmCompose.close}
-                  aria-label={isEn ? "Close" : "Fermer"}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-                <h1 className="text-base font-semibold tracking-tight text-foreground">
-                  {t.community?.newDmTitle ||
-                    (isEn ? "New direct message" : "Nouveau message")}
-                </h1>
-              </div>
-            </div>
-
-            <div className="border-b border-border">
-              <div className="max-w-3xl mx-auto w-full px-4 py-3">
-                <div className="relative">
-                  <SearchIcon className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
-                  <Input
-                    value={dmCompose.query}
-                    onChange={(e) => dmCompose.setQuery(e.target.value)}
-                    placeholder={
-                      t.community?.newDmSearchPlaceholder ||
-                      (isEn
-                        ? "Search people…"
-                        : "Rechercher quelqu'un…")
-                    }
-                    className="pl-9"
-                    autoFocus
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              <div className="max-w-3xl mx-auto w-full px-4 py-3">
-                {dmCompose.results.length === 0 ? (
-                  <p className="text-xs text-muted-foreground/70 text-center py-12">
-                    {dmCompose.query.trim()
-                      ? t.community?.newDmEmptyResults ||
-                        (isEn
-                          ? "No matching members."
-                          : "Aucun membre correspondant.")
-                      : isEn
-                      ? "No members yet."
-                      : "Aucun membre pour l'instant."}
-                  </p>
-                ) : (
-                  <>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50 px-2 pb-2">
-                      <span className="opacity-50">/</span>{" "}
-                      {dmCompose.query.trim()
-                        ? isEn
-                          ? "Results"
-                          : "Résultats"
-                        : isEn
-                        ? "Suggested"
-                        : "Suggestions"}
-                    </p>
-                    <div className="space-y-0.5">
-                      {dmCompose.results.map((u) => {
-                        const isAdminUser = u.role === "admin";
-                        const isProUser = u.subscription_tier === "pro";
-                        const initials = (u.name || u.email || "?")
-                          .split(/[\s@]+/)
-                          .map((s) => s[0])
-                          .filter(Boolean)
-                          .slice(0, 2)
-                          .join("")
-                          .toUpperCase();
-                        return (
-                          <button
-                            key={u.id}
-                            type="button"
-                            onClick={() => dmCompose.startWith(u.id)}
-                            disabled={dmCompose.starting}
-                            className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-muted/40 transition-colors disabled:opacity-50"
-                          >
-                            <Avatar className="h-9 w-9 shrink-0">
-                              <AvatarFallback
-                                className={cn(
-                                  "text-xs font-medium",
-                                  isAdminUser
-                                    ? "bg-amber-500/15 text-amber-500"
-                                    : userTintClass(u.id)
-                                )}
-                              >
-                                {initials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-sm font-medium text-foreground truncate">
-                                  {u.name || u.email.split("@")[0]}
-                                </p>
-                                {isAdminUser && (
-                                  <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-500">
-                                    <Crown className="h-2.5 w-2.5" />
-                                    {t.community?.dmAdminBadge || "Host"}
-                                  </span>
-                                )}
-                                {!isAdminUser && isProUser && (
-                                  <Badge className="bg-primary/15 text-primary text-[9px] px-1.5 py-0">
-                                    Pro
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="font-mono text-[10px] text-muted-foreground/70 truncate">
-                                {u.email}
-                              </p>
-                            </div>
-                            {dmCompose.starting && (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground/70 shrink-0" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-                {dmCompose.error && (
-                  <p className="text-xs text-destructive px-2 pt-3">
-                    {dmCompose.error}
-                  </p>
-                )}
-              </div>
-            </div>
-          </>
+          <DmComposePanel
+            compose={dmCompose}
+            isEn={isEn}
+            labels={{
+              title: t.community?.newDmTitle,
+              searchPlaceholder: t.community?.newDmSearchPlaceholder,
+              emptyResults: t.community?.newDmEmptyResults,
+              adminBadge: t.community?.dmAdminBadge,
+            }}
+          />
         ) : (
         <>
-        {/* ─── Chat Header ──────────────────────────────────────
-             Border spans full-width for visual continuity, but the
-             header content tracks the message column's max-w-3xl
-             so the sidebar toggle, channel name, and online
-             indicator stay aligned with the conversation below. */}
-        <div className="border-b border-border">
-        <div className="max-w-3xl mx-auto w-full flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {/* Toggle sidebar */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0 text-muted-foreground/70"
-              onClick={() => setShowSidebar(!showSidebar)}
-            >
-              {showSidebar ? (
-                <PanelLeftClose className="h-4 w-4" />
-              ) : (
-                <PanelLeft className="h-4 w-4" />
-              )}
-            </Button>
-
-            {/* Channel info — ClickUp-style: `#` glyph (matching the
-                sidebar) + bigger channel name as the page anchor. The
-                title was previously text-sm font-bold which read as
-                "secondary text" rather than "page title." */}
-            {activeChannel && activeChannel.type === "direct" ? (
-              // DM header: avatar + peer name + Host badge if admin.
-              // Different visual model from public channels — DMs are
-              // about the person, not the topic.
-              (() => {
-                const dm = dmThreads.find(
-                  (d) => d.channel_id === activeChannel.id
-                );
-                if (!dm) return null;
-                const isAdminThread = dm.other_role === "admin";
-                const initials = (dm.other_name || "?")
-                  .split(/\s+/)
-                  .map((s) => s[0])
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .join("")
-                  .toUpperCase();
-                return (
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback
-                        className={cn(
-                          "text-xs font-medium",
-                          isAdminThread
-                            ? "bg-amber-500/15 text-amber-500"
-                            : userTintClass(dm.other_user_id)
-                        )}
-                      >
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <h1 className="text-base font-semibold tracking-tight text-foreground truncate flex items-center gap-1.5">
-                        {dm.other_name}
-                        {isAdminThread && (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-amber-500">
-                            <Crown className="h-2.5 w-2.5" />
-                            {t.community?.dmAdminBadge || "Host"}
-                          </span>
-                        )}
-                      </h1>
-                      <p className="text-[11px] text-muted-foreground/70">
-                        {(t.community?.directMessages || "Direct messages").toLowerCase()}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })()
-            ) : activeChannel ? (
-              <div className="flex items-center gap-2 min-w-0">
-                <span
-                  className={cn(
-                    "shrink-0 font-mono text-lg leading-none",
-                    activeChannel.type === "announcements"
-                      ? "text-amber-500"
-                      : "text-muted-foreground/60"
-                  )}
-                  aria-hidden
-                >
-                  #
-                </span>
-                <div className="min-w-0">
-                  <h1 className="text-base font-semibold tracking-tight text-foreground truncate">
-                    {activeChannel.type === "general"
-                      ? t.community?.general || "General"
-                      : activeChannel.type === "announcements"
-                      ? t.community?.announcements || "Announcements"
-                      : activeChannel.name}
-                  </h1>
-                  {activeChannel.type === "announcements" && (
-                    <p className="text-[11px] text-amber-600 dark:text-amber-400">
-                      {t.community?.announcementsDesc ||
-                        (isEn
-                          ? "Important updates from admins"
-                          : "Mises à jour importantes des administrateurs")}
-                    </p>
-                  )}
-                  {activeChannel.type === "course" && (
-                    <p className="text-[11px] text-muted-foreground/70">
-                      {t.community?.courseChat ||
-                        (isEn
-                          ? "Course discussion"
-                          : "Discussion du cours")}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Pinned toggle */}
-            {pinnedMessages.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1.5 text-muted-foreground h-8"
-                onClick={() => setShowPinned(!showPinned)}
-              >
-                <Pin className="h-3.5 w-3.5" />
-                {pinnedMessages.length}
-              </Button>
-            )}
-
-            {/* Per-channel mute toggle. When muted, mention + announcement
-                 notifications skip this channel server-side; user still
-                 sees the messages when they visit. */}
-            {activeChannel && activeChannel.type !== "direct" && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => toggleChannelMute(activeChannel.id)}
-                title={
-                  mutedChannels.has(activeChannel.id)
-                    ? t.community?.channelUnmute || "Unmute"
-                    : t.community?.channelMute || "Mute notifications"
-                }
-                aria-label={
-                  mutedChannels.has(activeChannel.id)
-                    ? t.community?.channelUnmute || "Unmute"
-                    : t.community?.channelMute || "Mute notifications"
-                }
-              >
-                {mutedChannels.has(activeChannel.id) ? (
-                  <BellOff className="h-3.5 w-3.5 text-amber-500" />
-                ) : (
-                  <Bell className="h-3.5 w-3.5" />
-                )}
-              </Button>
-            )}
-
-            {/* In-community @-mentions bell removed — duplicate of the
-                 topbar notifications bell, which now surfaces the same
-                 mention rows via the chat_mentions trigger that mirrors
-                 into the unified notifications feed. */}
-
-            {/* Online indicator — title shows full roster on hover.
-                 Singular/plural forms use the proper localized
-                 strings ("1 personne en ligne" vs "3 personnes en
-                 ligne") so the count is unambiguous, not "1 en
-                 ligne" which leaves users guessing what 1 means. */}
-            <div
-              className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1"
-              title={
-                onlineUsers.length > 0
-                  ? onlineUsers.map((u) => u.name).join(", ")
-                  : undefined
-              }
-            >
-              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-medium text-primary tabular-nums">
-                {onlineCount}{" "}
-                {isEn
-                  ? onlineCount === 1
-                    ? "person online"
-                    : "people online"
-                  : onlineCount === 1
-                  ? "personne en ligne"
-                  : "personnes en ligne"}
-              </span>
-            </div>
-          </div>
-        </div>
-        </div>
+        <ChatHeader
+          activeChannel={activeChannel ?? null}
+          dmThreads={dmThreads}
+          pinnedCount={pinnedMessages.length}
+          showPinned={showPinned}
+          onTogglePinned={() => setShowPinned(!showPinned)}
+          isMuted={
+            activeChannel ? mutedChannels.has(activeChannel.id) : false
+          }
+          onToggleMute={() => activeChannel && toggleChannelMute(activeChannel.id)}
+          showSidebar={showSidebar}
+          onToggleSidebar={() => setShowSidebar(!showSidebar)}
+          onlineUsers={onlineUsers}
+          onlineCount={onlineCount}
+          isEn={isEn}
+          labels={{
+            general: t.community?.general,
+            announcements: t.community?.announcements,
+            announcementsDesc: t.community?.announcementsDesc,
+            courseChat: t.community?.courseChat,
+            directMessages: t.community?.directMessages,
+            dmAdminBadge: t.community?.dmAdminBadge,
+            channelMute: t.community?.channelMute,
+            channelUnmute: t.community?.channelUnmute,
+          }}
+        />
 
         {/* ─── Pinned Messages Panel ──────────────────────────── */}
         {showPinned && pinnedMessages.length > 0 && (
