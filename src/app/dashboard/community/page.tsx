@@ -49,6 +49,8 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
+import { useChannelPresence } from "@/lib/hooks/use-channel-presence";
+import { useDmCompose } from "@/lib/hooks/use-dm-compose";
 import { cn } from "@/lib/utils";
 import { ChatMarkdown } from "@/components/community/chat-markdown";
 import { Illustration } from "@/components/shared/illustration";
@@ -221,6 +223,9 @@ export default function CommunityPage() {
   const { t, language } = useLanguage();
   const isEn = language === "en";
 
+  /* ─── Live presence (extracted hook) ─────────────────────── */
+  const { onlineUsers, onlineCount } = useChannelPresence(user?.id, userName);
+
   /* ─── Channel state ─────────────────────────────────────── */
   const [channels, setChannels] = useState<Channel[]>([]);
   const [activeChannelId, setActiveChannelId] = useState(GENERAL_CHANNEL_ID);
@@ -236,13 +241,26 @@ export default function CommunityPage() {
    * page mount + when realtime fires for new participation rows
    * (e.g. someone DMs you for the first time). */
   const [dmThreads, setDmThreads] = useState<DmThread[]>([]);
-  const [composeMode, setComposeMode] = useState(false);
-  const [dmSearchQuery, setDmSearchQuery] = useState("");
-  const [dmSearchResults, setDmSearchResults] = useState<
-    Array<{ id: string; name: string; email: string; role: string | null; subscription_tier: string }>
-  >([]);
-  const [startingDm, setStartingDm] = useState(false);
-  const [dmError, setDmError] = useState<string | null>(null);
+
+  /* ─── DM compose (extracted hook) ─────────────────────────
+   * Hook owns the panel state (mode, query, results, error,
+   * starting). On open, the page refetches channels and switches
+   * to the new DM thread via onConversationOpened. */
+  const dmCompose = useDmCompose({
+    userId: user?.id,
+    onConversationOpened: useCallback(async (channelId: string) => {
+      const { data: allChannels } = await supabase
+        .from("chat_channels")
+        .select("*");
+      if (allChannels) {
+        setChannels(allChannels as Channel[]);
+      }
+      setActiveChannelId(channelId);
+    }, []),
+    translations: {
+      cannotMessage: t.community?.dmCannotMessage,
+    },
+  });
 
   /* ─── Chat state ────────────────────────────────────────── */
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -250,8 +268,9 @@ export default function CommunityPage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
-  const [onlineUsers, setOnlineUsers] = useState<{ id: string; name: string }[]>([]);
-  const onlineCount = onlineUsers.length;
+  // onlineUsers + onlineCount come from useChannelPresence below
+  // (declared after userName is in scope so the hook receives a
+  // stable display name for presence.track).
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState<ChatMessage[]>([]);
   const [showPinned, setShowPinned] = useState(false);
@@ -528,77 +547,9 @@ export default function CommunityPage() {
    * the user table (small to medium). Falls back to client-side
    * substring match — Postgres `ilike` is server-side so we hit DB
    * for anything substantive. */
-  const runUserSearch = useCallback(
-    async (query: string) => {
-      if (!user) {
-        setDmSearchResults([]);
-        return;
-      }
-      const q = query.trim();
-      // Empty query → return top suggested users so the compose
-      // panel populates immediately, no typing required. Non-empty
-      // query → ilike search. Both cases capped at 12 for the
-      // inline list (was 8 in the old modal).
-      let req = supabase
-        .from("users")
-        .select("id, name, email, role, subscription_tier")
-        .neq("id", user.id);
-      if (q) {
-        req = req.or(`name.ilike.%${q}%,email.ilike.%${q}%`);
-      }
-      const { data } = await req.limit(12);
-      // Sort: admin first, then Pro members, then alphabetical
-      const sorted = (data ?? []).sort(
-        (a: { role: string | null; subscription_tier: string; name: string },
-         b: { role: string | null; subscription_tier: string; name: string }) => {
-          if (a.role === "admin" && b.role !== "admin") return -1;
-          if (b.role === "admin" && a.role !== "admin") return 1;
-          if (a.subscription_tier === "pro" && b.subscription_tier !== "pro") return -1;
-          if (b.subscription_tier === "pro" && a.subscription_tier !== "pro") return 1;
-          return a.name.localeCompare(b.name);
-        }
-      );
-      setDmSearchResults(sorted);
-    },
-    [user]
-  );
-
-  // Debounced search trigger — only runs while compose is open so we
-  // don't burn a query on every keystroke when the panel isn't visible.
-  useEffect(() => {
-    if (!composeMode) return;
-    const timer = setTimeout(() => runUserSearch(dmSearchQuery), 200);
-    return () => clearTimeout(timer);
-  }, [composeMode, dmSearchQuery, runUserSearch]);
-
-  const handleStartDm = useCallback(
-    async (otherUserId: string) => {
-      setStartingDm(true);
-      setDmError(null);
-      const { data, error } = await supabase.rpc("get_or_create_dm", {
-        other_user_id: otherUserId,
-      });
-      if (error || !data) {
-        setDmError(t.community?.dmCannotMessage || "Couldn't open conversation");
-        setStartingDm(false);
-        return;
-      }
-      // Channel may not yet be in our channels list (just created).
-      // Refetch channels so the DM thread renders + we can switch to it.
-      const { data: allChannels } = await supabase
-        .from("chat_channels")
-        .select("*");
-      if (allChannels) {
-        setChannels(allChannels as Channel[]);
-      }
-      setActiveChannelId(data as string);
-      setComposeMode(false);
-      setDmSearchQuery("");
-      setDmSearchResults([]);
-      setStartingDm(false);
-    },
-    [t.community]
-  );
+  // Search + start-conversation logic now lives in useDmCompose
+  // (src/lib/hooks/use-dm-compose.ts). The hook is instantiated
+  // above as `dmCompose`.
 
   /* ─── DM realtime — new participations + new messages ───────
    * When someone DMs us for the first time, a participant row is
@@ -1016,45 +967,9 @@ export default function CommunityPage() {
     // useEffect above for rationale.
   }, [user?.id, markAsRead]);
 
-  /* ─── Presence ──────────────────────────────────────────── */
-  useEffect(() => {
-    if (!user) return;
-
-    const presence = supabase.channel("community_presence", {
-      config: { presence: { key: user.id } },
-    });
-
-    presence
-      .on("presence", { event: "sync" }, () => {
-        const state = presence.presenceState() as Record<
-          string,
-          { user_id: string; name: string }[]
-        >;
-        const list: { id: string; name: string }[] = [];
-        for (const key of Object.keys(state)) {
-          const meta = state[key]?.[0];
-          if (meta) list.push({ id: meta.user_id, name: meta.name || "User" });
-        }
-        // Sort own user first, then alphabetical — keeps tooltip stable.
-        list.sort((a, b) => {
-          if (a.id === user.id) return -1;
-          if (b.id === user.id) return 1;
-          return a.name.localeCompare(b.name);
-        });
-        setOnlineUsers(list);
-      })
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await presence.track({ user_id: user.id, name: userName });
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(presence);
-    };
-    // PERF: user.id (string) not user (object). userName is a derived
-    // string so its dep stability is fine.
-  }, [user?.id, userName]);
+  /* ─── Presence ──────────────────────────────────────────────
+   * Roster + count provided by useChannelPresence — see
+   * src/lib/hooks/use-channel-presence.ts. */
 
   /* ─── Mention roster ────────────────────────────────────── */
   // One fetch per mount. If the platform grows past a few hundred users,
@@ -1154,7 +1069,7 @@ export default function CommunityPage() {
     // exits compose. composeMode + activeChannelId can co-exist on
     // re-entry but a user clicking a channel clearly wants to leave
     // the compose UI.
-    setComposeMode(false);
+    dmCompose.close();
     if (channelId === activeChannelId) return;
     setActiveChannelId(channelId);
     setShowPinned(false);
@@ -1799,10 +1714,7 @@ export default function CommunityPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setComposeMode(true);
-                  setDmSearchQuery("");
-                  setDmSearchResults([]);
-                  setDmError(null);
+                  dmCompose.open();
                 }}
                 title={t.community?.newMessage || "New message"}
                 aria-label={t.community?.newMessage || "New message"}
@@ -1822,10 +1734,7 @@ export default function CommunityPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setComposeMode(true);
-                    setDmSearchQuery("");
-                    setDmSearchResults([]);
-                    setDmError(null);
+                    dmCompose.open();
                   }}
                   className="inline-flex items-center gap-1.5 rounded-md text-[11px] font-medium text-primary hover:underline underline-offset-2"
                 >
@@ -1941,7 +1850,7 @@ export default function CommunityPage() {
 
       {/* ─── Chat Area ──────────────────────────────────────── */}
       <div className="flex flex-1 flex-col min-w-0">
-        {composeMode ? (
+        {dmCompose.composeMode ? (
           /* ─── Inline DM Compose ──────────────────────────────
                Replaces the old modal popover. Owns the chat area
                while active: header (close + title) → search input
@@ -1955,12 +1864,7 @@ export default function CommunityPage() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 shrink-0 text-muted-foreground/70"
-                  onClick={() => {
-                    setComposeMode(false);
-                    setDmSearchQuery("");
-                    setDmSearchResults([]);
-                    setDmError(null);
-                  }}
+                  onClick={dmCompose.close}
                   aria-label={isEn ? "Close" : "Fermer"}
                 >
                   <X className="h-4 w-4" />
@@ -1977,8 +1881,8 @@ export default function CommunityPage() {
                 <div className="relative">
                   <SearchIcon className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
                   <Input
-                    value={dmSearchQuery}
-                    onChange={(e) => setDmSearchQuery(e.target.value)}
+                    value={dmCompose.query}
+                    onChange={(e) => dmCompose.setQuery(e.target.value)}
                     placeholder={
                       t.community?.newDmSearchPlaceholder ||
                       (isEn
@@ -1994,9 +1898,9 @@ export default function CommunityPage() {
 
             <div className="flex-1 overflow-y-auto">
               <div className="max-w-3xl mx-auto w-full px-4 py-3">
-                {dmSearchResults.length === 0 ? (
+                {dmCompose.results.length === 0 ? (
                   <p className="text-xs text-muted-foreground/70 text-center py-12">
-                    {dmSearchQuery.trim()
+                    {dmCompose.query.trim()
                       ? t.community?.newDmEmptyResults ||
                         (isEn
                           ? "No matching members."
@@ -2009,7 +1913,7 @@ export default function CommunityPage() {
                   <>
                     <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50 px-2 pb-2">
                       <span className="opacity-50">/</span>{" "}
-                      {dmSearchQuery.trim()
+                      {dmCompose.query.trim()
                         ? isEn
                           ? "Results"
                           : "Résultats"
@@ -2018,7 +1922,7 @@ export default function CommunityPage() {
                         : "Suggestions"}
                     </p>
                     <div className="space-y-0.5">
-                      {dmSearchResults.map((u) => {
+                      {dmCompose.results.map((u) => {
                         const isAdminUser = u.role === "admin";
                         const isProUser = u.subscription_tier === "pro";
                         const initials = (u.name || u.email || "?")
@@ -2032,8 +1936,8 @@ export default function CommunityPage() {
                           <button
                             key={u.id}
                             type="button"
-                            onClick={() => handleStartDm(u.id)}
-                            disabled={startingDm}
+                            onClick={() => dmCompose.startWith(u.id)}
+                            disabled={dmCompose.starting}
                             className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-muted/40 transition-colors disabled:opacity-50"
                           >
                             <Avatar className="h-9 w-9 shrink-0">
@@ -2069,7 +1973,7 @@ export default function CommunityPage() {
                                 {u.email}
                               </p>
                             </div>
-                            {startingDm && (
+                            {dmCompose.starting && (
                               <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground/70 shrink-0" />
                             )}
                           </button>
@@ -2078,9 +1982,9 @@ export default function CommunityPage() {
                     </div>
                   </>
                 )}
-                {dmError && (
+                {dmCompose.error && (
                   <p className="text-xs text-destructive px-2 pt-3">
-                    {dmError}
+                    {dmCompose.error}
                   </p>
                 )}
               </div>
