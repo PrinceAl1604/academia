@@ -1741,7 +1741,11 @@ export default function CommunityPage() {
               the `#` to signal "admin-broadcast" — channel-type
               differentiation by color, not by glyph. */}
           {coreChannels.map((ch) => {
-            const isActive = ch.id === activeChannelId;
+            // Active marker is suppressed while the Home view is
+            // showing — otherwise both Home and the previously-
+            // selected channel light up green at the same time and
+            // the user can't tell which is the "current" surface.
+            const isActive = !viewHome && ch.id === activeChannelId;
             const unread = unreadCounts.get(ch.id) || 0;
             const isAnnouncements = ch.type === "announcements";
             const isMuted = mutedChannels.has(ch.id);
@@ -1836,7 +1840,8 @@ export default function CommunityPage() {
             </div>
           ) : (
             dmThreads.map((dm) => {
-              const isActive = dm.channel_id === activeChannelId;
+              // Same Home-suppression rule as core channels above.
+              const isActive = !viewHome && dm.channel_id === activeChannelId;
               const unread = unreadCounts.get(dm.channel_id) || 0;
               const isAdminThread = dm.other_role === "admin";
               const initials = (dm.other_name || "?")
@@ -1899,7 +1904,8 @@ export default function CommunityPage() {
                 </p>
               </div>
               {courseChannels.map((ch) => {
-                const isActive = ch.id === activeChannelId;
+                // Same Home-suppression rule as core channels above.
+                const isActive = !viewHome && ch.id === activeChannelId;
                 const unread = unreadCounts.get(ch.id) || 0;
                 return (
                   <button
