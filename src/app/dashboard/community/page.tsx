@@ -9,6 +9,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -1212,8 +1213,23 @@ export default function CommunityPage() {
           );
         }
       }
-    } catch {
-      // Surface to the user later if needed; for now just unblock UI
+    } catch (err) {
+      // Surface the failure: previously the catch was empty and the
+      // message just silently disappeared on send (the optimistic UI
+      // never ran because we threw before it). The user saw the input
+      // clear with no feedback — looked like the chat was broken.
+      // Now: log the underlying error AND show a toast so the user
+      // knows the send failed and can retry. Restore the input so
+      // they don't lose their typing.
+      console.error("[community] sendChatMessage failed:", err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : isEn
+          ? "Couldn't send message. Please try again."
+          : "Impossible d'envoyer le message. Veuillez réessayer.";
+      toast.error(message);
+      setInput(content);
     }
 
     if (insertedId && activeMentions.length > 0) {
