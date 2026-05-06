@@ -103,7 +103,6 @@ export function CommunityHome({
         {/* ─── Hero greeting ─────────────────────────────────── */}
         <header className="space-y-1.5">
           <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            <span className="opacity-50">/</span>{" "}
             {labels.title || (isEn ? "Community" : "Communauté")}
           </p>
           <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-foreground">
@@ -149,8 +148,7 @@ export function CommunityHome({
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
-                <span className="opacity-50">/</span>{" "}
-                {labels.upNext || (isEn ? "Up next" : "À venir")}
+                    {labels.upNext || (isEn ? "Up next" : "À venir")}
               </p>
               <Link
                 href="/dashboard/sessions"
@@ -168,8 +166,7 @@ export function CommunityHome({
         {unreadChannels.length > 0 && (
           <section className="space-y-3">
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
-              <span className="opacity-50">/</span>{" "}
-              {labels.unreadChannels ||
+                {labels.unreadChannels ||
                 (isEn ? "Unread channels" : "Salons non lus")}
             </p>
             <div className="space-y-1">
@@ -216,8 +213,7 @@ export function CommunityHome({
         {dmThreads.length > 0 && (
           <section className="space-y-3">
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
-              <span className="opacity-50">/</span>{" "}
-              {labels.recentDms ||
+                {labels.recentDms ||
                 (isEn ? "Recent messages" : "Messages récents")}
             </p>
             <div className="space-y-1">

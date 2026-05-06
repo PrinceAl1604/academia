@@ -40,6 +40,7 @@ import {
   Crown,
   BellOff,
   Sparkles,
+  Lock,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -1649,8 +1650,7 @@ export default function CommunityPage() {
       >
         {/* Sidebar header */}
         <div className="flex items-center justify-between px-3 py-3 border-b border-border">
-          <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
-            <span className="opacity-50">/</span>{" "}
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/60">
             {t.community?.channels || "Channels"}
           </h2>
           <div
@@ -1682,9 +1682,9 @@ export default function CommunityPage() {
               setViewHome(true);
             }}
             className={cn(
-              "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-2 text-left transition-colors",
+              "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-1.5 text-left transition-colors",
               viewHome &&
-                "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
+                "before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:rounded-r-sm before:bg-primary",
               viewHome
                 ? "bg-sidebar-accent text-foreground"
                 : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
@@ -1721,9 +1721,9 @@ export default function CommunityPage() {
                 key={ch.id}
                 onClick={() => switchChannel(ch.id)}
                 className={cn(
-                  "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-2 text-left transition-colors",
+                  "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-1.5 text-left transition-colors",
                   isActive &&
-                    "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
+                    "before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:rounded-r-sm before:bg-primary",
                   isActive
                     ? "bg-sidebar-accent text-foreground"
                     : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
@@ -1790,8 +1790,7 @@ export default function CommunityPage() {
                but the "+ New" button is gated to Pro/admin via
                canStartDm. Empty state nudges initiation. */}
           <div className="pt-3 pb-1 px-2.5 flex items-center justify-between">
-            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
-              <span className="opacity-50">/</span>{" "}
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/60">
               {t.community?.directMessages || "Direct messages"}
             </p>
             {canStartDm && (
@@ -1845,9 +1844,9 @@ export default function CommunityPage() {
                   key={dm.channel_id}
                   onClick={() => switchChannel(dm.channel_id)}
                   className={cn(
-                    "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-2 text-left transition-colors",
+                    "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-1.5 text-left transition-colors",
                     isActive &&
-                      "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
+                      "before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:rounded-r-sm before:bg-primary",
                     isActive
                       ? "bg-sidebar-accent text-foreground"
                       : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
@@ -1888,8 +1887,7 @@ export default function CommunityPage() {
           {courseChannels.length > 0 && (
             <>
               <div className="pt-3 pb-1 px-2.5">
-                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50">
-                  <span className="opacity-50">/</span>{" "}
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/60">
                   {t.community?.courseChannels || "Courses"}
                 </p>
               </div>
@@ -1902,9 +1900,9 @@ export default function CommunityPage() {
                     onClick={() => switchChannel(ch.id)}
                     title={ch.name}
                     className={cn(
-                      "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-2 text-left transition-colors",
+                      "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-1.5 text-left transition-colors",
                       isActive &&
-                        "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
+                        "before:absolute before:left-0 before:top-1 before:bottom-1 before:w-[2px] before:rounded-r-sm before:bg-primary",
                       isActive
                         ? "bg-sidebar-accent text-foreground"
                         : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
@@ -1919,6 +1917,13 @@ export default function CommunityPage() {
                     <span className="flex-1 text-sm font-medium truncate">
                       {ch.name}
                     </span>
+                    {/* Course channels are scoped to enrolled students.
+                         Lock glyph signals "this is course-tied" the same
+                         way ClickUp shows lock for private channels. */}
+                    <Lock
+                      className="h-3 w-3 text-muted-foreground/50 shrink-0"
+                      aria-label={isEn ? "Course-only channel" : "Salon de cours"}
+                    />
                     {unread > 0 && (
                       <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground tabular-nums px-1">
                         {unread > 99 ? "99+" : unread}
@@ -2005,6 +2010,7 @@ export default function CommunityPage() {
             dmAdminBadge: t.community?.dmAdminBadge,
             channelMute: t.community?.channelMute,
             channelUnmute: t.community?.channelUnmute,
+            pinnedMessages: t.community?.pinnedMessages,
           }}
         />
 
@@ -2118,7 +2124,10 @@ export default function CommunityPage() {
                   )}
                 <div
                   className={cn(
-                    "group flex items-start gap-2.5 px-2 py-1 rounded-lg transition-colors hover:bg-muted/40",
+                    // `relative` so the absolute-positioned action
+                    // toolbar can float at the top-right edge of
+                    // the row without taking width from the body.
+                    "group relative flex items-start gap-2.5 px-2 py-1 rounded-lg transition-colors hover:bg-muted/40",
                     msg.is_pinned &&
                       !msg.is_deleted &&
                       "bg-amber-50/40 dark:bg-amber-900/10",
@@ -2565,9 +2574,18 @@ export default function CommunityPage() {
                       )}
                   </div>
 
-                  {/* Actions */}
+                  {/* Floating action toolbar.
+                       Position: absolute top-right, raised above
+                       the message with bg-card + border + shadow
+                       so it reads as a "floating chip" the way
+                       ClickUp / Linear / Slack do it. Translates
+                       up slightly on hover-in to telegraph "this
+                       is interactive". Three primary actions stay
+                       inline (React, Reply, ⋯); the ⋯ dropdown
+                       holds the secondary actions (edit, pin,
+                       delete). */}
                   {!msg.is_deleted && editingId !== msg.id && (
-                    <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute -top-3 right-3 flex items-center gap-0.5 rounded-md border border-border/70 bg-card shadow-sm p-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity z-10">
                       {/* Quick reaction picker */}
                       <DropdownMenu>
                         <DropdownMenuTrigger
@@ -2575,7 +2593,8 @@ export default function CommunityPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              aria-label={isEn ? "React" : "Réagir"}
                             />
                           }
                         >
@@ -2603,7 +2622,7 @@ export default function CommunityPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
                         onClick={() => startReply(msg)}
                         aria-label={isEn ? "Reply" : "Répondre"}
                       >
@@ -2616,7 +2635,8 @@ export default function CommunityPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              aria-label={isEn ? "More" : "Plus"}
                             />
                           }
                         >
