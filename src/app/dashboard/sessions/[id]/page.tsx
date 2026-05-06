@@ -503,11 +503,18 @@ function LiveSessionFrame({
           }
           return;
         }
-        const { url } = await res.json();
+        const { url, token } = await res.json();
         if (cancelled) return;
-        // Pre-fill display name via URL param so Daily shows the user
-        // as e.g. "Alex" instead of "Guest" the moment they enter.
-        const fullUrl = `${url}?userName=${encodeURIComponent(displayName)}`;
+        // Prefer the server-minted meeting token: it pins both
+        // user_name (so users can't rename to something else and
+        // confuse no-show detection) and user_id (so the cron
+        // matches bookings → attendance by exact UUID). If for any
+        // reason the server didn't return a token (older deploy,
+        // Daily token API hiccup), fall back to the user-name URL
+        // param — fuzzy match still catches most attendees.
+        const fullUrl = token
+          ? `${url}?t=${encodeURIComponent(token)}`
+          : `${url}?userName=${encodeURIComponent(displayName)}`;
         dailyUrlCache.set(cacheKey, fullUrl);
         setRoomUrl(fullUrl);
       } catch (err) {

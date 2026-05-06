@@ -11,6 +11,12 @@ export interface CourseStats {
 /**
  * GET /api/admin/course-stats
  * Returns enrollment stats aggregated per course for the admin explorer.
+ *
+ * Aggregation runs in Postgres via the admin_course_stats() RPC — the
+ * earlier implementation pulled every enrollment row to Node and folded
+ * them with Array.reduce, which gets slow once the table grows past a
+ * few thousand rows and re-streams the entire table on every dashboard
+ * load.
  */
 export async function GET() {
   const access = await validateUserAccess();
@@ -22,30 +28,33 @@ export async function GET() {
   }
 
   const supabase = getSupabaseAdmin();
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-
-  const { data: enrollments } = await supabase
-    .from("enrollments")
-    .select("course_id, progress, completed_at, enrolled_at");
-
-  const stats: Record<string, CourseStats> = {};
-
-  for (const e of enrollments ?? []) {
-    const id = e.course_id;
-    if (!stats[id]) {
-      stats[id] = { enrollments: 0, completions: 0, avgProgress: 0, recent7d: 0 };
-    }
-    stats[id].enrollments++;
-    if (e.completed_at) stats[id].completions++;
-    stats[id].avgProgress += Number(e.progress ?? 0);
-    if (e.enrolled_at && e.enrolled_at >= sevenDaysAgo) stats[id].recent7d++;
+  const { data, error } = await supabase.rpc("admin_course_stats");
+  if (error) {
+    console.error("[admin/course-stats] rpc failed:", error.message);
+    return NextResponse.json(
+      { error: "Could not load stats" },
+      { status: 500 }
+    );
   }
 
-  // Convert summed progress to averages
-  for (const id of Object.keys(stats)) {
-    if (stats[id].enrollments > 0) {
-      stats[id].avgProgress = Math.round(stats[id].avgProgress / stats[id].enrollments);
-    }
+  // Reshape to the keyed map the client expects. The RPC returns one
+  // row per course with snake_case columns; the client wants camelCase
+  // and a Record<courseId, stats>.
+  type Row = {
+    course_id: string;
+    enrollments: number;
+    completions: number;
+    avg_progress: number;
+    recent_7d: number;
+  };
+  const stats: Record<string, CourseStats> = {};
+  for (const r of (data ?? []) as Row[]) {
+    stats[r.course_id] = {
+      enrollments: Number(r.enrollments),
+      completions: Number(r.completions),
+      avgProgress: Number(r.avg_progress),
+      recent7d: Number(r.recent_7d),
+    };
   }
 
   return NextResponse.json({ stats });

@@ -95,6 +95,68 @@ export async function ensureDailyRoom(
 }
 
 /**
+ * Mint a meeting token for a specific user. The token embeds
+ * `user_id` (our Postgres UUID) and locks `user_name`, so when the
+ * user joins the meeting, Daily's `/meetings` endpoint reports back
+ * the same `user_id` we set here. This makes no-show detection
+ * exact instead of fuzzy-name-matching against display names that
+ * users can rename mid-call.
+ *
+ * Tokens are short-lived (capped to room exp + 1h grace) so a leaked
+ * token can't be replayed long after the session.
+ */
+export interface DailyTokenConfig {
+  /** Room name the token grants access to. */
+  roomName: string;
+  /** Our Postgres user UUID — comes back on /meetings as participant.user_id. */
+  userId: string;
+  /** Display name shown in the room. */
+  userName: string;
+  /** UNIX-seconds when the token stops being accepted. */
+  exp: number;
+}
+
+export async function mintDailyMeetingToken(
+  config: DailyTokenConfig
+): Promise<string> {
+  const apiKey = process.env.DAILY_API_KEY;
+  if (!apiKey) throw new Error("DAILY_API_KEY env var not set");
+
+  const res = await fetch(`${DAILY_API_BASE}/meeting-tokens`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      properties: {
+        room_name: config.roomName,
+        user_id: config.userId,
+        user_name: config.userName,
+        exp: config.exp,
+        // Students aren't owners — keeps the moderator-style controls
+        // gated. Hosts get their own token with is_owner: true.
+        is_owner: false,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      `Daily /meeting-tokens ${res.status}: ${
+        typeof body?.info === "string" ? body.info : JSON.stringify(body)
+      }`
+    );
+  }
+  const json = (await res.json()) as { token?: string };
+  if (!json.token) {
+    throw new Error("Daily /meeting-tokens returned no token");
+  }
+  return json.token;
+}
+
+/**
  * Fetch the list of participants who joined a Daily room. Used by
  * the daily cron to flag no-shows after a session ends.
  *
@@ -102,16 +164,21 @@ export async function ensureDailyRoom(
  * the cron's once-a-day cadence has plenty of buffer to query a
  * just-ended session.
  *
- * Returns an array of normalized display-name strings (lowercased,
- * trimmed) for fuzzy matching against the booking owner's name. We
- * lowercase because Daily preserves casing as the user typed; the
- * URL-param `userName` is what we set, but users can override in the
- * pre-join screen even when prejoin is disabled (some clients have a
- * "rename" affordance mid-meeting).
+ * Returns participant records with both `user_id` (when minted via
+ * mintDailyMeetingToken — exact match) and `name` (lowercased
+ * fallback for legacy meetings created before token minting was
+ * wired up). The cron prefers user_id where present.
  */
+export interface DailyParticipant {
+  /** Our user UUID, present iff a meeting-token was minted server-side. */
+  user_id: string | null;
+  /** Display name, lowercased + trimmed. Fuzzy fallback. */
+  name: string;
+}
+
 export async function getDailyMeetingParticipants(
   roomName: string
-): Promise<string[]> {
+): Promise<DailyParticipant[]> {
   const apiKey = process.env.DAILY_API_KEY;
   if (!apiKey) throw new Error("DAILY_API_KEY env var not set");
 
@@ -126,16 +193,23 @@ export async function getDailyMeetingParticipants(
   }
   const data = (await res.json()) as {
     data?: Array<{
-      participants?: Array<{ user_name?: string }>;
+      participants?: Array<{ user_name?: string; user_id?: string }>;
     }>;
   };
-  const names = new Set<string>();
+  // Deduplicate by user_id (when set) or name. A user who joined
+  // multiple meetings on the same room (rejoined after disconnect)
+  // shows up once in the resulting set.
+  const seen = new Map<string, DailyParticipant>();
   for (const meeting of data.data ?? []) {
     for (const p of meeting.participants ?? []) {
-      if (p.user_name) names.add(p.user_name.trim().toLowerCase());
+      const name = (p.user_name || "").trim().toLowerCase();
+      const userId = p.user_id || null;
+      const key = userId || name;
+      if (!key) continue;
+      if (!seen.has(key)) seen.set(key, { user_id: userId, name });
     }
   }
-  return Array.from(names);
+  return Array.from(seen.values());
 }
 
 /**

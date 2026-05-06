@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { validateUserAccess, getSupabaseAdmin } from "@/lib/supabase-server";
-import { ensureDailyRoom } from "@/lib/daily";
+import { ensureDailyRoom, mintDailyMeetingToken } from "@/lib/daily";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
@@ -106,13 +106,44 @@ export async function POST(req: Request) {
   const expSeconds = Math.floor((endsAtMs + 4 * 3600 * 1000) / 1000);
 
   try {
+    const roomName = (slot as { room_name: string }).room_name;
     const url = await ensureDailyRoom({
-      name: (slot as { room_name: string }).room_name,
+      name: roomName,
       exp: expSeconds,
       maxParticipants:
         (slot as { max_attendees: number }).max_attendees + 1, // +1 for host
     });
-    return NextResponse.json({ ok: true, url });
+
+    // Look up the caller's display name so the token's user_name
+    // matches what we'd otherwise have set via ?userName=. One extra
+    // SELECT, but ensure-room is rate-limited and infrequent (1 per
+    // session join), so the cost is negligible.
+    const { data: profile } = await admin
+      .from("users")
+      .select("name, email")
+      .eq("id", access.user.id)
+      .single();
+    const userName =
+      (profile as { name?: string; email?: string } | null)?.name ||
+      (profile as { email?: string } | null)?.email?.split("@")[0] ||
+      "Guest";
+
+    // Mint a meeting token that pins the caller's user_id into the
+    // participant record. The cron's no-show detector then matches
+    // bookings to attendance by exact UUID instead of fuzzy name —
+    // robust against rename, locale, accent, casing, and "Alex L."
+    // vs "Alex Landrin" mismatches that the old name-substring
+    // heuristic struggled with.
+    const token = await mintDailyMeetingToken({
+      roomName,
+      userId: access.user.id,
+      userName,
+      // Token exp matches room exp so a leaked token can't be
+      // replayed beyond the meeting's lifetime.
+      exp: expSeconds,
+    });
+
+    return NextResponse.json({ ok: true, url, token });
   } catch (err) {
     console.error("ensure-room failed:", err);
     return NextResponse.json(

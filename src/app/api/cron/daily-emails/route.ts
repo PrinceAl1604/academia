@@ -7,9 +7,17 @@ import {
   sendSessionReminderEmail,
 } from "@/lib/email";
 import { getDailyMeetingParticipants } from "@/lib/daily";
+import { mapWithConcurrency } from "@/lib/parallel";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app";
+
+// Concurrency caps — Resend's free tier is 10 req/s, Daily's is 5 req/s.
+// 5 here keeps us comfortably under both while pipelining most of the
+// email-send wall time. Was sequential (await in for-loop) before, which
+// risked Vercel's 10-s function timeout at scale.
+const EMAIL_CONCURRENCY = 5;
+const DAILY_CONCURRENCY = 3;
 
 /**
  * True iff the user has muted this email category in their
@@ -35,12 +43,28 @@ function emailMuted(
  *  3. Inactive user nudges (14 days without login)
  *  4. Live session reminders (~24h before booked sessions)
  *
- * Protected by CRON_SECRET to prevent unauthorized access.
+ * Auth: accepts EITHER
+ *   - `x-vercel-cron: 1` — set automatically by Vercel's scheduler.
+ *     Vercel strips inbound copies of `x-vercel-*` headers at the
+ *     proxy, so seeing it here means the request originated inside
+ *     Vercel's cron infra (can't be forged by external callers).
+ *   - `Authorization: Bearer ${CRON_SECRET}` — for manual triggers
+ *     and for self-hosted / non-Vercel cron platforms.
+ *
+ * Both paths are required because if CRON_SECRET isn't set in the
+ * env (e.g., a fresh deploy that forgot to add it), the secret check
+ * collapses to `Bearer undefined` matching the literal — which is
+ * trivially defeatable. The Vercel header is a defense-in-depth
+ * floor; the Bearer is a portability floor.
  */
 export async function GET(req: Request) {
-  // Verify cron secret (Vercel sets this automatically for cron jobs)
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const isVercelCron = req.headers.get("x-vercel-cron") === "1";
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = req.headers.get("authorization") ?? "";
+  const bearerOk = cronSecret
+    ? authHeader === `Bearer ${cronSecret}`
+    : false;
+  if (!isVercelCron && !bearerOk) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -74,12 +98,10 @@ export async function GET(req: Request) {
       .gte("pro_expires_at", dayStart.toISOString())
       .lte("pro_expires_at", dayEnd.toISOString());
 
-    for (const user of expiringSoon ?? []) {
+    await mapWithConcurrency(expiringSoon ?? [], EMAIL_CONCURRENCY, async (user) => {
       // Skip email if user muted the "pro" email category. In-app
       // notification still fires below (separate mute path).
-      if (emailMuted(user.notification_preferences, "pro")) {
-        // no-op email
-      } else {
+      if (!emailMuted(user.notification_preferences, "pro")) {
         try {
           await sendRenewalReminderEmail({
             to: user.email,
@@ -106,7 +128,7 @@ export async function GET(req: Request) {
       } catch (err) {
         results.errors.push(`notif_expiring:${user.email}:${String(err)}`);
       }
-    }
+    });
   } catch (err) {
     results.errors.push(`reminders_query:${String(err)}`);
   }
@@ -123,7 +145,7 @@ export async function GET(req: Request) {
       .gte("pro_expires_at", twentyFourHoursAgo.toISOString())
       .lte("pro_expires_at", now.toISOString());
 
-    for (const user of justExpired ?? []) {
+    await mapWithConcurrency(justExpired ?? [], EMAIL_CONCURRENCY, async (user) => {
       // Email subject to muted_email_categories — but the DB
       // downgrade below ALWAYS happens regardless of email pref.
       if (!emailMuted(user.notification_preferences, "pro")) {
@@ -159,7 +181,7 @@ export async function GET(req: Request) {
       } catch (err) {
         results.errors.push(`notif_expired:${user.email}:${String(err)}`);
       }
-    }
+    });
   } catch (err) {
     results.errors.push(`expired_query:${String(err)}`);
   }
@@ -180,10 +202,10 @@ export async function GET(req: Request) {
       .gte("last_active_at", windowStart.toISOString())
       .lte("last_active_at", windowEnd.toISOString());
 
-    for (const user of inactiveUsers ?? []) {
+    await mapWithConcurrency(inactiveUsers ?? [], EMAIL_CONCURRENCY, async (user) => {
       // Respect notification preferences
       const prefs = user.notification_preferences as Record<string, boolean> | null;
-      if (prefs && prefs.promotional === false) continue;
+      if (prefs && prefs.promotional === false) return;
 
       try {
         await sendInactiveNudgeEmail({ to: user.email, name: user.name });
@@ -191,7 +213,7 @@ export async function GET(req: Request) {
       } catch (err) {
         results.errors.push(`nudge:${user.email}:${String(err)}`);
       }
-    }
+    });
   } catch (err) {
     results.errors.push(`nudge_query:${String(err)}`);
   }
@@ -217,7 +239,7 @@ export async function GET(req: Request) {
       .lte("session_slots.starts_at", windowEnd.toISOString())
       .eq("session_slots.status", "open");
 
-    for (const row of pendingReminders ?? []) {
+    await mapWithConcurrency(pendingReminders ?? [], EMAIL_CONCURRENCY, async (row) => {
       // Supabase types the join as object|object[] depending on the
       // FK shape — at runtime !inner returns a single object for both.
       const slot = (row as unknown as {
@@ -287,7 +309,7 @@ export async function GET(req: Request) {
           `notif_session_reminder:${user.email}:${String(err)}`
         );
       }
-    }
+    });
   } catch (err) {
     results.errors.push(`session_reminders_query:${String(err)}`);
   }
@@ -310,7 +332,7 @@ export async function GET(req: Request) {
     const earliestPossiblyPast = new Date(now.getTime() - 30 * 60 * 1000);
     const { data: candidates } = await supabase
       .from("session_slots")
-      .select("id, starts_at, duration_minutes")
+      .select("id, starts_at, duration_minutes, room_name")
       .eq("status", "open")
       .lte("starts_at", earliestPossiblyPast.toISOString())
       .gte("starts_at", new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString());
@@ -337,52 +359,75 @@ export async function GET(req: Request) {
       // No-shows still consume the user's monthly cap (that's the
       // whole point — book → ghost → cap is gone, so they think
       // twice next time).
-      for (const slotId of toComplete) {
-        try {
-          const { data: slotRow } = await supabase
-            .from("session_slots")
-            .select("room_name")
-            .eq("id", slotId)
-            .single();
-          if (!slotRow) continue;
-          const roomName = (slotRow as { room_name: string }).room_name;
+      //
+      // Two perf wins on this block:
+      //  1. Pull room_name in the original candidates query so we
+      //     don't issue a follow-up SELECT per slot.
+      //  2. mapWithConcurrency at DAILY_CONCURRENCY=3 — Daily's free
+      //     tier rate-limits at 5 req/s, so 3 in flight gives slack
+      //     for parallel cron jobs without 429s.
+      const slotMeta = new Map<string, { room_name: string }>();
+      for (const c of candidates ?? []) {
+        const r = c as { id: string; room_name?: string };
+        if (r.room_name) slotMeta.set(r.id, { room_name: r.room_name });
+      }
 
-          const participantNames = await getDailyMeetingParticipants(
-            roomName
-          );
+      await mapWithConcurrency(toComplete, DAILY_CONCURRENCY, async (slotId) => {
+        try {
+          const meta = slotMeta.get(slotId);
+          if (!meta) return;
+          const roomName = meta.room_name;
+
+          const participants = await getDailyMeetingParticipants(roomName);
           // Empty set is informative — meeting never happened. We
           // don't flag the booking as no-show in that case (the host
           // didn't show up either). Skip.
-          if (participantNames.length === 0) continue;
+          if (participants.length === 0) return;
+
+          // Pre-compute the lookup sets once per slot. Sessions with a
+          // server-minted token report participant.user_id directly →
+          // exact UUID match. Sessions joined before the token mint
+          // was deployed (or by anyone using the legacy URL flow)
+          // only have user_name → fall back to fuzzy substring match.
+          const userIdSet = new Set(
+            participants.map((p) => p.user_id).filter(Boolean) as string[]
+          );
+          const nameSet = participants.map((p) => p.name).filter(Boolean);
 
           const { data: slotBookings } = await supabase
             .from("session_bookings")
-            .select("id, users!inner(name, email)")
+            .select("id, user_id, users!inner(name, email)")
             .eq("slot_id", slotId)
             .is("cancelled_at", null)
             .is("no_show_at", null);
 
           for (const row of slotBookings ?? []) {
-            const u = (row as unknown as {
+            const r = row as unknown as {
+              id: string;
+              user_id: string;
               users: { name: string | null; email: string };
-            }).users;
-            const candidates = [
-              u.name?.toLowerCase().trim(),
-              u.email.split("@")[0].toLowerCase().trim(),
-              u.name?.split(" ")[0].toLowerCase().trim(),
-            ].filter(Boolean) as string[];
-            // Match if any candidate substring appears in any
-            // participant name. Fuzzy intentionally — Daily preserves
-            // user-typed casing/format and we need to tolerate
-            // "Alex L." vs "Alex Landrin" etc.
-            const attended = candidates.some((c) =>
-              participantNames.some((p) => p.includes(c) || c.includes(p))
-            );
+            };
+            // 1) Exact match by Daily-token user_id (preferred).
+            let attended = userIdSet.has(r.user_id);
+
+            // 2) Fuzzy fallback for legacy / token-less joins.
+            if (!attended) {
+              const u = r.users;
+              const candidatesLocal = [
+                u.name?.toLowerCase().trim(),
+                u.email.split("@")[0].toLowerCase().trim(),
+                u.name?.split(" ")[0].toLowerCase().trim(),
+              ].filter(Boolean) as string[];
+              attended = candidatesLocal.some((c) =>
+                nameSet.some((p) => p.includes(c) || c.includes(p))
+              );
+            }
+
             if (!attended) {
               await supabase
                 .from("session_bookings")
                 .update({ no_show_at: new Date().toISOString() })
-                .eq("id", (row as { id: string }).id);
+                .eq("id", r.id);
               results.noShowsFlagged++;
             }
           }
@@ -391,7 +436,7 @@ export async function GET(req: Request) {
             `no_show_check_${slotId}:${String(err)}`
           );
         }
-      }
+      });
     }
     // widestEndCutoff intentionally referenced via comment for context
     void widestEndCutoff;

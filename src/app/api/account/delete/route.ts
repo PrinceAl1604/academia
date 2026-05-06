@@ -35,15 +35,28 @@ export async function DELETE(req: Request) {
   const supabase = getSupabaseAdmin();
 
   try {
-    // Delete in dependency order (child rows first)
-    await supabase.from("lesson_progress").delete().eq("user_id", userId);
-    await supabase.from("enrollments").delete().eq("user_id", userId);
-    await supabase.from("referrals").delete().eq("referred_id", userId);
-    await supabase.from("referrals").delete().eq("referrer_id", userId);
-    await supabase.from("activity_log").delete().eq("user_id", userId);
-    await supabase.from("users").delete().eq("id", userId);
+    // Atomically tear down all of the user's owned data via the
+    // delete_user_account() stored procedure. One round-trip, one
+    // transaction — replaces the previous JS sequence that ran 6
+    // independent DELETEs and could leave a half-deleted user
+    // mid-flight if any step failed.
+    const { error: rpcError } = await supabase.rpc("delete_user_account", {
+      p_user_id: userId,
+    });
+    if (rpcError) {
+      console.error("delete_user_account rpc failed:", rpcError.message);
+      return NextResponse.json(
+        { error: "Failed to delete account" },
+        { status: 500 }
+      );
+    }
 
-    // Finally, remove from auth.users
+    // Auth row lives in the auth schema with its own admin API. We
+    // delete it AFTER the public teardown so a partial state means
+    // "auth row points to nothing public" (recoverable by admin
+    // sweep) rather than "public row exists with broken FKs"
+    // (corrupts joins). The proc's transactional commit guarantees
+    // public is fully cleaned before we reach here.
     const { error: authError } = await supabase.auth.admin.deleteUser(userId);
     if (authError) {
       console.error("Failed to delete auth user:", authError.message);
