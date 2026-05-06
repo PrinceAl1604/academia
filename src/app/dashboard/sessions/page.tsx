@@ -110,7 +110,7 @@ function canCancelBooking(slot: SessionSlot): boolean {
 
 export default function StudentSessionsPage() {
   const { t } = useLanguage();
-  const { user, isPro, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isPro, isAdmin, isAuthenticated, loading: authLoading } = useAuth();
   const isEn = t.nav.signIn === "Sign In";
 
   const [slots, setSlots] = useState<SessionSlot[]>([]);
@@ -412,20 +412,44 @@ export default function StudentSessionsPage() {
           <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-foreground">
             {t.sessions.title}
           </h1>
-          {/* Cap counter pill — at-a-glance "how many do I have left" */}
-          <div
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[11px] tabular-nums ${
-              capReached
-                ? "border-destructive/40 bg-destructive/10 text-destructive"
-                : "border-border/60 bg-card text-muted-foreground"
-            }`}
-          >
-            {capReached ? t.sessions.capReached : capLabel}
-          </div>
+          {/* Cap counter pill — at-a-glance "how many do I have
+              left". Admins are hosts, not bookers, so they don't
+              have a 2-per-month cap; the pill is hidden for them. */}
+          {!isAdmin && (
+            <div
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[11px] tabular-nums ${
+                capReached
+                  ? "border-destructive/40 bg-destructive/10 text-destructive"
+                  : "border-border/60 bg-card text-muted-foreground"
+              }`}
+            >
+              {capReached ? t.sessions.capReached : capLabel}
+            </div>
+          )}
         </div>
         <p className="text-muted-foreground text-base max-w-prose">
           {t.sessions.subtitle}
         </p>
+        {/* Admin notice — they can preview the student-facing view
+            here but the Book actions are gated. Manage page is the
+            real workspace for creating/editing slots. */}
+        {isAdmin && (
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-amber-700 dark:text-amber-400 text-xs">
+            <span className="font-medium">
+              {isEn
+                ? "Admin view — you're hosting these slots, not booking them."
+                : "Vue admin — vous animez ces créneaux, vous ne les réservez pas."}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20"
+              render={<Link href="/admin/sessions" />}
+            >
+              {isEn ? "Manage sessions →" : "Gérer les sessions →"}
+            </Button>
+          </div>
+        )}
       </header>
 
       {/* Error banner */}
@@ -681,9 +705,25 @@ export default function StudentSessionsPage() {
 
                     {/* Action — mt-auto pushes it to the bottom of the
                          card so every CTA aligns across the row regardless
-                         of how much content sits above. */}
+                         of how much content sits above.
+
+                         Admin branch: replaces the Book button with a
+                         "Manage" link to the admin sessions page. Admins
+                         are the HOSTS of these slots; letting them
+                         self-book would be nonsensical (and would consume
+                         a phantom 2/month quota that doesn't apply to
+                         them anyway). */}
                     <div className="pt-2 mt-auto">
-                      {alreadyBooked ? (
+                      {isAdmin ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          render={<Link href="/admin/sessions" />}
+                        >
+                          {isEn ? "Manage" : "Gérer"}
+                        </Button>
+                      ) : alreadyBooked ? (
                         <Badge className="bg-primary/15 text-primary">
                           {t.sessions.bookedCta}
                         </Badge>
