@@ -812,8 +812,13 @@ export default function CommunityPage() {
           }
 
           if (msg.channel_id === activeChannelRef.current) {
-            // Message in active channel → add to list
-            setMessages((prev) => [...prev, msg]);
+            // Message in active channel → add to list. Dedup by id
+            // so the realtime echo of the SENDER's own optimistic
+            // push (added directly in handleSend) doesn't duplicate.
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === msg.id)) return prev;
+              return [...prev, msg];
+            });
             if (isNearBottom.current) {
               setTimeout(
                 () =>
@@ -1171,6 +1176,16 @@ export default function CommunityPage() {
     // Use Case enforces "non-empty content" + trims; the handler
     // catches errors so the optimistic clear above is never visible
     // as a stuck spinner if the server rejects.
+    //
+    // OPTIMISTIC PUSH: previously we relied entirely on the realtime
+    // INSERT echo to add the sender's own message to state. That's
+    // brittle — any flaky realtime connection or RLS subquery edge
+    // case (DMs ride on is_dm_participant + a chat_channels join)
+    // and the sender ends up looking at an empty chat with no proof
+    // their message was sent. Slack / Discord behavior: push the
+    // sender's message into state immediately from the insert
+    // response, and let realtime handle OTHER users' messages with
+    // a dedup guard (added in the INSERT handler).
     let insertedId: string | null = null;
     try {
       const inserted = await sendChatMessage.execute({
@@ -1179,6 +1194,23 @@ export default function CommunityPage() {
         content,
       });
       insertedId = inserted.id;
+
+      // Optimistic push for the SENDER's own view. Only when the
+      // message actually belongs to the channel the user is looking
+      // at (defensive — they might have switched channels between
+      // typing and the round-trip resolving).
+      if (inserted.channel_id === activeChannelId) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === inserted.id)) return prev;
+          return [...prev, inserted];
+        });
+        if (isNearBottom.current) {
+          setTimeout(
+            () => bottomRef.current?.scrollIntoView({ behavior: "smooth" }),
+            50
+          );
+        }
+      }
     } catch {
       // Surface to the user later if needed; for now just unblock UI
     }
