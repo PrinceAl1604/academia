@@ -39,6 +39,7 @@ import {
   Search as SearchIcon,
   Crown,
   BellOff,
+  Sparkles,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -56,6 +57,7 @@ import { userTintClass } from "@/lib/avatar-color";
 import { DmComposePanel } from "@/components/community/dm-compose-panel";
 import { ChatHeader } from "@/components/community/chat-header";
 import { SessionsSidebarSection } from "@/components/community/sessions-sidebar-section";
+import { CommunityHome } from "@/components/community/community-home";
 import {
   sendChatMessage,
   markChannelRead,
@@ -233,6 +235,15 @@ export default function CommunityPage() {
    * (e.g. someone DMs you for the first time). */
   const [dmThreads, setDmThreads] = useState<DmThread[]>([]);
 
+  /* ─── Right-pane mode ─────────────────────────────────────
+   * Three exclusive states for what fills the chat area:
+   *   viewHome=true  → CommunityHome (live + sessions + unreads)
+   *   composeMode    → DmComposePanel (handled by useDmCompose)
+   *   else           → channel/DM chat view
+   * Default to home so a fresh visitor lands on a populated
+   * dashboard instead of an empty General channel. */
+  const [viewHome, setViewHome] = useState(true);
+
   /* ─── DM compose (extracted hook) ─────────────────────────
    * Hook owns the panel state (mode, query, results, error,
    * starting). On open, the page refetches channels and switches
@@ -247,6 +258,7 @@ export default function CommunityPage() {
         setChannels(allChannels as Channel[]);
       }
       setActiveChannelId(channelId);
+      setViewHome(false);
     }, []),
     translations: {
       cannotMessage: t.community?.dmCannotMessage,
@@ -1048,11 +1060,10 @@ export default function CommunityPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 
   const switchChannel = (channelId: string) => {
-    // If we were in compose mode, picking a channel from the sidebar
-    // exits compose. composeMode + activeChannelId can co-exist on
-    // re-entry but a user clicking a channel clearly wants to leave
-    // the compose UI.
+    // Picking a channel from the sidebar exits compose AND home —
+    // a user clicking a channel clearly wants to enter chat mode.
     dmCompose.close();
+    setViewHome(false);
     if (channelId === activeChannelId) return;
     setActiveChannelId(channelId);
     setShowPinned(false);
@@ -1627,6 +1638,40 @@ export default function CommunityPage() {
 
         {/* Channel list */}
         <nav className="flex-1 overflow-y-auto py-2 px-1.5 space-y-0.5">
+          {/* ─── Home button ─────────────────────────────────
+               Top-of-rail entry point. Switches the right pane
+               to the CommunityHome view (live + sessions +
+               unreads digest). Active state mirrors the channel
+               row treatment so it reads as part of the same nav. */}
+          <button
+            type="button"
+            onClick={() => {
+              dmCompose.close();
+              setViewHome(true);
+            }}
+            className={cn(
+              "group relative flex w-full items-center gap-2 rounded-md pl-3 pr-2.5 py-2 text-left transition-colors",
+              viewHome &&
+                "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
+              viewHome
+                ? "bg-sidebar-accent text-foreground"
+                : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+            )}
+          >
+            <Sparkles
+              className={cn(
+                "h-3.5 w-3.5 shrink-0",
+                viewHome ? "text-primary" : "text-muted-foreground/60"
+              )}
+              aria-hidden
+            />
+            <span className="flex-1 text-sm font-medium truncate">
+              {t.community?.home || (isEn ? "Home" : "Accueil")}
+            </span>
+          </button>
+
+          <div className="my-2 mx-2.5 h-px bg-sidebar-border/60" />
+
           {/* Core channels (General, Announcements).
               ClickUp-style: `#` glyph prefix for all channel rows
               instead of type-specific icons. Replaces the previous
@@ -1866,6 +1911,40 @@ export default function CommunityPage() {
               searchPlaceholder: t.community?.newDmSearchPlaceholder,
               emptyResults: t.community?.newDmEmptyResults,
               adminBadge: t.community?.dmAdminBadge,
+            }}
+          />
+        ) : viewHome ? (
+          <CommunityHome
+            userName={userName}
+            liveSessions={sessions.live}
+            upcomingSessions={sessions.upcoming}
+            unreadChannels={channels
+              .filter(
+                (ch) =>
+                  ch.type !== "direct" && (unreadCounts.get(ch.id) ?? 0) > 0
+              )
+              .map((ch) => ({
+                id: ch.id,
+                type: ch.type,
+                name: ch.name,
+                unreadCount: unreadCounts.get(ch.id) ?? 0,
+              }))}
+            dmThreads={dmThreads}
+            isEn={isEn}
+            onChannelOpen={(id) => switchChannel(id)}
+            labels={{
+              title: t.community?.title,
+              welcome: undefined,
+              liveNow: t.sessions?.liveNow,
+              upNext: t.sessions?.upNext,
+              unreadChannels: t.community?.unreadChannels,
+              recentDms: t.community?.recentDms,
+              allCaughtUp: t.community?.allCaughtUp,
+              allCaughtUpDesc: t.community?.allCaughtUpDesc,
+              joinNow: t.sessions?.joinNow,
+              viewAllSessions: t.sessions?.viewAll,
+              general: t.community?.general,
+              announcements: t.community?.announcements,
             }}
           />
         ) : (
