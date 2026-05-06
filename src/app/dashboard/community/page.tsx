@@ -1222,12 +1222,28 @@ export default function CommunityPage() {
       // knows the send failed and can retry. Restore the input so
       // they don't lose their typing.
       console.error("[community] sendChatMessage failed:", err);
-      const message =
-        err instanceof Error
-          ? err.message
-          : isEn
+      // Supabase PostgrestError is a plain object with .message and
+      // .code — NOT an Error instance — so `instanceof Error` misses
+      // it. Extract message defensively from any shape that has one,
+      // append the .code as a debug hint when present so we can
+      // identify RLS rejections (42501) vs check violations (23514)
+      // at a glance.
+      let message: string;
+      if (err instanceof Error) {
+        message = err.message;
+      } else if (
+        err &&
+        typeof err === "object" &&
+        "message" in err &&
+        typeof (err as { message?: unknown }).message === "string"
+      ) {
+        const e = err as { message: string; code?: string };
+        message = e.code ? `${e.message} [${e.code}]` : e.message;
+      } else {
+        message = isEn
           ? "Couldn't send message. Please try again."
           : "Impossible d'envoyer le message. Veuillez réessayer.";
+      }
       toast.error(message);
       setInput(content);
     }
