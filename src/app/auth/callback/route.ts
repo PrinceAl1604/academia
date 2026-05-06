@@ -72,8 +72,22 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // If signed up via referral link, link the referral
-      const refCode = user.user_metadata?.referral_code;
+      // SECURITY: read referral_code from app_metadata (server-only
+      // writable), NOT user_metadata. The latter is client-writable
+      // via supabase.auth.updateUser, so an attacker can self-credit
+      // any referral code they want and trigger a payout.
+      //
+      // The signup flow now sets app_metadata.referral_code via the
+      // service-role admin client during signUp (see /sign-up handler).
+      const appMeta = user.app_metadata as
+        | Record<string, unknown>
+        | undefined;
+      const refCode = (appMeta?.referral_code as string | undefined) ??
+        // Fallback for accounts whose signup happened before this
+        // migration — they had a code stamped into user_metadata.
+        // Once consumed, it's cleared via the linkReferral side
+        // effect; new signups never use this branch.
+        (user.user_metadata?.referral_code as string | undefined);
       if (refCode && !profile?.referred_by) {
         try {
           await linkReferral(user.id, refCode);

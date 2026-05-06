@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { escapeHtml as esc } from "./html-escape";
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
@@ -156,14 +157,17 @@ export async function sendWelcomeEmail({
   to: string;
   name: string;
 }) {
-  const firstName = name.split(" ")[0] || name;
+  // Escape user-controlled name before any HTML interpolation. The
+  // safe-firstName fallback uses the email local part if name is
+  // empty; both paths feed into the template.
+  const safeFirstName = esc((name || to).split(" ")[0] || (name || to));
 
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Welcome to ${APP_NAME}, ${firstName}!`,
+    subject: `Welcome to ${APP_NAME}, ${safeFirstName}!`,
     html: emailWrapper({
-      heading: `Welcome aboard, ${firstName}!`,
+      heading: `Welcome aboard, ${safeFirstName}!`,
       preheading: `You're in! Start exploring courses on ${APP_NAME}.`,
       body: `
         <p style="margin:0 0 16px;">
@@ -201,20 +205,20 @@ export async function sendCourseCompletionEmail({
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Congratulations! You completed "${courseTitle}"`,
+    subject: `Congratulations! You completed "${esc(courseTitle)}"`,
     html: emailWrapper({
-      heading: `Well done, ${firstName}!`,
-      preheading: `You just completed "${courseTitle}" on ${APP_NAME}.`,
+      heading: `Well done, ${esc(firstName)}!`,
+      preheading: `You just completed "${esc(courseTitle)}" on ${APP_NAME}.`,
       body: `
         <p style="margin:0 0 20px;">
-          You've successfully completed <strong>${courseTitle}</strong>.
+          You've successfully completed <strong>${esc(courseTitle)}</strong>.
           Your consistency is paying off.
         </p>
         <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
           <tr>
             <td style="padding:16px 20px; background:#f0fdf4; border-radius:10px; border-left:4px solid #16a34a;">
               <p style="margin:0 0 4px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:#16a34a;">Completed</p>
-              <p style="margin:0; font-size:16px; font-weight:600; color:#171717;">${courseTitle}</p>
+              <p style="margin:0; font-size:16px; font-weight:600; color:#171717;">${esc(courseTitle)}</p>
             </td>
           </tr>
         </table>
@@ -242,7 +246,7 @@ export async function sendSubscriptionEmail({
     to,
     subject: `You're now a Pro member!`,
     html: emailWrapper({
-      heading: `Welcome to Pro, ${firstName}!`,
+      heading: `Welcome to Pro, ${esc(firstName)}!`,
       preheading: `Your Pro membership is active. Unlimited access unlocked.`,
       body: `
         <p style="margin:0 0 20px;">
@@ -298,7 +302,7 @@ export async function sendReferralRewardEmail({
       preheading: `A friend subscribed through your referral. Here's your licence key.`,
       body: `
         <p style="margin:0 0 16px;">
-          Hi ${firstName}, a friend you referred just subscribed to
+          Hi ${esc(firstName)}, a friend you referred just subscribed to
           <strong>${APP_NAME} Pro</strong>. As a thank-you, here is your
           <strong>free 1-month licence key</strong>:
         </p>
@@ -307,7 +311,7 @@ export async function sendReferralRewardEmail({
             <td align="center" style="padding:20px; background:#f0fdf4; border:2px dashed #86efac; border-radius:12px;">
               <p style="margin:0 0 6px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#16a34a;">Your Licence Key</p>
               <p style="margin:0; font-size:24px; font-weight:700; font-family:'SF Mono','Fira Code','Courier New',monospace; color:#171717; letter-spacing:2px;">
-                ${licenceKey}
+                ${esc(licenceKey)}
               </p>
             </td>
           </tr>
@@ -346,7 +350,7 @@ export async function sendRenewalReminderEmail({
       preheading: `${daysLeft} day${plural} left on your Pro plan. Renew to keep access.`,
       body: `
         <p style="margin:0 0 20px;">
-          Hi ${firstName}, your Pro plan is running out.
+          Hi ${esc(firstName)}, your Pro plan is running out.
         </p>
         <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
           <tr>
@@ -384,7 +388,7 @@ export async function sendProExpiredEmail({
       preheading: `Your account is now on the Free plan. Renew to get access back.`,
       body: `
         <p style="margin:0 0 20px;">
-          Hi ${firstName}, your Pro membership has expired and your account has been
+          Hi ${esc(firstName)}, your Pro membership has expired and your account has been
           switched to the <strong>Free plan</strong>.
         </p>
         <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
@@ -421,20 +425,20 @@ export async function sendNewCourseEmail({
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `New course: ${courseTitle}`,
+    subject: `New course: ${esc(courseTitle)}`,
     html: emailWrapper({
       heading: `A new course just dropped`,
-      preheading: `"${courseTitle}" is now available on ${APP_NAME}.`,
+      preheading: `"${esc(courseTitle)}" is now available on ${APP_NAME}.`,
       body: `
         <p style="margin:0 0 20px;">
-          Hi ${firstName}, we just published a new course and thought you'd want to know.
+          Hi ${esc(firstName)}, we just published a new course and thought you'd want to know.
         </p>
         <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
           <tr>
             <td style="padding:20px; background:#f0fdf4; border-radius:10px; border-left:4px solid #16a34a;">
               <p style="margin:0 0 4px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:#16a34a;">New Course</p>
-              <p style="margin:0 0 6px; font-size:18px; font-weight:700; color:#171717;">${courseTitle}</p>
-              ${courseDescription ? `<p style="margin:0; font-size:14px; color:#525252; line-height:1.5;">${courseDescription}</p>` : ""}
+              <p style="margin:0 0 6px; font-size:18px; font-weight:700; color:#171717;">${esc(courseTitle)}</p>
+              ${courseDescription ? `<p style="margin:0; font-size:14px; color:#525252; line-height:1.5;">${esc(courseDescription)}</p>` : ""}
             </td>
           </tr>
         </table>
@@ -460,9 +464,9 @@ export async function sendInactiveNudgeEmail({
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `We miss you, ${firstName}!`,
+    subject: `We miss you, ${esc(firstName)}!`,
     html: emailWrapper({
-      heading: `It's been a while, ${firstName}`,
+      heading: `It's been a while, ${esc(firstName)}`,
       preheading: `Your courses are waiting for you on ${APP_NAME}. Come back and keep learning.`,
       body: `
         <p style="margin:0 0 20px;">
@@ -597,20 +601,20 @@ export async function sendSessionBookedEmail({
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Booked: ${sessionTitle}`,
+    subject: `Booked: ${esc(sessionTitle)}`,
     html: emailWrapper({
       heading: `You're confirmed`,
-      preheading: `${sessionTitle} — ${dateStr}.`,
+      preheading: `${esc(sessionTitle)} — ${dateStr}.`,
       body: `
         <p style="margin:0 0 20px;">
-          Hi ${firstName}, your spot is locked in. We'll send you a reminder
+          Hi ${esc(firstName)}, your spot is locked in. We'll send you a reminder
           the day before so it stays on your radar.
         </p>
         <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
           <tr>
             <td style="padding:20px; background:#f0fdf4; border-radius:10px; border-left:4px solid #16a34a;">
               <p style="margin:0 0 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#16a34a;">${typeLabel}</p>
-              <p style="margin:0 0 10px; font-size:18px; font-weight:700; color:#171717;">${sessionTitle}</p>
+              <p style="margin:0 0 10px; font-size:18px; font-weight:700; color:#171717;">${esc(sessionTitle)}</p>
               <p style="margin:0; font-size:14px; color:#525252;">
                 <strong>${dateStr}</strong> &middot; ${durationMinutes} min
               </p>
@@ -684,20 +688,20 @@ export async function sendSessionReminderEmail({
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Tomorrow: ${sessionTitle}`,
+    subject: `Tomorrow: ${esc(sessionTitle)}`,
     html: emailWrapper({
       heading: `Tomorrow at a glance`,
-      preheading: `${sessionTitle} starts ${dateStr}.`,
+      preheading: `${esc(sessionTitle)} starts ${dateStr}.`,
       body: `
         <p style="margin:0 0 20px;">
-          Hi ${firstName}, a heads-up that you're booked for a session
+          Hi ${esc(firstName)}, a heads-up that you're booked for a session
           tomorrow.
         </p>
         <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
           <tr>
             <td style="padding:20px; background:#fffbeb; border-radius:10px; border-left:4px solid #f59e0b;">
               <p style="margin:0 0 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#d97706;">${typeLabel}</p>
-              <p style="margin:0 0 10px; font-size:18px; font-weight:700; color:#171717;">${sessionTitle}</p>
+              <p style="margin:0 0 10px; font-size:18px; font-weight:700; color:#171717;">${esc(sessionTitle)}</p>
               <p style="margin:0; font-size:14px; color:#525252;">
                 <strong>${dateStr}</strong> &middot; ${durationMinutes} min
               </p>
@@ -789,22 +793,22 @@ export async function sendSlotUpdatedEmail({
     from: FROM_EMAIL,
     to,
     subject: rescheduled
-      ? `Rescheduled: ${sessionTitle}`
-      : `Updated: ${sessionTitle}`,
+      ? `Rescheduled: ${esc(sessionTitle)}`
+      : `Updated: ${esc(sessionTitle)}`,
     html: emailWrapper({
       heading: rescheduled ? "Your session has been moved" : "Session updated",
       preheading: rescheduled
-        ? `${sessionTitle} — new time: ${newDate}.`
-        : `${sessionTitle} — details updated.`,
+        ? `${esc(sessionTitle)} — new time: ${newDate}.`
+        : `${esc(sessionTitle)} — details updated.`,
       body: `
         <p style="margin:0 0 20px;">
-          Hi ${firstName}, the host updated a session you're booked into.
+          Hi ${esc(firstName)}, the host updated a session you're booked into.
         </p>
         <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
           <tr>
             <td style="padding:20px; background:#fffbeb; border-radius:10px; border-left:4px solid #f59e0b;">
               <p style="margin:0 0 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#d97706;">${typeLabel}</p>
-              <p style="margin:0 0 10px; font-size:18px; font-weight:700; color:#171717;">${sessionTitle}</p>
+              <p style="margin:0 0 10px; font-size:18px; font-weight:700; color:#171717;">${esc(sessionTitle)}</p>
               ${
                 rescheduled
                   ? `<p style="margin:0 0 6px; font-size:13px; color:#a3a3a3; text-decoration:line-through;">${oldDate}</p>
@@ -875,20 +879,20 @@ export async function sendSlotCancelledEmail({
   return getResend().emails.send({
     from: FROM_EMAIL,
     to,
-    subject: `Cancelled: ${sessionTitle}`,
+    subject: `Cancelled: ${esc(sessionTitle)}`,
     html: emailWrapper({
       heading: `Your session was cancelled`,
-      preheading: `${sessionTitle} (${dateStr}) won't be happening.`,
+      preheading: `${esc(sessionTitle)} (${dateStr}) won't be happening.`,
       body: `
         <p style="margin:0 0 20px;">
-          Hi ${firstName}, the host has cancelled the session you were
+          Hi ${esc(firstName)}, the host has cancelled the session you were
           booked into:
         </p>
         <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">
           <tr>
             <td style="padding:20px; background:#fef2f2; border-radius:10px; border-left:4px solid #ef4444;">
               <p style="margin:0 0 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#dc2626;">Cancelled</p>
-              <p style="margin:0 0 6px; font-size:18px; font-weight:700; color:#171717;">${sessionTitle}</p>
+              <p style="margin:0 0 6px; font-size:18px; font-weight:700; color:#171717;">${esc(sessionTitle)}</p>
               <p style="margin:0; font-size:14px; color:#525252;"><strong>${dateStr}</strong></p>
             </td>
           </tr>
@@ -922,7 +926,7 @@ export async function sendPasswordChangedEmail({
       preheading: `Your ${APP_NAME} password was just changed.`,
       body: `
         <p style="margin:0 0 20px;">
-          Hi ${firstName}, your password was successfully changed. If you made this change,
+          Hi ${esc(firstName)}, your password was successfully changed. If you made this change,
           no further action is needed.
         </p>
         <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%; margin-bottom:20px;">

@@ -55,7 +55,16 @@ function SignInForm() {
       if (explicit) {
         router.push(explicit);
       } else {
-        const role = data.user?.user_metadata?.role;
+        // Read role from app_metadata (server-only writable). Falls
+        // back to user_metadata for the few accounts created before
+        // the app_metadata backfill — they'll self-heal on next
+        // admin promotion. After full migration this fallback can
+        // be removed.
+        const appRole = (data.user?.app_metadata as
+          | Record<string, unknown>
+          | undefined)?.role;
+        const userRole = data.user?.user_metadata?.role;
+        const role = appRole ?? userRole;
         router.push(role === "admin" ? "/admin" : "/");
       }
     }

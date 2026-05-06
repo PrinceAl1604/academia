@@ -88,7 +88,14 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  const metaRole = user.user_metadata?.role;
+  // SECURITY: anchor admin gating on app_metadata.role, not
+  // user_metadata.role. user_metadata is client-writable via
+  // supabase.auth.updateUser({ data: ... }) — a regular user can
+  // self-elevate by writing { role: "admin" } to their own metadata
+  // and bypass this middleware. app_metadata is server-only writable
+  // (must use the service-role admin client). Backfilled from
+  // public.users.role in the `app_metadata_role_backfill` migration.
+  const metaRole = (user.app_metadata as Record<string, unknown> | null)?.role;
 
   // Authenticated user on auth route → bounce to their home.
   if (isAuthRoute) {
@@ -103,12 +110,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 
-  // /admin/* — verify admin role.
+  // /admin/* — verify admin role. JWT-cached path is fast; DB
+  // fallback covers users whose app_metadata isn't populated yet
+  // (legacy accounts pre-backfill).
   if (pathname.startsWith("/admin")) {
-    if (metaRole === "admin") {
-      // JWT-cached role; no DB call.
-      return response;
-    }
+    if (metaRole === "admin") return response;
 
     const { data: profile } = await supabase
       .from("users")
@@ -120,8 +126,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // Cache role in user_metadata so future requests skip the DB hit.
-    supabase.auth.updateUser({ data: { role: "admin" } }).catch(() => {});
+    // DB says admin but JWT app_metadata isn't flagged — this is a
+    // post-promotion case. We can't update app_metadata from a
+    // non-admin Supabase client (would need service role). The next
+    // sign-in or token refresh after admin runs the backfill SQL
+    // again will pick it up; no-op here.
   }
 
   return response;
