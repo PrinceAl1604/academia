@@ -450,6 +450,13 @@ export const translations = {
       channelMute: "Mute notifications",
       channelUnmute: "Unmute",
       channelMuted: "Muted",
+      // Community Home (Phase B of community/sessions merge)
+      home: "Home",
+      unreadChannels: "Unread channels",
+      recentDms: "Recent messages",
+      allCaughtUp: "All caught up",
+      allCaughtUpDesc:
+        "No live sessions, unread messages, or upcoming events. Check back later.",
     },
 
     // Notifications — type+payload model. Each `*Title`/`*Body` takes
@@ -801,6 +808,11 @@ export const translations = {
       formRepeatHint:
         "Publishes {n} slots — same day of the week, same time, for the next {n} weeks.",
       formRepeatWeeks: "for {n} weeks",
+      // Community-home + sidebar references (Phase A/B merge)
+      upNext: "Up next",
+      joinNow: "Join now",
+      viewAll: "View all",
+      noUpcoming: "No upcoming sessions.",
     },
   },
 
@@ -1257,6 +1269,13 @@ export const translations = {
       channelMute: "Couper les notifications",
       channelUnmute: "Réactiver",
       channelMuted: "Coupé",
+      // Community Home (Phase B of community/sessions merge)
+      home: "Accueil",
+      unreadChannels: "Salons non lus",
+      recentDms: "Messages récents",
+      allCaughtUp: "Tout est à jour",
+      allCaughtUpDesc:
+        "Aucune session en direct, message non lu ou événement à venir. Revenez plus tard.",
     },
 
     notifications: {
@@ -1591,6 +1610,11 @@ export const translations = {
       formRepeatHint:
         "Publie {n} créneaux — même jour de la semaine, même heure, pour les {n} prochaines semaines.",
       formRepeatWeeks: "pendant {n} semaines",
+      // Community-home + sidebar references (Phase A/B merge)
+      upNext: "À venir",
+      joinNow: "Rejoindre",
+      viewAll: "Voir tout",
+      noUpcoming: "Aucune session à venir.",
     },
   },
 } as const;
