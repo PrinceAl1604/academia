@@ -119,12 +119,14 @@ export function DashboardSidebar() {
         { label: t.dashboard.title || "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { label: t.dashboard.browse || "Browse", href: "/", icon: Compass },
         { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
-        // Community now hosts both chat AND live sessions (Phase A/B/C
-        // of the merge). The dedicated /dashboard/sessions route stays
-        // accessible via the "View all →" link inside Community for
-        // bookmarks and the full schedule view, but it's no longer in
-        // the top-level nav — one mental model, one entry point.
         { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
+        // Live sessions has its own top-level entry — they're a
+        // calendar/booking concern, distinct from chat. Embedding
+        // them inside Community's sidebar (Phase A/B/C of an earlier
+        // merge attempt) bloated the visual hierarchy and added a
+        // "No upcoming sessions" empty-state into a sidebar slot
+        // that should stay focused. Reverted to the original split.
+        { label: t.sessions?.title || "Live sessions", href: "/dashboard/sessions", icon: Video },
       ],
     },
   ];

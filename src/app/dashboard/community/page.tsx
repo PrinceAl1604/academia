@@ -54,11 +54,9 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
 import { useChannelPresence } from "@/lib/hooks/use-channel-presence";
 import { useDmCompose } from "@/lib/hooks/use-dm-compose";
-import { useUpcomingSessions } from "@/lib/hooks/use-upcoming-sessions";
 import { userTintClass } from "@/lib/avatar-color";
 import { DmComposePanel } from "@/components/community/dm-compose-panel";
 import { ChatHeader } from "@/components/community/chat-header";
-import { SessionsSidebarSection } from "@/components/community/sessions-sidebar-section";
 import { CommunityHome } from "@/components/community/community-home";
 import {
   sendChatMessage,
@@ -219,7 +217,6 @@ export default function CommunityPage() {
    * Powers the LIVE NOW + SESSIONS blocks in the sidebar. Empty
    * for free users (sessions are a Pro feature) and silent
    * during load — no skeleton, no flicker. */
-  const sessions = useUpcomingSessions(user?.id, isPro);
 
   /* ─── Channel state ─────────────────────────────────────── */
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -1795,28 +1792,6 @@ export default function CommunityPage() {
             );
           })}
 
-          {/* ─── Live + upcoming sessions ──────────────────────
-               Phase A of the Community/Sessions merge. The LIVE NOW
-               band only renders when there's something to act on;
-               UPCOMING shows the next 5 booked sessions with a
-               "View all →" deep link to /dashboard/sessions for
-               the full schedule. Sidebar still hosts the chat and
-               DM lists below — the sessions block is just one more
-               vertical section in the same rail. */}
-          <SessionsSidebarSection
-            live={sessions.live}
-            upcoming={sessions.upcoming}
-            loading={sessions.loading}
-            isPro={isPro}
-            isEn={isEn}
-            labels={{
-              liveNow: t.sessions?.liveNow,
-              sessions: t.sessions?.title,
-              viewAll: t.sessions?.viewAll,
-              noUpcoming: t.sessions?.noUpcoming,
-            }}
-          />
-
           {/* ─── Direct messages section ──────────────────────
                Always rendered (free users can RECEIVE from admin)
                but the "+ New" button is gated to Pro/admin via
@@ -1985,8 +1960,6 @@ export default function CommunityPage() {
         ) : viewHome ? (
           <CommunityHome
             userName={userName}
-            liveSessions={sessions.live}
-            upcomingSessions={sessions.upcoming}
             unreadChannels={channels
               .filter(
                 (ch) =>
@@ -2004,14 +1977,10 @@ export default function CommunityPage() {
             labels={{
               title: t.community?.title,
               welcome: undefined,
-              liveNow: t.sessions?.liveNow,
-              upNext: t.sessions?.upNext,
               unreadChannels: t.community?.unreadChannels,
               recentDms: t.community?.recentDms,
               allCaughtUp: t.community?.allCaughtUp,
               allCaughtUpDesc: t.community?.allCaughtUpDesc,
-              joinNow: t.sessions?.joinNow,
-              viewAllSessions: t.sessions?.viewAll,
               general: t.community?.general,
               announcements: t.community?.announcements,
             }}
