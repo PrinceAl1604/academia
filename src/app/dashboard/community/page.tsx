@@ -51,9 +51,11 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
 import { useChannelPresence } from "@/lib/hooks/use-channel-presence";
 import { useDmCompose } from "@/lib/hooks/use-dm-compose";
+import { useUpcomingSessions } from "@/lib/hooks/use-upcoming-sessions";
 import { userTintClass } from "@/lib/avatar-color";
 import { DmComposePanel } from "@/components/community/dm-compose-panel";
 import { ChatHeader } from "@/components/community/chat-header";
+import { SessionsSidebarSection } from "@/components/community/sessions-sidebar-section";
 import {
   sendChatMessage,
   markChannelRead,
@@ -208,6 +210,12 @@ export default function CommunityPage() {
 
   /* ─── Live presence (extracted hook) ─────────────────────── */
   const { onlineUsers, onlineCount } = useChannelPresence(user?.id, userName);
+
+  /* ─── Upcoming sessions (Phase A community/sessions merge) ─
+   * Powers the LIVE NOW + SESSIONS blocks in the sidebar. Empty
+   * for free users (sessions are a Pro feature) and silent
+   * during load — no skeleton, no flicker. */
+  const sessions = useUpcomingSessions(user?.id, isPro);
 
   /* ─── Channel state ─────────────────────────────────────── */
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -1677,6 +1685,28 @@ export default function CommunityPage() {
               </button>
             );
           })}
+
+          {/* ─── Live + upcoming sessions ──────────────────────
+               Phase A of the Community/Sessions merge. The LIVE NOW
+               band only renders when there's something to act on;
+               UPCOMING shows the next 5 booked sessions with a
+               "View all →" deep link to /dashboard/sessions for
+               the full schedule. Sidebar still hosts the chat and
+               DM lists below — the sessions block is just one more
+               vertical section in the same rail. */}
+          <SessionsSidebarSection
+            live={sessions.live}
+            upcoming={sessions.upcoming}
+            loading={sessions.loading}
+            isPro={isPro}
+            isEn={isEn}
+            labels={{
+              liveNow: t.sessions?.liveNow,
+              sessions: t.sessions?.title,
+              viewAll: t.sessions?.viewAll,
+              noUpcoming: t.sessions?.noUpcoming,
+            }}
+          />
 
           {/* ─── Direct messages section ──────────────────────
                Always rendered (free users can RECEIVE from admin)
