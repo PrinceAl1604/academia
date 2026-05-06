@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { validateUserAccess, getSupabaseAdmin } from "@/lib/supabase-server";
 import { ensureDailyRoom } from "@/lib/daily";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/sessions/ensure-room
@@ -24,28 +25,12 @@ import { ensureDailyRoom } from "@/lib/daily";
  * without re-creating the room (Daily treats name collisions as no-op).
  */
 
-// In-memory token bucket per user. Survives across requests within a
-// single Vercel function instance. Cold starts reset, which is fine —
-// the rate limit's purpose is to bound damage from an abusive client,
-// not to enforce hard global counts.
-const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+// DB-backed rate limit (10/min per user) — replaces the per-process
+// Map that didn't survive Vercel's parallel cold starts. Daily room
+// creation is a paid action; we don't want anyone burning the quota
+// by cycling instances under the prior cap.
 const RATE_LIMIT_MAX = 10;
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const bucket = rateLimitBuckets.get(userId);
-  if (!bucket || bucket.resetAt < now) {
-    rateLimitBuckets.set(userId, {
-      count: 1,
-      resetAt: now + RATE_LIMIT_WINDOW_MS,
-    });
-    return true;
-  }
-  if (bucket.count >= RATE_LIMIT_MAX) return false;
-  bucket.count++;
-  return true;
-}
+const RATE_LIMIT_WINDOW_SECONDS = 60;
 
 export async function POST(req: Request) {
   const access = await validateUserAccess();
@@ -53,7 +38,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!checkRateLimit(access.user.id)) {
+  const allowed = await checkRateLimit({
+    bucket: `ensure-room:${access.user.id}`,
+    maxCount: RATE_LIMIT_MAX,
+    windowSeconds: RATE_LIMIT_WINDOW_SECONDS,
+  });
+  if (!allowed) {
     return NextResponse.json(
       { error: "Too many requests" },
       { status: 429, headers: { "Retry-After": "60" } }

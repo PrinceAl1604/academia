@@ -1,22 +1,9 @@
 import { NextResponse } from "next/server";
 import { validateUserAccess, getSupabaseAdmin } from "@/lib/supabase-server";
+import { checkRateLimit } from "@/lib/rate-limit";
 
-// Simple in-memory rate limiter: max 5 attempts per IP per 15 minutes
-const attempts = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 5;
-const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = attempts.get(ip);
-  if (!entry || now > entry.resetAt) {
-    attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT) return false;
-  entry.count++;
-  return true;
-}
+const WINDOW_SECONDS = 15 * 60;
 
 export async function POST(request: Request) {
   try {
@@ -29,13 +16,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // Rate limiting
+    // Rate limiting — DB-backed so the cap holds across Vercel's
+    // parallel function instances. Bucket on user id, not just IP,
+    // so an attacker cycling residential proxies still hits the same
+    // counter under the same authenticated session.
     const ip =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       "unknown";
-
-    if (!checkRateLimit(ip)) {
+    const allowed = await checkRateLimit({
+      bucket: `licence-activate:${access.user.id}:${ip}`,
+      maxCount: RATE_LIMIT,
+      windowSeconds: WINDOW_SECONDS,
+    });
+    if (!allowed) {
       return NextResponse.json(
         { error: "Too many attempts. Please try again in 15 minutes." },
         { status: 429 }

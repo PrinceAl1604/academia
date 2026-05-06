@@ -164,29 +164,72 @@ function extractOgData(html: string, pageUrl: URL): ExtractedPreview {
 
 /* ─── Fetch with body cap + timeout ────────────────────────── */
 
-async function fetchWithCap(url: URL): Promise<string | null> {
+async function fetchWithCap(initialUrl: URL): Promise<string | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
-    const res = await fetch(url.toString(), {
-      signal: controller.signal,
-      redirect: "follow",
-      headers: {
-        "User-Agent": USER_AGENT,
-        // Accept HTML — if the server returns JSON/binary we'll bail on
-        // the content-type check below.
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      },
-    });
+    // Manual redirect handling — `redirect: "follow"` would let fetch
+    // walk the chain autonomously, with two problems:
+    //   1. MAX_REDIRECTS isn't enforced — Node's default cap is 20+,
+    //      plenty of room for tracking funnels and loops.
+    //   2. Intermediate hops to private hosts (link-local, RFC1918,
+    //      AWS metadata at 169.254.169.254) get hit before we have a
+    //      chance to validate. Even though we never return their
+    //      bodies, the GET itself reaches an internal target.
+    // So we walk the chain ourselves, validating every Location.
+    let currentUrl = initialUrl;
+    let res: Response | null = null;
 
-    if (!res.ok) return null;
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      res = await fetch(currentUrl.toString(), {
+        signal: controller.signal,
+        redirect: "manual",
+        headers: {
+          "User-Agent": USER_AGENT,
+          // Accept HTML — if the server returns JSON/binary we'll bail
+          // on the content-type check below.
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+      });
 
-    // Belt & suspenders: the post-redirect URL could be a private host
-    // if the origin redirected there. Re-check.
-    const finalUrl = new URL(res.url);
-    if (isPrivateHost(finalUrl.hostname)) return null;
+      // Not a redirect → done walking, drop through to body read.
+      // 301/302/303/307/308 all carry a Location header per RFC 7231 §6.4.
+      const isRedirect =
+        res.status === 301 ||
+        res.status === 302 ||
+        res.status === 303 ||
+        res.status === 307 ||
+        res.status === 308;
+      if (!isRedirect) break;
+
+      // Hit the cap — abort instead of following one more step.
+      if (hop === MAX_REDIRECTS) return null;
+
+      const location = res.headers.get("location");
+      if (!location) return null;
+
+      // Location may be relative ("/path") or absolute. Resolve against
+      // the current URL, then re-validate through sanitizeUrl so http(s)
+      // and isPrivateHost() apply to the next hop.
+      let next: URL;
+      try {
+        next = new URL(location, currentUrl);
+      } catch {
+        return null;
+      }
+      const safe = sanitizeUrl(next.toString());
+      if (!safe) return null;
+      currentUrl = safe;
+    }
+
+    if (!res || !res.ok) return null;
+
+    // Belt & suspenders: the final URL must also be public. (We
+    // validated each Location above, but a same-origin server-side
+    // redirect via internal mechanisms would still surface here.)
+    if (isPrivateHost(currentUrl.hostname)) return null;
 
     const ct = res.headers.get("content-type") || "";
     if (!ct.toLowerCase().includes("html")) return null;

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 import { sendPushToUser } from "@/lib/push";
 
@@ -24,8 +25,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, reason: "not_configured" });
   }
 
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${expected}`) {
+  // Timing-safe comparison: a naive `auth !== \`Bearer …\`` early-exits
+  // on the first mismatching byte, leaking the secret one character
+  // at a time via response timing. timingSafeEqual is constant-time.
+  // Length must match before the call or it throws (and length itself
+  // becomes the side channel) — pad-equal first via length check.
+  const auth = req.headers.get("authorization") ?? "";
+  const expectedHeader = `Bearer ${expected}`;
+  const a = Buffer.from(auth, "utf8");
+  const b = Buffer.from(expectedHeader, "utf8");
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
