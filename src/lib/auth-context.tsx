@@ -34,7 +34,14 @@ type Plan = "free" | "pro";
  * Versioned key (`_v2`) lets us invalidate stale cache shapes when
  * the schema changes. Bump the suffix on schema migrations.
  */
-const PROFILE_CACHE_KEY = "brightroots_profile_v2";
+// Bumped to v3 after the AdminLayout black-screen incident: a
+// stale cache with role:"user" was making real admins unable to
+// see /admin (the layout returned null when client isAdmin=false,
+// even though the server middleware had verified them as admin).
+// The layout has since been fixed to trust the server, but bumping
+// the cache version is the cleanest way to invalidate any poisoned
+// localStorage entries already on user devices.
+const PROFILE_CACHE_KEY = "brightroots_profile_v3";
 
 interface CachedProfile {
   userId: string;
