@@ -4,11 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { supabase } from "@/lib/supabase";
-import { syncAllCourseTotals } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Loader2, Gift } from "lucide-react";
+import { ArrowRight, Gift } from "lucide-react";
 import { Illustration } from "@/components/shared/illustration";
 
 interface ReferralUser {
@@ -55,55 +54,55 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const isEn = t.nav.signIn === "Sign In";
 
+  /* ─── Data fetch ───────────────────────────────────────────
+   * Was: six count: "exact" queries on every load (forced full
+   * scans on users, courses, enrollments) + a serial referrals
+   * fetch + a fire-and-forget syncAllCourseTotals() that fanned
+   * out N+1 work to recompute counters DB triggers already keep
+   * fresh. Total: ~2-5s of waste on every admin visit.
+   *
+   * Now: one Postgres function (admin_dashboard_stats) that
+   * does three table scans and returns the six counts as JSON,
+   * plus the referrals fetch in parallel. syncAllCourseTotals()
+   * is gone — DB triggers handle that on insert/update. */
   useEffect(() => {
-    async function loadStats() {
-      const [
-        { count: totalStudents },
-        { count: proStudents },
-        { count: totalCourses },
-        { count: publishedCourses },
-        { count: totalEnrollments },
-        { count: recentSignups },
-      ] = await Promise.all([
-        supabase.from("users").select("*", { count: "exact", head: true }).eq("role", "student"),
-        supabase.from("users").select("*", { count: "exact", head: true }).eq("subscription_tier", "pro"),
-        supabase.from("courses").select("*", { count: "exact", head: true }),
-        supabase.from("courses").select("*", { count: "exact", head: true }).eq("is_published", true),
-        supabase.from("enrollments").select("*", { count: "exact", head: true }),
-        supabase.from("users").select("*", { count: "exact", head: true })
-          .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+    let cancelled = false;
+    async function load() {
+      type StatsRpc = {
+        total_students: number;
+        pro_students: number;
+        total_courses: number;
+        published_courses: number;
+        total_enrollments: number;
+        recent_signups: number;
+      };
+      const [statsRes, referralsRes] = await Promise.all([
+        supabase.rpc("admin_dashboard_stats"),
+        fetch("/api/admin/referrals")
+          .then((r) => (r.ok ? r.json() : { referrals: [] }))
+          .catch(() => ({ referrals: [] as Referral[] })),
       ]);
+      if (cancelled) return;
 
-      setStats({
-        totalStudents: totalStudents ?? 0,
-        proStudents: proStudents ?? 0,
-        totalCourses: totalCourses ?? 0,
-        publishedCourses: publishedCourses ?? 0,
-        totalEnrollments: totalEnrollments ?? 0,
-        recentSignups: recentSignups ?? 0,
-      });
-
-      try {
-        const res = await fetch("/api/admin/referrals");
-        if (res.ok) {
-          const json = await res.json();
-          setReferrals(json.referrals ?? []);
-        }
-      } catch {}
-
+      const data = statsRes.data as StatsRpc | null;
+      if (data) {
+        setStats({
+          totalStudents: data.total_students ?? 0,
+          proStudents: data.pro_students ?? 0,
+          totalCourses: data.total_courses ?? 0,
+          publishedCourses: data.published_courses ?? 0,
+          totalEnrollments: data.total_enrollments ?? 0,
+          recentSignups: data.recent_signups ?? 0,
+        });
+      }
+      setReferrals(referralsRes.referrals ?? []);
       setLoading(false);
-      syncAllCourseTotals();
     }
-    loadStats();
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/70" />
-      </div>
-    );
-  }
 
   // Six entry cards — primary admin actions. Order is deliberate: most-
   // used actions first (Add Course, Manage Courses), then resource
@@ -227,7 +226,27 @@ export default function AdminDashboardPage() {
             )}
           </div>
 
-          {referrals.length === 0 ? (
+          {loading ? (
+            // Skeleton: 3 referral-row placeholders. Same vertical
+            // rhythm as the real rows so the layout doesn't jump
+            // when data arrives.
+            <Card>
+              <CardContent className="p-0">
+                <div className="divide-y divide-border/60">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-3">
+                      <div className="h-9 w-9 rounded-full bg-muted animate-pulse shrink-0" />
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="h-3.5 w-3/5 rounded bg-muted animate-pulse" />
+                        <div className="h-2.5 w-2/5 rounded bg-muted/70 animate-pulse" />
+                      </div>
+                      <div className="h-5 w-16 rounded-full bg-muted animate-pulse shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : referrals.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center text-center py-12">
                 <Illustration name="admin-empty" alt="" size="md" />
@@ -310,11 +329,17 @@ export default function AdminDashboardPage() {
                 className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-4 py-3"
               >
                 <span className="text-sm text-muted-foreground">{stat.label}</span>
-                <span className="font-mono text-base font-medium text-foreground tabular-nums">
-                  {typeof stat.value === "number"
-                    ? stat.value.toLocaleString()
-                    : stat.value}
-                </span>
+                {loading ? (
+                  // Skeleton bar — matches the real value's font
+                  // size so the row height doesn't jump on swap.
+                  <span className="h-5 w-10 rounded bg-muted animate-pulse" />
+                ) : (
+                  <span className="font-mono text-base font-medium text-foreground tabular-nums">
+                    {typeof stat.value === "number"
+                      ? stat.value.toLocaleString()
+                      : stat.value}
+                  </span>
+                )}
               </div>
             ))}
           </div>
