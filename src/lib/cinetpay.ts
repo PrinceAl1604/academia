@@ -1,10 +1,18 @@
 /**
- * Moneroo Payment Integration
- * https://docs.moneroo.io
+ * Payment integration — Moneroo aggregator (https://docs.moneroo.io).
  *
- * Environment variables needed:
- *   NEXT_PUBLIC_MONEROO_PUBLIC_KEY  — Your Moneroo public key
- *   MONEROO_SECRET_KEY             — Your Moneroo secret key (server-only)
+ * Filename note: this module is `cinetpay.ts` because CinetPay is the
+ * downstream rail the user sees in checkout. The actual API we talk
+ * to is Moneroo, an aggregator that fronts CinetPay (and other
+ * African rails like Wave, Orange Money, MTN). Routes import from
+ * `@/lib/cinetpay` and reference "CinetPay" in user-visible strings;
+ * keep that contract.
+ *
+ * Environment variables (server-only unless prefixed NEXT_PUBLIC_):
+ *   NEXT_PUBLIC_MONEROO_PUBLIC_KEY  — public key for the SDK
+ *   MONEROO_SECRET_KEY              — secret key for server-to-server
+ *   CINETPAY_WEBHOOK_SECRET         — HMAC shared with the webhook
+ *                                     (verified in /api/payment/notify)
  */
 
 // Re-export from canonical source

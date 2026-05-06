@@ -23,10 +23,19 @@ const USER_AGENT =
  * but that requires server-side DNS pinning (out of scope here).
  */
 function isPrivateHost(hostname: string): boolean {
-  const h = hostname.toLowerCase();
+  let h = hostname.toLowerCase();
   if (h === "localhost" || h === "0.0.0.0" || h === "::" || h === "::1") {
     return true;
   }
+  // URL.hostname strips brackets but lowercases [::ffff:127.0.0.1] →
+  // "::ffff:127.0.0.1". An IPv4-mapped IPv6 literal is the standard
+  // way to spell an IPv4 address inside an IPv6 socket — it routes
+  // identically to the bare IPv4. Without unwrapping, an attacker
+  // could submit https://[::ffff:169.254.169.254]/latest/meta-data
+  // and bypass the IPv4 private-range check below.
+  const mapped = h.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
+  if (mapped) h = mapped[1];
+
   // IPv4 literals
   const v4 = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (v4) {

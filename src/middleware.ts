@@ -27,11 +27,19 @@ export async function middleware(request: NextRequest) {
     pathname === "/sign-up" ||
     pathname === "/reset-password";
 
-  // Everything else under the matcher requires auth. The catalog
-  // at "/" used to be public; now it's the post-login student home.
-  // Logged-out visitors are sent to /sign-in so we can build a
-  // proper landing page later without conflating the two.
-  const isProtectedRoute = !isAuthRoute;
+  // Explicit protected-route list. This duplicates the `matcher` at
+  // the bottom of the file by design: if a new path gets added to
+  // the matcher without updating this list, the route falls through
+  // to "no decision" (no redirect, no protection) — fail-closed by
+  // omission rather than fail-open via `!isAuthRoute`. Reviewable
+  // here in one place instead of mentally re-deriving from the
+  // matcher pattern on every read.
+  const isProtectedRoute =
+    pathname === "/" ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
+    pathname === "/onboarding" ||
+    (pathname.startsWith("/courses/") && pathname.endsWith("/learn"));
 
   // Cheap cookie sniff: does the visitor look authenticated at all?
   const hasSessionCookie = request.cookies

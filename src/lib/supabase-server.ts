@@ -1,16 +1,37 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 /**
  * Admin client — uses service_role key, bypasses RLS.
  * Use ONLY in API routes / server actions for privileged operations.
+ *
+ * Module-scope singleton: the service-role client doesn't carry
+ * per-request state (no cookies, no auth header swap), so a new
+ * client per call burned an HTTP/2 connection setup, a fetch agent,
+ * and ~5ms of v8 alloc on every invocation. With multiple admin
+ * calls per request (validateUserAccess + the route's own queries)
+ * that compounded fast. One client, lazily instantiated, reused
+ * across every warm request in the function instance.
  */
-export function getSupabaseAdmin() {
-  return createClient(
+let cachedAdmin: SupabaseClient | null = null;
+
+export function getSupabaseAdmin(): SupabaseClient {
+  if (cachedAdmin) return cachedAdmin;
+  cachedAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        // Service-role token never refreshes and we never want it to
+        // accidentally pick up a user session from cookies. Belt &
+        // braces.
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
   );
+  return cachedAdmin;
 }
 
 /**
