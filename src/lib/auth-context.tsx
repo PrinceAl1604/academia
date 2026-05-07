@@ -34,14 +34,15 @@ type Plan = "free" | "pro";
  * Versioned key (`_v2`) lets us invalidate stale cache shapes when
  * the schema changes. Bump the suffix on schema migrations.
  */
-// Bumped to v3 after the AdminLayout black-screen incident: a
-// stale cache with role:"user" was making real admins unable to
-// see /admin (the layout returned null when client isAdmin=false,
-// even though the server middleware had verified them as admin).
-// The layout has since been fixed to trust the server, but bumping
-// the cache version is the cleanest way to invalidate any poisoned
-// localStorage entries already on user devices.
-const PROFILE_CACHE_KEY = "brightroots_profile_v3";
+// Bumped to v4 to invalidate caches that don't yet have the new
+// avatarUrl field (older entries would deserialize with avatarUrl
+// undefined and the topbar would briefly show initials before the
+// background refresh filled it in — minor flicker but worth a clean
+// cut). Previous bump (v3) was for the AdminLayout black-screen
+// incident; the layout itself is now fine, but historical cache
+// versions are a one-line cost so we keep the suffix for the
+// schema-change pattern.
+const PROFILE_CACHE_KEY = "brightroots_profile_v4";
 
 interface CachedProfile {
   userId: string;
@@ -50,6 +51,7 @@ interface CachedProfile {
   proExpiresAt: string | null;
   hasOnboarded: boolean;
   referralCode: string | null;
+  avatarUrl: string | null;
   cachedAt: number;
 }
 
@@ -84,7 +86,7 @@ function writeProfileCache(profile: Omit<CachedProfile, "cachedAt">) {
 export async function primeProfileCacheForUser(userId: string): Promise<void> {
   const { data, error } = await supabase
     .from("users")
-    .select("role, subscription_tier, pro_expires_at, has_onboarded, referral_code")
+    .select("role, subscription_tier, pro_expires_at, has_onboarded, referral_code, avatar_url")
     .eq("id", userId)
     .single();
   if (error || !data) return;
@@ -103,6 +105,7 @@ export async function primeProfileCacheForUser(userId: string): Promise<void> {
     proExpiresAt: data.pro_expires_at || null,
     hasOnboarded: data.has_onboarded ?? true,
     referralCode: data.referral_code || null,
+    avatarUrl: data.avatar_url || null,
   });
 }
 
@@ -130,6 +133,8 @@ interface AuthContextType {
   isExpired: boolean;
   hasOnboarded: boolean;
   referralCode: string | null;
+  avatarUrl: string | null;
+  setAvatarUrl: (url: string | null) => void;
   markOnboarded: () => void;
   logout: () => Promise<void>;
 }
@@ -145,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [proExpiresAt, setProExpiresAt] = useState<string | null>(null);
   const [hasOnboarded, setHasOnboarded] = useState(true); // default true to avoid flash redirect
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const router = useRouter();
   // Track whether we've already updated last_active_at this session.
   // Without this, every loadUserProfile call (initial load + token
@@ -154,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUserProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from("users")
-      .select("role, subscription_tier, pro_expires_at, has_onboarded, referral_code")
+      .select("role, subscription_tier, pro_expires_at, has_onboarded, referral_code, avatar_url")
       .eq("id", userId)
       .single();
 
@@ -201,6 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPlan("free");
       setHasOnboarded(false);
       setReferralCode(null);
+      setAvatarUrl(null);
       writeProfileCache({
         userId,
         role: "user",
@@ -208,6 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         proExpiresAt: null,
         hasOnboarded: false,
         referralCode: null,
+        avatarUrl: null,
       });
       return;
     }
@@ -218,6 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProExpiresAt(data.pro_expires_at || null);
       setHasOnboarded(data.has_onboarded ?? true);
       setReferralCode(data.referral_code || null);
+      setAvatarUrl(data.avatar_url || null);
 
       let resolvedPlan: Plan = "free";
       // Check if Pro has expired (UI-only — DB trigger handles the
@@ -255,6 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         proExpiresAt: data.pro_expires_at || null,
         hasOnboarded: data.has_onboarded ?? true,
         referralCode: data.referral_code || null,
+        avatarUrl: data.avatar_url || null,
       });
     } else {
       setRole("user");
@@ -316,6 +326,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProExpiresAt(cached.proExpiresAt);
           setHasOnboarded(cached.hasOnboarded);
           setReferralCode(cached.referralCode);
+          setAvatarUrl(cached.avatarUrl ?? null);
           setLoading(false);
           // PERF: skip the background refresh entirely if the cache is
           // less than 5 minutes old. Saves ~150-300ms of network on
@@ -374,6 +385,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRole(null);
           setPlan("free");
           setProExpiresAt(null);
+          setAvatarUrl(null);
         }
         if (cancelled) return;
         setLoading(false);
@@ -401,6 +413,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProExpiresAt(null);
     setHasOnboarded(true);
     setReferralCode(null);
+    setAvatarUrl(null);
 
     // CRITICAL: must AWAIT signOut() before navigating. The browser
     // client clears the sb-*-auth-token cookies as part of signOut.
@@ -476,6 +489,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [daysUntilExpiry, role]
   );
 
+  // Optimistic setter exposed to settings page after a successful
+  // upload — flips the local state immediately so the topbar avatar
+  // updates without waiting on the next loadUserProfile cycle. Also
+  // patches the localStorage cache so the new image survives a hard
+  // refresh.
+  const updateAvatarUrl = useCallback((url: string | null) => {
+    setAvatarUrl(url);
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(PROFILE_CACHE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as CachedProfile;
+      window.localStorage.setItem(
+        PROFILE_CACHE_KEY,
+        JSON.stringify({ ...parsed, avatarUrl: url })
+      );
+    } catch {
+      // ignore — non-fatal, next loadUserProfile will reconcile
+    }
+  }, []);
+
   // Memoize context value to prevent unnecessary re-renders of consumers.
   // Note: `user` is replaced with `stableUser` so token refreshes don't
   // churn the whole tree.
@@ -495,10 +529,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isExpired,
       hasOnboarded,
       referralCode,
+      avatarUrl,
+      setAvatarUrl: updateAvatarUrl,
       markOnboarded,
       logout,
     }),
-    [stableUser, role, plan, userName, loading, proExpiresAt, daysUntilExpiry, isExpiringSoon, isExpired, hasOnboarded, referralCode, markOnboarded, logout]
+    [stableUser, role, plan, userName, loading, proExpiresAt, daysUntilExpiry, isExpiringSoon, isExpired, hasOnboarded, referralCode, avatarUrl, updateAvatarUrl, markOnboarded, logout]
   );
 
   return (

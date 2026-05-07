@@ -10,6 +10,7 @@ import { PushNotificationsToggle } from "@/components/shared/push-notifications-
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarUpload } from "@/components/shared/avatar-upload";
 import {
   Check,
   Loader2,
@@ -495,12 +496,20 @@ export default function SettingsPage() {
                 </h3>
                 <Separator className="my-4" />
 
-                <div className="flex items-center gap-4 mb-6">
-                  <Avatar className="h-16 w-16">
-                    <AvatarFallback className="bg-muted text-lg font-semibold dark:text-muted-foreground/70">
-                      {(userName || "U").split(" ").map((n) => n[0]).join("")}
-                    </AvatarFallback>
-                  </Avatar>
+                {/* Avatar uploader — replaces the static initials-only
+                    block. AvatarUpload renders the current image (or
+                    fallback initials) plus Upload/Change/Remove
+                    buttons, and writes through to users.avatar_url +
+                    auth-context state on success. */}
+                <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+                  <AvatarUpload
+                    fallback={(userName || "U")
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  />
                   <div>
                     <p className="font-semibold text-foreground">{userName || "User"}</p>
                     <p className="text-sm text-muted-foreground">{user?.email}</p>
