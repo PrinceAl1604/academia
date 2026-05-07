@@ -210,13 +210,48 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    await supabase.from("users").update({ name }).eq("id", user.id);
-    await supabase.auth.updateUser({ data: { full_name: name } });
-    // Force session refresh so sidebar/topbar pick up the new name immediately
-    await supabase.auth.refreshSession();
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      // 1) Persist to public.users (the source of truth for the
+      //    sidebar/dashboard name).
+      const { error: dbError } = await supabase
+        .from("users")
+        .update({ name })
+        .eq("id", user.id);
+      if (dbError) throw dbError;
+
+      // 2) Mirror into auth.user_metadata.full_name so JWT-derived
+      //    consumers see it too. updateUser fires a USER_UPDATED
+      //    event which the auth-context listener catches and
+      //    propagates — that already pushes the fresh name into
+      //    state, so a manual refreshSession() afterward was
+      //    redundant. The previous version awaited an extra
+      //    refreshSession() call that could deadlock against the
+      //    auth client's own internal refresh mutex, leaving the
+      //    spinner spinning forever.
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { full_name: name },
+      });
+      if (authError) throw authError;
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error("[settings] save profile failed:", err);
+      // Surface a minimal toast-equivalent. The screen already has a
+      // success indicator (`saved`) — reusing the error slot used by
+      // other handlers in this file would mean threading more state.
+      // Keep simple: alert if dev console isn't open.
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(
+        (isEn ? "Couldn't save: " : "Échec de l'enregistrement : ") + msg
+      );
+    } finally {
+      // CRITICAL: always clear the spinner. The previous shape only
+      // cleared on the success path, so any thrown error or hung
+      // promise left the button stuck. Wrapping in finally is the
+      // minimum hardening for any optimistic-loading UI.
+      setSaving(false);
+    }
   };
 
   // Toggle a single notification pref and persist
