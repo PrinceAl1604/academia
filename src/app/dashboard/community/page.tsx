@@ -12,7 +12,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Send,
@@ -90,6 +90,7 @@ interface DmThread {
   channel_id: string;
   other_user_id: string;
   other_name: string;
+  other_avatar_url: string | null;
   other_role: string | null;
   // Most-recent message timestamp drives sort order (most recent first).
   // null when the thread has no messages yet — sort to the top under
@@ -504,10 +505,16 @@ export default function CommunityPage() {
 
     // 2. Pull all participant rows for those channels — RLS lets us
     //    see them because we're in the channel. Then filter to "the
-    //    other person" client-side.
+    //    other person" client-side. We pull email + avatar_url too
+    //    so the display-name fallback can resolve to something
+    //    meaningful even when users.name is null (otherwise the
+    //    initial collapses to literal "?" and the sidebar shows a
+    //    question-mark avatar).
     const { data: participants } = await supabase
       .from("chat_dm_participants")
-      .select("channel_id, user_id, user:users(id, name, role)")
+      .select(
+        "channel_id, user_id, user:users(id, name, email, avatar_url, role)"
+      )
       .in("channel_id", dmChannelIds)
       .neq("user_id", user.id);
 
@@ -535,13 +542,30 @@ export default function CommunityPage() {
       const r = row as unknown as {
         channel_id: string;
         user_id: string;
-        user: { id: string; name: string; role: string | null };
+        user: {
+          id: string;
+          name: string | null;
+          email: string | null;
+          avatar_url: string | null;
+          role: string | null;
+        } | null;
       };
+      // Fallback chain so we never render a "?" avatar:
+      //   real name → email-local-part → "User"
+      // The user row could also be null if the account was hard-
+      // deleted while we still hold the participant link; treat
+      // as "User" in that case.
+      const u = r.user;
+      const name =
+        (u?.name && u.name.trim()) ||
+        (u?.email && u.email.split("@")[0]) ||
+        "User";
       return {
         channel_id: r.channel_id,
-        other_user_id: r.user.id,
-        other_name: r.user.name,
-        other_role: r.user.role,
+        other_user_id: u?.id ?? r.user_id,
+        other_name: name,
+        other_avatar_url: u?.avatar_url ?? null,
+        other_role: u?.role ?? null,
         last_message_at: lastByChannel.get(r.channel_id) ?? null,
       };
     });
@@ -1933,6 +1957,10 @@ export default function CommunityPage() {
               const isActive = !viewHome && dm.channel_id === activeChannelId;
               const unread = unreadCounts.get(dm.channel_id) || 0;
               const isAdminThread = dm.other_role === "admin";
+              // The repo now resolves other_name through a
+              // name → email-local-part → "User" fallback chain, so
+              // dm.other_name is guaranteed non-empty. The `|| "?"`
+              // here is dead code kept only as a paranoia rail.
               const initials = (dm.other_name || "?")
                 .split(/\s+/)
                 .map((s) => s[0])
@@ -1954,6 +1982,9 @@ export default function CommunityPage() {
                   )}
                 >
                   <Avatar className="h-6 w-6 shrink-0">
+                    {dm.other_avatar_url && (
+                      <AvatarImage src={dm.other_avatar_url} alt="" />
+                    )}
                     <AvatarFallback
                       className={cn(
                         "text-[10px] font-medium",

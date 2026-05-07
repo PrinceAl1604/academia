@@ -49,7 +49,15 @@ export interface ChatMessage {
 export interface DmThread {
   channel_id: string;
   other_user_id: string;
+  /**
+   * Display name resolved by the repository — guaranteed non-empty.
+   * The repo falls back through name → email-local-part → "User"
+   * before returning, so consumers don't need their own `|| "?"`
+   * fallback (which previously surfaced as a literal "?" avatar
+   * for users whose `users.name` was never populated).
+   */
   other_name: string;
+  other_avatar_url: string | null;
   other_role: string | null;
   last_message_at: string | null;
 }

@@ -40,9 +40,16 @@ export class SupabaseChatRepository implements ChatRepository {
   }
 
   async listDmThreads(currentUserId: string): Promise<DmThread[]> {
+    // We pull `email` and `avatar_url` alongside `name` so the
+    // display-name fallback below can resolve to something
+    // meaningful even when users.name is null (the empty-name
+    // case manifested in the sidebar as a literal "?" initial,
+    // because every render site fell back to `name || "?"`).
     const { data } = await supabase
       .from("chat_dm_participants")
-      .select("channel_id, user_id, user:users(id, name, role)")
+      .select(
+        "channel_id, user_id, user:users(id, name, email, avatar_url, role)"
+      )
       .neq("user_id", currentUserId);
     if (!data) return [];
 
@@ -75,13 +82,29 @@ export class SupabaseChatRepository implements ChatRepository {
       const r = row as unknown as {
         channel_id: string;
         user_id: string;
-        user: { id: string; name: string; role: string | null };
+        user: {
+          id: string;
+          name: string | null;
+          email: string | null;
+          avatar_url: string | null;
+          role: string | null;
+        } | null;
       };
+      // Defensive: if the user row is gone (account deletion left a
+      // dangling participant), fall back to a placeholder so the
+      // sidebar doesn't crash. The participant row itself still
+      // satisfies the channel; the user just shows as "Deleted user".
+      const u = r.user;
+      const name =
+        (u?.name && u.name.trim()) ||
+        (u?.email && u.email.split("@")[0]) ||
+        "User";
       return {
         channel_id: r.channel_id,
-        other_user_id: r.user.id,
-        other_name: r.user.name,
-        other_role: r.user.role,
+        other_user_id: u?.id ?? r.user_id,
+        other_name: name,
+        other_avatar_url: u?.avatar_url ?? null,
+        other_role: u?.role ?? null,
         last_message_at: lastByChannel.get(r.channel_id) ?? null,
       };
     });

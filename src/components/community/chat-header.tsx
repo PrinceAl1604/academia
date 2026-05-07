@@ -10,7 +10,7 @@ import {
   Pin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -57,6 +57,7 @@ export interface ChatHeaderDmThread {
   channel_id: string;
   other_user_id: string;
   other_name: string;
+  other_avatar_url: string | null;
   other_role: string | null;
 }
 
@@ -258,6 +259,9 @@ function DmHeader({
   return (
     <div className="flex items-center gap-2 min-w-0">
       <Avatar className="h-7 w-7 shrink-0">
+        {dm.other_avatar_url && (
+          <AvatarImage src={dm.other_avatar_url} alt="" />
+        )}
         <AvatarFallback
           className={cn(
             "text-[11px] font-medium",

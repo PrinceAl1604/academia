@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { userTintClass } from "@/lib/avatar-color";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 /**
  * Community Home — the right-pane view shown when no channel
@@ -40,6 +40,7 @@ interface CommunityHomeDm {
   channel_id: string;
   other_user_id: string;
   other_name: string;
+  other_avatar_url: string | null;
   other_role: string | null;
   last_message_at: string | null;
 }
@@ -164,6 +165,9 @@ export function CommunityHome({
                     className="group flex w-full items-center gap-3 rounded-lg border border-border/60 bg-card px-4 py-3 text-left transition-colors hover:border-border hover:bg-sidebar-accent/40"
                   >
                     <Avatar className="h-8 w-8 shrink-0">
+                      {dm.other_avatar_url && (
+                        <AvatarImage src={dm.other_avatar_url} alt="" />
+                      )}
                       <AvatarFallback
                         className={cn(
                           "text-xs font-medium",
