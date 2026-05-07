@@ -9,7 +9,12 @@ import { useLanguage } from "@/lib/i18n/language-context";
 
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"] as const;
 const ALLOWED_EXT = ["jpg", "jpeg", "png", "webp"] as const;
-const MAX_BYTES = 2 * 1024 * 1024; // matches the bucket's file_size_limit
+// 5 MB — matches storage.buckets.file_size_limit on the `avatars`
+// bucket. The bucket cap is the authoritative boundary (Storage
+// rejects oversized uploads server-side regardless of what the
+// client claims); this constant is only here so the user gets
+// instant rejection feedback without waiting on a round trip.
+const MAX_BYTES = 5 * 1024 * 1024;
 
 interface AvatarUploadProps {
   /** Initials shown when no avatar is set. */
@@ -62,8 +67,8 @@ export function AvatarUpload({ fallback, className }: AvatarUploadProps) {
     if (file.size > MAX_BYTES) {
       setError(
         isEn
-          ? "Image must be under 2 MB."
-          : "L'image doit faire moins de 2 Mo."
+          ? "Image must be under 5 MB."
+          : "L'image doit faire moins de 5 Mo."
       );
       return;
     }
@@ -202,7 +207,7 @@ export function AvatarUpload({ fallback, className }: AvatarUploadProps) {
             </button>
           )}
           <p className="text-[11px] text-muted-foreground/70">
-            {isEn ? "JPEG, PNG, WebP · Max 2 MB" : "JPEG, PNG, WebP · Max 2 Mo"}
+            {isEn ? "JPEG, PNG, WebP · Max 5 MB" : "JPEG, PNG, WebP · Max 5 Mo"}
           </p>
         </div>
       </div>
