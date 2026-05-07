@@ -54,29 +54,47 @@ export async function sendPushToUser(
   if (!subs || subs.length === 0) return 0;
 
   const json = JSON.stringify(payload);
-  let sent = 0;
-  for (const s of subs) {
-    try {
-      await webpush.sendNotification(
+
+  // Fan out in parallel. Sequential `for await` previously serialized
+  // the per-device round trips: a user with 5 devices waited 5×
+  // ~150ms = ~750ms. With Promise.allSettled the wall-clock collapses
+  // to the slowest device.
+  //
+  // Dead-endpoint pruning is batched into one DELETE at the end
+  // instead of one DELETE per failure — cuts N round trips to 1.
+  const results = await Promise.allSettled(
+    subs.map((s) =>
+      webpush.sendNotification(
         {
           endpoint: s.endpoint,
           keys: { p256dh: s.p256dh, auth: s.auth },
         },
         json,
         { TTL: 3600 } // browser keeps push for 1h if user offline
-      );
+      )
+    )
+  );
+
+  const deadIds: string[] = [];
+  let sent = 0;
+  results.forEach((r, idx) => {
+    if (r.status === "fulfilled") {
       sent++;
-    } catch (err: unknown) {
-      // 410 Gone = subscription expired/revoked; 404 = endpoint
-      // doesn't exist anymore. Either way, prune the row so we
-      // stop trying to send to a dead endpoint.
-      const statusCode = (err as { statusCode?: number })?.statusCode;
+    } else {
+      const statusCode = (r.reason as { statusCode?: number })?.statusCode;
       if (statusCode === 410 || statusCode === 404) {
-        await admin.from("push_subscriptions").delete().eq("id", s.id);
+        // 410 Gone: subscription revoked. 404: endpoint deleted.
+        // Either way, the row is dead — prune it.
+        deadIds.push(subs[idx].id);
       } else {
-        console.error("push send failed:", statusCode, err);
+        console.error("push send failed:", statusCode, r.reason);
       }
     }
+  });
+
+  if (deadIds.length > 0) {
+    await admin.from("push_subscriptions").delete().in("id", deadIds);
   }
+
   return sent;
 }

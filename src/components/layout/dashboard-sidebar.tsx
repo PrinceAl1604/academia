@@ -71,12 +71,32 @@ export function DashboardSidebar() {
     if (!isAuthenticated) return;
     fetchUnread();
 
+    // The previous shape fetched /api/chat/unread on EVERY chat
+    // message insert anywhere in the app — meaning a busy
+    // #announcements channel firing 50 messages/min triggered 50
+    // unread-count fetches per minute per signed-in tab. The
+    // chat_unread_total RPC is cheap, but the badge only changes
+    // when a message is actually unread by THIS user, and we don't
+    // need sub-second freshness. Trailing-edge debounce: after the
+    // first event in a quiet window, fire once 1s later, swallow
+    // any further events that arrive in that window. The badge
+    // catches up within a second; we save dozens of round trips per
+    // minute on busy channels.
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedFetch = () => {
+      if (debounceTimer) return;
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
+        fetchUnread();
+      }, 1000);
+    };
+
     const channel = supabase
       .channel("sidebar_unread_chat")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "chat_messages" },
-        () => fetchUnread()
+        debouncedFetch
       )
       .subscribe();
 
@@ -86,6 +106,7 @@ export function DashboardSidebar() {
     window.addEventListener("focus", onFocus);
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);
     };

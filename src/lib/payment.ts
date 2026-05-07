@@ -90,7 +90,14 @@ export async function verifyPayment(paymentRef: string): Promise<{
 
 /**
  * Generate a unique payment reference.
+ *
+ * Uses crypto.randomUUID — Math.random() is not a CSPRNG, and the
+ * old format `EDU-${Date.now()}-${6 chars}` had ~31 bits of entropy
+ * (effectively just the 6 random chars; the timestamp narrows the
+ * search to a known second). An attacker who can guess refs can
+ * probe the verify endpoint or correlate notify webhook traffic.
+ * UUIDv4 gives ~122 bits, which is unguessable.
  */
 export function generatePaymentRef(): string {
-  return `EDU-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+  return `EDU-${crypto.randomUUID()}`;
 }

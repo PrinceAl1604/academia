@@ -133,6 +133,10 @@ const NOTIF_CATEGORIES: Array<{
 export default function SettingsPage() {
   const { user, userName, isPro, proExpiresAt, daysUntilExpiry, isExpiringSoon, logout, referralCode } = useAuth();
   const { t, language, setLanguage } = useLanguage();
+  // Other places in this file use `t.nav.signIn === "Sign In"` inline;
+  // hoisting to a single isEn so the new password-flow strings can
+  // reference it cleanly.
+  const isEn = t.nav.signIn === "Sign In";
   const [activeTab, setActiveTab] = useState<Tab>("profile");
 
   // Profile
@@ -150,6 +154,8 @@ export default function SettingsPage() {
   const [keySuccess, setKeySuccess] = useState(false);
 
   // Security
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -323,6 +329,14 @@ export default function SettingsPage() {
   const handleChangePassword = async () => {
     setPasswordError(null);
     setPasswordSuccess(false);
+    if (!currentPassword) {
+      setPasswordError(
+        isEn
+          ? "Enter your current password to confirm."
+          : "Saisissez votre mot de passe actuel pour confirmer."
+      );
+      return;
+    }
     if (newPassword.length < 6) {
       setPasswordError(t.settings.passwordMinError);
       return;
@@ -331,15 +345,48 @@ export default function SettingsPage() {
       setPasswordError(t.settings.passwordMismatch);
       return;
     }
+    if (!user?.email) {
+      setPasswordError(
+        isEn
+          ? "Account has no email on file."
+          : "Aucun email associé au compte."
+      );
+      return;
+    }
     setPasswordSaving(true);
+
+    // Re-authenticate against the current password before allowing
+    // the rotation. supabase.auth.updateUser({ password }) will
+    // happily accept a new password using only the access token,
+    // which means a stolen session (laptop left unlocked, hijacked
+    // refresh token) lets the attacker rotate the password and
+    // permanently lock the legitimate user out. Forcing a fresh
+    // signInWithPassword here turns this into a per-action
+    // re-auth: the attacker would need the current password too.
+    const { error: reauthError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (reauthError) {
+      setPasswordSaving(false);
+      setPasswordError(
+        isEn
+          ? "Current password is incorrect."
+          : "Mot de passe actuel incorrect."
+      );
+      return;
+    }
+
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setPasswordSaving(false);
     if (error) {
       setPasswordError(error.message);
     } else {
       setPasswordSuccess(true);
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setShowCurrentPassword(false);
       setShowNewPassword(false);
       setShowConfirmPassword(false);
       setTimeout(() => setPasswordSuccess(false), 3000);
@@ -893,6 +940,28 @@ export default function SettingsPage() {
                   <Separator className="my-4" />
                   <div className="space-y-4">
                     <div className="space-y-2">
+                      <Label className="dark:text-muted-foreground/70">
+                        {isEn ? "Current password" : "Mot de passe actuel"}
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          type={showCurrentPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="pr-12"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          autoComplete="current-password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-muted-foreground"
+                        >
+                          {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
                       <Label className="dark:text-muted-foreground/70">{t.settings.newPassword}</Label>
                       <div className="relative">
                         <Input
@@ -901,6 +970,7 @@ export default function SettingsPage() {
                           className="pr-12"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
+                          autoComplete="new-password"
                         />
                         <button
                           type="button"
@@ -932,7 +1002,10 @@ export default function SettingsPage() {
                     </div>
                     {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
                     {passwordSuccess && <p className="text-xs text-primary">{t.settings.passwordUpdated}</p>}
-                    <Button onClick={handleChangePassword} disabled={passwordSaving || !newPassword}>
+                    <Button
+                      onClick={handleChangePassword}
+                      disabled={passwordSaving || !currentPassword || !newPassword}
+                    >
                       {passwordSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                       {t.settings.updatePassword}
                     </Button>

@@ -152,25 +152,36 @@ export class SupabaseChatRepository implements ChatRepository {
     return normalizeReplyCount(data as ChatMessage);
   }
 
+  // All mutation methods below previously discarded the Supabase
+  // response — `await supabase.from(…).update(…)` returns `{ error }`
+  // which we never checked. RLS rejection or network failure looked
+  // identical to success in the UI. The page-level wrappers in
+  // /dashboard/community/page.tsx are now wrapped in toast-on-error
+  // (Batch 7), but the repo also throws on failure so any other
+  // future caller gets a real error instead of silent loss.
+
   async deleteMessage(messageId: string): Promise<void> {
-    await supabase
+    const { error } = await supabase
       .from("chat_messages")
       .update({ is_deleted: true })
       .eq("id", messageId);
+    if (error) throw error;
   }
 
   async updateMessage(input: UpdateMessageInput): Promise<void> {
-    await supabase
+    const { error } = await supabase
       .from("chat_messages")
       .update({ content: input.content, edited_at: new Date().toISOString() })
       .eq("id", input.messageId);
+    if (error) throw error;
   }
 
   async setMessagePinned(messageId: string, pinned: boolean): Promise<void> {
-    await supabase
+    const { error } = await supabase
       .from("chat_messages")
       .update({ is_pinned: pinned })
       .eq("id", messageId);
+    if (error) throw error;
   }
 
   async setReaction(
@@ -179,22 +190,21 @@ export class SupabaseChatRepository implements ChatRepository {
     emoji: string,
     on: boolean
   ): Promise<void> {
-    if (on) {
-      await supabase
-        .from("chat_reactions")
-        .insert({ message_id: messageId, user_id: userId, emoji });
-    } else {
-      await supabase
-        .from("chat_reactions")
-        .delete()
-        .eq("message_id", messageId)
-        .eq("user_id", userId)
-        .eq("emoji", emoji);
-    }
+    const { error } = on
+      ? await supabase
+          .from("chat_reactions")
+          .insert({ message_id: messageId, user_id: userId, emoji })
+      : await supabase
+          .from("chat_reactions")
+          .delete()
+          .eq("message_id", messageId)
+          .eq("user_id", userId)
+          .eq("emoji", emoji);
+    if (error) throw error;
   }
 
   async markChannelRead(channelId: string, userId: string): Promise<void> {
-    await supabase
+    const { error } = await supabase
       .from("chat_reads")
       .upsert(
         {
@@ -204,6 +214,7 @@ export class SupabaseChatRepository implements ChatRepository {
         },
         { onConflict: "user_id,channel_id" }
       );
+    if (error) throw error;
   }
 
   async getOrCreateDm(otherUserId: string): Promise<string> {

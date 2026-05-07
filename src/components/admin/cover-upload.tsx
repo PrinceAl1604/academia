@@ -14,13 +14,29 @@ export function CoverUpload({ value, onChange, courseSlug }: CoverUploadProps) {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Whitelist of accepted image extensions. We use this rather than
+  // parsing `file.name.split(".").pop()` directly because:
+  //   1. The split returns the entire trailing segment after the
+  //      LAST dot — `evil.png.html` → `html`, but `..\\..\\evil` →
+  //      `evil` (no dot at all, returns the whole filename). Both
+  //      slip past the original code.
+  //   2. The MIME type from `file.type` is browser-supplied and
+  //      can be spoofed by renaming a `.exe` to `.png`. The bucket
+  //      should also enforce content-type, but client-side allow-
+  //      list is the cheap first line.
+  const ALLOWED_EXT = ["jpg", "jpeg", "png", "webp"] as const;
+  const ALLOWED_MIME = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ] as const;
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type and size
-    if (!file.type.startsWith("image/")) {
-      alert("Please upload an image file");
+    if (!ALLOWED_MIME.includes(file.type as typeof ALLOWED_MIME[number])) {
+      alert("Please upload a JPEG, PNG, or WebP image");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -28,14 +44,35 @@ export function CoverUpload({ value, onChange, courseSlug }: CoverUploadProps) {
       return;
     }
 
-    setUploading(true);
+    // Extract extension from the filename, validate against the
+    // allow-list, and DON'T pass the user-supplied filename through
+    // to the storage path. A filename like `../../etc/passwd.png`
+    // would otherwise become a Storage object key with traversal
+    // segments, and while Supabase Storage is bucket-scoped (so
+    // there's no real escape), the resulting key is still ugly and
+    // makes the bucket harder to admin.
+    const rawExt = (file.name.match(/\.([a-zA-Z0-9]+)$/)?.[1] ?? "")
+      .toLowerCase();
+    if (!ALLOWED_EXT.includes(rawExt as typeof ALLOWED_EXT[number])) {
+      alert("Unsupported file extension");
+      return;
+    }
+    // Sanitize the slug part: keep only the alphabet that's safe
+    // for Storage object keys. If the caller didn't pass one (new
+    // course not yet saved), use a random suffix to keep keys
+    // unique and unguessable. crypto.randomUUID returns 36 chars
+    // including 4 hyphens — perfect for this use.
+    const safeSlug = (courseSlug ?? "")
+      .replace(/[^a-z0-9-]/gi, "")
+      .toLowerCase()
+      .slice(0, 60) || crypto.randomUUID();
+    const fileName = `${safeSlug}-${Date.now()}.${rawExt}`;
 
-    const ext = file.name.split(".").pop();
-    const fileName = `${courseSlug || Date.now()}-${Date.now()}.${ext}`;
+    setUploading(true);
 
     const { error } = await supabase.storage
       .from("course-covers")
-      .upload(fileName, file, { upsert: true });
+      .upload(fileName, file, { upsert: true, contentType: file.type });
 
     if (error) {
       alert("Upload failed: " + error.message);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -242,128 +243,56 @@ export default function AdminSettingsPage() {
           )}
 
           {/* ─── Notifications ────────────────────────────────────── */}
+          {/* These tabs (Notifications, Platform, Security) previously
+              rendered fully-styled forms with Switches and Inputs that
+              had NO onChange/onClick handlers — admins clicked Save and
+              saw "saved" feedback while nothing persisted. Worse than
+              no UI. Until each surface is wired to a real backing
+              store (notification_preferences for admin, app_config
+              RPC for platform, /dashboard/settings for password rotation
+              with current-password reauth), render an honest placeholder. */}
           {activeTab === "notifications" && (
-            <Card className="p-6">
+            <Card className="p-6 text-center">
               <h3 className="text-lg font-semibold text-foreground">
-                Notifications
+                {isEn ? "Admin notifications — coming soon" : "Notifications admin — bientôt disponible"}
               </h3>
-              <p className="text-sm text-muted-foreground">
-                {isEn ? "Manage your notification preferences" : "Gérez vos préférences de notification"}
+              <p className="mt-2 text-sm text-muted-foreground">
+                {isEn
+                  ? "Per-event admin notification preferences will live here. For now, all admin alerts go to the address set in ADMIN_ALERT_EMAIL."
+                  : "Les préférences de notification admin par événement arriveront ici. Pour l'instant, toutes les alertes admin vont à l'adresse définie dans ADMIN_ALERT_EMAIL."}
               </p>
-              <Separator className="my-4" />
-
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="dark:text-muted-foreground/70">{isEn ? "New Student Signup" : "Nouvel étudiant inscrit"}</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {isEn ? "Get notified when a new student signs up" : "Soyez notifié quand un nouvel étudiant s'inscrit"}
-                    </p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="dark:text-muted-foreground/70">{isEn ? "New Pro Subscription" : "Nouvel abonnement Pro"}</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {isEn ? "Get notified when a student activates Pro" : "Soyez notifié quand un étudiant active Pro"}
-                    </p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="dark:text-muted-foreground/70">{isEn ? "Course Completion" : "Cours terminé"}</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {isEn ? "Get notified when a student completes a course" : "Soyez notifié quand un étudiant termine un cours"}
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="dark:text-muted-foreground/70">{isEn ? "Weekly Report" : "Rapport hebdomadaire"}</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {isEn ? "Receive a weekly summary of platform activity" : "Recevez un résumé hebdomadaire de l'activité"}
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-              </div>
             </Card>
           )}
 
           {/* ─── Platform ─────────────────────────────────────────── */}
           {activeTab === "platform" && (
-            <Card className="p-6">
+            <Card className="p-6 text-center">
               <h3 className="text-lg font-semibold text-foreground">
-                {isEn ? "Platform Settings" : "Paramètres de la plateforme"}
+                {isEn ? "Platform settings — read-only" : "Paramètres plateforme — lecture seule"}
               </h3>
-              <p className="text-sm text-muted-foreground">
-                {isEn ? "Configure your platform" : "Configurez votre plateforme"}
+              <p className="mt-2 text-sm text-muted-foreground">
+                {isEn
+                  ? "Platform name, checkout URL, and subscription price live in environment variables and the lib/licence constants. Edit them in the Vercel dashboard or the codebase, then redeploy."
+                  : "Le nom de la plateforme, l'URL de paiement et le prix de l'abonnement sont définis dans les variables d'environnement et lib/licence. Modifiez-les dans Vercel ou le code, puis redéployez."}
               </p>
-              <Separator className="my-4" />
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="dark:text-muted-foreground/70">{isEn ? "Platform Name" : "Nom de la plateforme"}</Label>
-                  <Input defaultValue="Brightroots" className="dark:bg-muted" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="dark:text-muted-foreground/70">{isEn ? "Platform URL" : "URL de la plateforme"}</Label>
-                  <Input defaultValue="https://academia-vert-phi.vercel.app" disabled className="opacity-60" />
-                </div>
-
-                <Separator className="dark:bg-muted" />
-
-                <div className="space-y-2">
-                  <Label className="dark:text-muted-foreground/70">{isEn ? "Chariow Checkout URL" : "URL de paiement Chariow"}</Label>
-                  <Input defaultValue="https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout" disabled className="opacity-60" />
-                  <p className="text-xs text-muted-foreground/70">{isEn ? "Configured in environment variables" : "Configuré dans les variables d'environnement"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="dark:text-muted-foreground/70">{isEn ? "Subscription Price" : "Prix de l'abonnement"}</Label>
-                  <Input defaultValue="15,000 FCFA / month (~$27 USD)" disabled className="opacity-60" />
-                </div>
-
-                <Separator className="dark:bg-muted" />
-
-                <div className="space-y-2">
-                  <Label className="dark:text-muted-foreground/70">{isEn ? "Email Service" : "Service email"}</Label>
-                  <Input defaultValue="Resend" disabled className="opacity-60" />
-                  <p className="text-xs text-muted-foreground/70">{isEn ? "Configure custom domain in Resend dashboard" : "Configurez un domaine dans le dashboard Resend"}</p>
-                </div>
-              </div>
             </Card>
           )}
 
           {/* ─── Security ─────────────────────────────────────────── */}
           {activeTab === "security" && (
-            <div className="space-y-6">
-              <Card className="p-6">
-                <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {isEn ? "Change Password" : "Changer le mot de passe"}
-                  </h3>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {isEn ? "Update your password to keep your account secure" : "Mettez à jour votre mot de passe"}
-                </p>
-                <Separator className="my-4" />
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="dark:text-muted-foreground/70">{isEn ? "New Password" : "Nouveau mot de passe"}</Label>
-                    <Input type="password" placeholder="••••••••" className="dark:bg-muted" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="dark:text-muted-foreground/70">{isEn ? "Confirm Password" : "Confirmer le mot de passe"}</Label>
-                    <Input type="password" placeholder="••••••••" className="dark:bg-muted" />
-                  </div>
-                  <Button>{isEn ? "Update Password" : "Mettre à jour"}</Button>
-                </div>
-              </Card>
-            </div>
+            <Card className="p-6 text-center">
+              <h3 className="text-lg font-semibold text-foreground">
+                {isEn ? "Change password" : "Changer le mot de passe"}
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {isEn
+                  ? "Use the password change form on your personal settings page — it requires re-authentication with your current password and sends a confirmation email."
+                  : "Utilisez le formulaire de changement de mot de passe sur votre page de paramètres personnels — il requiert une ré-authentification et envoie un email de confirmation."}
+              </p>
+              <Button className="mt-4" render={<Link href="/dashboard/settings?tab=security" />}>
+                {isEn ? "Open security settings" : "Ouvrir les paramètres de sécurité"}
+              </Button>
+            </Card>
           )}
         </div>
       </div>
