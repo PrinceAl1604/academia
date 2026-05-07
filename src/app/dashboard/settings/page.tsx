@@ -33,6 +33,7 @@ import {
   Eye,
   EyeOff,
   Calendar,
+  Pencil,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -144,6 +145,12 @@ export default function SettingsPage() {
   const [name, setName] = useState(userName || "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // View-by-default pattern (Apple/Notion-style settings). Static
+  // text by default, edit Input + Save/Cancel only after the user
+  // explicitly clicks Edit. Avatar uploader keeps its own UX
+  // (Upload/Change/Remove) — those buttons are self-evidently
+  // committal, so they don't need a separate edit mode wrapping.
+  const [editingProfile, setEditingProfile] = useState(false);
 
   // Appearance
   const [darkMode, setDarkMode] = useState(false);
@@ -207,6 +214,30 @@ export default function SettingsPage() {
     localStorage.setItem("theme", !darkMode ? "dark" : "light");
   };
 
+  // Keep the input in sync with auth-context's userName when the
+  // user is NOT in edit mode. Without this, a token refresh / cross-
+  // tab name change would leave stale text in the (hidden) input,
+  // and a subsequent Edit click would show the old value. While
+  // editing, we leave the input alone so the user's in-progress
+  // typing isn't clobbered.
+  useEffect(() => {
+    if (!editingProfile) {
+      setName(userName || "");
+    }
+  }, [userName, editingProfile]);
+
+  const handleStartEditProfile = () => {
+    setName(userName || "");
+    setEditingProfile(true);
+    setSaved(false);
+  };
+
+  const handleCancelEditProfile = () => {
+    // Discard in-progress changes by reverting to the source of truth.
+    setName(userName || "");
+    setEditingProfile(false);
+  };
+
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
@@ -234,6 +265,11 @@ export default function SettingsPage() {
       if (authError) throw authError;
 
       setSaved(true);
+      // Exit edit mode on success — the static view re-renders with
+      // the freshly-saved name. If the save failed (catch below) we
+      // stay in edit mode so the user can correct and retry without
+      // re-clicking Edit.
+      setEditingProfile(false);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error("[settings] save profile failed:", err);
@@ -563,9 +599,38 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-4">
+                  {/* Full name — view mode by default, edit on demand.
+                      In view mode we render the saved value as static
+                      text plus a small Edit button. Clicking Edit
+                      swaps in an editable Input + Save/Cancel.
+                      Email + Referral code are always read-only so
+                      they sit outside this conditional. */}
                   <div className="space-y-2">
-                    <Label className="dark:text-muted-foreground/70">{t.settings.fullName}</Label>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} className="dark:bg-muted" />
+                    <div className="flex items-center justify-between">
+                      <Label className="dark:text-muted-foreground/70">{t.settings.fullName}</Label>
+                      {!editingProfile && (
+                        <button
+                          type="button"
+                          onClick={handleStartEditProfile}
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <Pencil className="h-3 w-3" />
+                          {isEn ? "Edit" : "Modifier"}
+                        </button>
+                      )}
+                    </div>
+                    {editingProfile ? (
+                      <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="dark:bg-muted"
+                        autoFocus
+                      />
+                    ) : (
+                      <p className="rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-sm text-foreground">
+                        {userName || (isEn ? "—" : "—")}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label className="dark:text-muted-foreground/70">Email</Label>
@@ -605,15 +670,32 @@ export default function SettingsPage() {
                     </div>
                   )}
 
+                  {/* Action row — only renders when there's actually
+                      something to commit. Save+Cancel pair while
+                      editing; just the success indicator otherwise. */}
                   <div className="flex items-center gap-3 justify-end pt-2">
-                    {saved && (
+                    {saved && !editingProfile && (
                       <span className="flex items-center gap-1 text-sm text-primary">
                         <Check className="h-4 w-4" /> {t.settings.saved}
                       </span>
                     )}
-                    <Button onClick={handleSaveProfile} disabled={saving}>
-                      {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t.settings.saveChanges}
-                    </Button>
+                    {editingProfile && (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={handleCancelEditProfile}
+                          disabled={saving}
+                        >
+                          {isEn ? "Cancel" : "Annuler"}
+                        </Button>
+                        <Button
+                          onClick={handleSaveProfile}
+                          disabled={saving || !name.trim() || name.trim() === (userName || "")}
+                        >
+                          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t.settings.saveChanges}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </Card>
