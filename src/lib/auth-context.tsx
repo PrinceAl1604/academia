@@ -180,17 +180,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
 
-    // If user doesn't exist in users table, create them
+    // If user doesn't exist in users table, render with safe defaults
+    // and let the server backfill the row.
+    //
+    // Two independent server paths reliably create the public.users
+    // row on first sign-in:
+    //   1. The handle_new_user() trigger on auth.users insert.
+    //   2. The /auth/callback route's explicit admin-client insert.
+    //
+    // We previously had a third path here that did a client-side
+    // INSERT with role + subscription_tier. After Batch 4 locked
+    // those columns from the authenticated role's column grants,
+    // this client insert silently fails (Supabase swallows
+    // permission-denied) — but the server paths above keep the row
+    // creation reliable, so functionally nothing changes. Removing
+    // the dead INSERT to stop the wasted round-trip and the RLS
+    // denial in Supabase logs.
     if (error && error.code === "PGRST116") {
-      const session = (await supabase.auth.getSession()).data.session;
-      const meta = session?.user?.user_metadata;
-      await supabase.from("users").insert({
-        id: userId,
-        email: session?.user?.email || "",
-        name: meta?.full_name || session?.user?.email?.split("@")[0] || "",
-        role: "student",
-        subscription_tier: "free",
-      });
       setRole("user");
       setPlan("free");
       setHasOnboarded(false);
@@ -214,17 +220,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setReferralCode(data.referral_code || null);
 
       let resolvedPlan: Plan = "free";
-      // Check if Pro has expired
+      // Check if Pro has expired (UI-only — DB trigger handles the
+      // actual subscription_tier flip).
+      //
+      // Previously this block also fired a client-side
+      // `update users set subscription_tier='free'`. After Batch 4
+      // locked that column from the authenticated role's grants,
+      // the update silently fails. The check_and_downgrade_pro
+      // BEFORE-UPDATE trigger on the users table handles the actual
+      // downgrade transparently on the next legitimate row update
+      // (e.g. last_active_at touch on the next page load), so the DB
+      // converges without the broken client write.
       if (data.subscription_tier === "pro" && data.pro_expires_at) {
         const expiresAt = new Date(data.pro_expires_at);
         if (expiresAt < new Date() && userRole !== "admin") {
-          // Pro expired — downgrade to free
           setPlan("free");
           resolvedPlan = "free";
-          await supabase
-            .from("users")
-            .update({ subscription_tier: "free" })
-            .eq("id", userId);
         } else {
           setPlan("pro");
           resolvedPlan = "pro";

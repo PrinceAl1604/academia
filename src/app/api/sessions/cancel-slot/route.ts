@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { validateUserAccess, getSupabaseAdmin } from "@/lib/supabase-server";
 import { sendSlotCancelledEmail } from "@/lib/email";
+import { mapWithConcurrency } from "@/lib/parallel";
+
+// Match the cron's email concurrency cap — Resend free tier is 10/s.
+const EMAIL_CONCURRENCY = 5;
 
 /**
  * POST /api/sessions/cancel-slot
@@ -86,7 +90,7 @@ export async function POST(req: Request) {
   const slotStartsAt = (slot as { starts_at: string }).starts_at;
   let notified = 0;
   const errors: string[] = [];
-  for (const row of activeBookings ?? []) {
+  await mapWithConcurrency(activeBookings ?? [], EMAIL_CONCURRENCY, async (row) => {
     const u = (row as unknown as { users: { email: string; name: string } })
       .users;
     const userId = (row as { user_id: string }).user_id;
@@ -117,7 +121,7 @@ export async function POST(req: Request) {
     } catch (err) {
       errors.push(`notif ${u.email}: ${String(err)}`);
     }
-  }
+  });
 
   return NextResponse.json({
     ok: true,

@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { validateUserAccess, getSupabaseAdmin } from "@/lib/supabase-server";
 import { sendNewCourseEmail } from "@/lib/email";
+import { mapWithConcurrency } from "@/lib/parallel";
+
+// Resend free tier is 10 req/s — 5 in flight stays well under that
+// while pipelining most of the wall time. Was sequential before, which
+// hit Vercel's 10-s function timeout once user count grew.
+const EMAIL_CONCURRENCY = 5;
 
 /**
  * POST /api/email/new-course
@@ -47,10 +53,10 @@ export async function POST(req: Request) {
   let sent = 0;
   const errors: string[] = [];
 
-  for (const user of users ?? []) {
+  await mapWithConcurrency(users ?? [], EMAIL_CONCURRENCY, async (user) => {
     // Respect notification preferences (default is opted-in)
     const prefs = user.notification_preferences as Record<string, boolean> | null;
-    if (prefs && prefs.new_courses === false) continue;
+    if (prefs && prefs.new_courses === false) return;
 
     try {
       await sendNewCourseEmail({
@@ -63,7 +69,7 @@ export async function POST(req: Request) {
     } catch (err) {
       errors.push(`${user.email}:${String(err)}`);
     }
-  }
+  });
 
   return NextResponse.json({
     success: true,

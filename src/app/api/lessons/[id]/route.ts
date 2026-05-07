@@ -54,6 +54,16 @@ export async function GET(
     course: { id: string; title: string; is_free: boolean; is_published: boolean };
   };
   const course = module.course;
+
+  // Block draft / unpublished course content from leaking. Anyone who
+  // knows or guesses a lesson UUID would otherwise be able to fetch
+  // the full description + content + youtube_url for unpublished
+  // courses (e.g., admin's draft prep notes). Admin can still preview
+  // unpublished lessons for QA.
+  if (!course.is_published && !access.isAdmin) {
+    return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+  }
+
   const isFreeCourse = course.is_free;
   const isFreeLesson = lesson.is_free;
   const requiresPro = !isFreeCourse && !isFreeLesson;

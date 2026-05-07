@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { validateUserAccess, getSupabaseAdmin } from "@/lib/supabase-server";
 import { sendSlotUpdatedEmail } from "@/lib/email";
+import { mapWithConcurrency } from "@/lib/parallel";
+
+const EMAIL_CONCURRENCY = 5;
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app";
@@ -141,7 +144,7 @@ export async function POST(req: Request) {
       body.title !== undefined ? body.title.trim() : ex.title;
     let notified = 0;
     const errors: string[] = [];
-    for (const row of activeBookings ?? []) {
+    await mapWithConcurrency(activeBookings ?? [], EMAIL_CONCURRENCY, async (row) => {
       const u = (row as unknown as { users: { email: string; name: string } })
         .users;
       const bookingId = (row as { id: string }).id;
@@ -186,7 +189,7 @@ export async function POST(req: Request) {
       } catch (err) {
         errors.push(`notif ${u.email}: ${String(err)}`);
       }
-    }
+    });
     return NextResponse.json({
       ok: true,
       notified,

@@ -19,13 +19,28 @@ export class SupabaseUserRepository implements UserRepository {
     currentUserId: string,
     limit: number
   ): Promise<UserSummary[]> {
+    // PostgREST filter injection guard. The `.or()` filter takes a
+    // raw string of comma-separated conditions like
+    //   "name.ilike.%foo%,email.ilike.%foo%"
+    // and parses commas, parens, colons as syntax tokens. Without
+    // sanitization, a user searching for `,role.eq.admin,` would
+    // turn the OR list into 6 conditions including a literal
+    // `role.eq.admin` — bypassing what the search is supposed to
+    // match and surfacing admin users that wouldn't normally appear.
+    //
+    // Stripping the PostgREST-significant characters (comma, parens,
+    // colon, asterisk, double-quote, backslash) before interpolation
+    // closes the injection. Real-name search usage doesn't lose
+    // anything meaningful — those chars don't appear in display
+    // names or email-local-parts in practice.
     const trimmed = query.trim();
+    const safe = trimmed.replace(/[(),:*\\"]/g, " ").trim();
     let req = supabase
       .from("users")
       .select("id, name, email, role, subscription_tier")
       .neq("id", currentUserId);
-    if (trimmed) {
-      req = req.or(`name.ilike.%${trimmed}%,email.ilike.%${trimmed}%`);
+    if (safe) {
+      req = req.or(`name.ilike.%${safe}%,email.ilike.%${safe}%`);
     }
     const { data } = await req.limit(limit);
     return (data ?? []) as UserSummary[];
