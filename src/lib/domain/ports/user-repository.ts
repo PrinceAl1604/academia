@@ -10,6 +10,7 @@ export interface UserSummary {
   id: string;
   name: string;
   email: string;
+  avatar_url: string | null;
   role: string | null;
   subscription_tier: string;
 }
@@ -17,6 +18,7 @@ export interface UserSummary {
 export interface MentionableUser {
   id: string;
   name: string;
+  avatar_url: string | null;
   role: string | null;
 }
 

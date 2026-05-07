@@ -3,7 +3,7 @@
 import { Search as SearchIcon, X, Crown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { userTintClass } from "@/lib/avatar-color";
@@ -129,6 +129,9 @@ export function DmComposePanel({ compose, isEn, labels }: DmComposePanelProps) {
                       className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left hover:bg-muted/40 transition-colors disabled:opacity-50"
                     >
                       <Avatar className="h-9 w-9 shrink-0">
+                        {u.avatar_url && (
+                          <AvatarImage src={u.avatar_url} alt="" />
+                        )}
                         <AvatarFallback
                           className={cn(
                             "text-xs font-medium",

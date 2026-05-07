@@ -22,7 +22,7 @@ import type {
  */
 
 const MESSAGE_SELECT =
-  "*, user:users(id, name, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)";
+  "*, user:users(id, name, avatar_url, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)";
 
 function normalizeReplyCount(msg: ChatMessage): ChatMessage {
   type EmbedShape = { replies?: { count: number }[] };

@@ -116,7 +116,7 @@ interface ChatMessage {
   edited_at: string | null;
   // Thread root ref. NULL = top-level message, non-null = reply.
   parent_message_id: string | null;
-  user?: { name: string; role: string | null };
+  user?: { name: string; avatar_url: string | null; role: string | null };
   reactions?: ChatReaction[];
   // PostgREST embedded-count aggregate. Returned as `[{ count: N }]`;
   // normalizeReplyCount() hoists the number onto `reply_count` for the
@@ -287,7 +287,7 @@ export default function CommunityPage() {
   // happens client-side: the list is small (tens to low hundreds) and this
   // avoids a DB round trip for every keystroke.
   const [mentionableUsers, setMentionableUsers] = useState<
-    Array<{ id: string; name: string; role: string | null }>
+    Array<{ id: string; name: string; avatar_url: string | null; role: string | null }>
   >([]);
   // Active typeahead query (the text after `@`). `null` = dropdown closed.
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -701,7 +701,7 @@ export default function CommunityPage() {
     const { data } = await supabase
       .from("chat_messages")
       .select(
-        "*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
+        "*, user:users(name, avatar_url, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
       )
       .eq("channel_id", channelId)
       .is("parent_message_id", null)
@@ -747,7 +747,7 @@ export default function CommunityPage() {
     const { data } = await supabase
       .from("chat_messages")
       .select(
-        "*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
+        "*, user:users(name, avatar_url, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
       )
       .eq("channel_id", activeChannelRef.current)
       .is("parent_message_id", null)
@@ -823,7 +823,7 @@ export default function CommunityPage() {
           const { data } = await supabase
             .from("chat_messages")
             .select(
-              "*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
+              "*, user:users(name, avatar_url, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
             )
             .eq("id", payload.new.id)
             .single();
@@ -902,7 +902,7 @@ export default function CommunityPage() {
           const { data } = await supabase
             .from("chat_messages")
             .select(
-              "*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
+              "*, user:users(name, avatar_url, role), reactions:chat_reactions(id, message_id, user_id, emoji), replies:chat_messages!parent_message_id(count)"
             )
             .eq("id", updated.id)
             .single();
@@ -1024,10 +1024,10 @@ export default function CommunityPage() {
     (async () => {
       const { data } = await supabase
         .from("users")
-        .select("id, name, role")
+        .select("id, name, avatar_url, role")
         .order("name", { ascending: true });
       setMentionableUsers(
-        (data ?? []) as Array<{ id: string; name: string; role: string | null }>
+        (data ?? []) as Array<{ id: string; name: string; avatar_url: string | null; role: string | null }>
       );
     })();
   }, [user]);
@@ -1381,7 +1381,7 @@ export default function CommunityPage() {
       const { data } = await supabase
         .from("chat_messages")
         .select(
-          "*, user:users(name, role), reactions:chat_reactions(id, message_id, user_id, emoji)"
+          "*, user:users(name, avatar_url, role), reactions:chat_reactions(id, message_id, user_id, emoji)"
         )
         .eq("parent_message_id", parentId)
         .order("created_at", { ascending: true });
@@ -2270,6 +2270,9 @@ export default function CommunityPage() {
                   <div className="w-8 shrink-0">
                     {showAvatar && (
                       <Avatar className="h-8 w-8">
+                        {msg.user?.avatar_url && (
+                          <AvatarImage src={msg.user.avatar_url} alt="" />
+                        )}
                         <AvatarFallback
                           className={cn(
                             "text-[11px] font-semibold",
@@ -2450,6 +2453,9 @@ export default function CommunityPage() {
                                 className="group/reply flex items-start gap-2 py-0.5 px-1 rounded hover:bg-muted/40"
                               >
                                 <Avatar className="h-6 w-6 mt-0.5">
+                                  {reply.user?.avatar_url && (
+                                    <AvatarImage src={reply.user.avatar_url} alt="" />
+                                  )}
                                   <AvatarFallback
                                     className={cn(
                                       "text-[9px] font-semibold",
@@ -2879,6 +2885,9 @@ export default function CommunityPage() {
                     )}
                   >
                     <Avatar className="h-6 w-6">
+                      {u.avatar_url && (
+                        <AvatarImage src={u.avatar_url} alt="" />
+                      )}
                       <AvatarFallback
                         className={cn(
                           "text-[10px] font-semibold",

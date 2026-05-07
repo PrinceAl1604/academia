@@ -37,7 +37,7 @@ export class SupabaseUserRepository implements UserRepository {
     const safe = trimmed.replace(/[(),:*\\"]/g, " ").trim();
     let req = supabase
       .from("users")
-      .select("id, name, email, role, subscription_tier")
+      .select("id, name, email, avatar_url, role, subscription_tier")
       .neq("id", currentUserId);
     if (safe) {
       req = req.or(`name.ilike.%${safe}%,email.ilike.%${safe}%`);
@@ -49,7 +49,7 @@ export class SupabaseUserRepository implements UserRepository {
   async listMentionable(): Promise<MentionableUser[]> {
     const { data } = await supabase
       .from("users")
-      .select("id, name, role")
+      .select("id, name, avatar_url, role")
       .order("name", { ascending: true });
     return (data ?? []) as MentionableUser[];
   }

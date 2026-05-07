@@ -27,6 +27,7 @@ export interface ChatMessageReaction {
 export interface ChatMessageAuthor {
   id: string;
   name: string;
+  avatar_url: string | null;
   role: string | null;
 }
 

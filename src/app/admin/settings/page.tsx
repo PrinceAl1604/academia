@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarUpload } from "@/components/shared/avatar-upload";
 import {
   Check,
   Loader2,
@@ -20,6 +20,7 @@ import {
   Moon,
   Sun,
   Lock,
+  Pencil,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -46,10 +47,21 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  // View-by-default profile pattern (mirrors /dashboard/settings).
+  const [editingProfile, setEditingProfile] = useState(false);
 
   useEffect(() => {
     setDarkMode(document.documentElement.classList.contains("dark"));
   }, []);
+
+  // Sync the local input with auth-context's userName when the user
+  // is NOT actively editing — so a name change from another tab
+  // doesn't leave stale text in the (hidden) input.
+  useEffect(() => {
+    if (!editingProfile) {
+      setName(userName || "");
+    }
+  }, [userName, editingProfile]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -57,14 +69,45 @@ export default function AdminSettingsPage() {
     localStorage.setItem("theme", !darkMode ? "dark" : "light");
   };
 
+  const handleStartEditProfile = () => {
+    setName(userName || "");
+    setEditingProfile(true);
+    setSaved(false);
+  };
+
+  const handleCancelEditProfile = () => {
+    setName(userName || "");
+    setEditingProfile(false);
+  };
+
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    await supabase.from("users").update({ name }).eq("id", user.id);
-    await supabase.auth.updateUser({ data: { full_name: name } });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      const { error: dbError } = await supabase
+        .from("users")
+        .update({ name })
+        .eq("id", user.id);
+      if (dbError) throw dbError;
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { full_name: name },
+      });
+      if (authError) throw authError;
+      setSaved(true);
+      setEditingProfile(false);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      // Same hardening as the dashboard settings page — without a
+      // try/finally, any thrown error or hung promise leaves the
+      // spinner spinning forever.
+      console.error("[admin/settings] save profile failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(
+        (isEn ? "Couldn't save: " : "Échec de l'enregistrement : ") + msg
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const tabLabels: Record<Tab, string> = {
@@ -138,12 +181,19 @@ export default function AdminSettingsPage() {
               </p>
               <Separator className="my-4" />
 
-              <div className="flex items-center gap-4 mb-6">
-                <Avatar className="h-16 w-16">
-                  <AvatarFallback className="bg-muted text-lg font-semibold dark:text-muted-foreground/70">
-                    {(userName || "A").split(" ").map((n) => n[0]).join("")}
-                  </AvatarFallback>
-                </Avatar>
+              {/* Avatar uploader — same component as /dashboard/settings.
+                  Admins get the same 5 MB upload + Change/Remove flow.
+                  The component reads/writes via the auth context, so
+                  the topbar/sidebar avatar updates immediately. */}
+              <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+                <AvatarUpload
+                  fallback={(userName || "A")
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
+                />
                 <div>
                   <p className="font-semibold text-foreground">{userName || "Admin"}</p>
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
@@ -151,13 +201,33 @@ export default function AdminSettingsPage() {
               </div>
 
               <div className="space-y-4">
+                {/* View-by-default for the name field (Apple-style). */}
                 <div className="space-y-2">
-                  <Label className="dark:text-muted-foreground/70">{isEn ? "Full Name" : "Nom complet"}</Label>
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="dark:bg-muted"
-                  />
+                  <div className="flex items-center justify-between">
+                    <Label className="dark:text-muted-foreground/70">{isEn ? "Full Name" : "Nom complet"}</Label>
+                    {!editingProfile && (
+                      <button
+                        type="button"
+                        onClick={handleStartEditProfile}
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        {isEn ? "Edit" : "Modifier"}
+                      </button>
+                    )}
+                  </div>
+                  {editingProfile ? (
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="dark:bg-muted"
+                      autoFocus
+                    />
+                  ) : (
+                    <p className="rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-sm text-foreground">
+                      {userName || "—"}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="dark:text-muted-foreground/70">{isEn ? "Email" : "Email"}</Label>
@@ -166,14 +236,28 @@ export default function AdminSettingsPage() {
                 </div>
 
                 <div className="flex items-center gap-3 justify-end pt-2">
-                  {saved && (
+                  {saved && !editingProfile && (
                     <span className="flex items-center gap-1 text-sm text-green-600">
                       <Check className="h-4 w-4" /> {isEn ? "Saved" : "Enregistré"}
                     </span>
                   )}
-                  <Button onClick={handleSaveProfile} disabled={saving}>
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (isEn ? "Save Changes" : "Enregistrer")}
-                  </Button>
+                  {editingProfile && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={handleCancelEditProfile}
+                        disabled={saving}
+                      >
+                        {isEn ? "Cancel" : "Annuler"}
+                      </Button>
+                      <Button
+                        onClick={handleSaveProfile}
+                        disabled={saving || !name.trim() || name.trim() === (userName || "")}
+                      >
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (isEn ? "Save Changes" : "Enregistrer")}
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </Card>
