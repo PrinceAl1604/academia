@@ -410,20 +410,35 @@ export default function CommunityPage() {
         else next.add(channelId);
         return next;
       });
-      if (isMuted) {
-        await supabase
-          .from("chat_channel_mutes")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("channel_id", channelId);
-      } else {
-        await supabase.from("chat_channel_mutes").insert({
-          user_id: user.id,
-          channel_id: channelId,
+      const { error } = isMuted
+        ? await supabase
+            .from("chat_channel_mutes")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("channel_id", channelId)
+        : await supabase.from("chat_channel_mutes").insert({
+            user_id: user.id,
+            channel_id: channelId,
+          });
+      if (error) {
+        // Roll back the optimistic flip — without this, the icon
+        // shows muted/unmuted but the DB disagrees, so notifications
+        // keep firing (or stay silent) until refresh. Surface a toast
+        // so the user knows the action didn't take.
+        setMutedChannels((prev) => {
+          const next = new Set(prev);
+          if (isMuted) next.add(channelId);
+          else next.delete(channelId);
+          return next;
         });
+        toast.error(
+          isEn
+            ? "Couldn't update mute. Please try again."
+            : "Impossible de mettre à jour. Réessayez."
+        );
       }
     },
-    [user, mutedChannels]
+    [user, mutedChannels, isEn]
   );
 
   const totalUnread = useMemo(
@@ -668,6 +683,13 @@ export default function CommunityPage() {
       .is("parent_message_id", null)
       .order("created_at", { ascending: false })
       .limit(MESSAGES_PER_PAGE);
+
+    // Race guard: if the user clicked a different channel while this
+    // fetch was in flight, the late resolution of channel A would
+    // otherwise overwrite channel B's content (last-write-wins). The
+    // ref tracks the current selection synchronously, so a stale
+    // resolution bails before touching state.
+    if (activeChannelRef.current !== channelId) return;
 
     const msgs = ((data as ChatMessage[]) || [])
       .map(normalizeReplyCount)
@@ -1260,12 +1282,31 @@ export default function CommunityPage() {
           mentioned_user_id: m.user_id,
           channel_id: activeChannelId,
         }));
-      // Fire-and-forget: mention rows failing shouldn't block the message
-      // itself, which is already persisted.
-      supabase.from("chat_mentions").insert(rows);
+      // Fire-and-forget: mention rows failing shouldn't block the
+      // message itself, which is already persisted. But the previous
+      // version was a floating Promise — if RLS rejected (mismatched
+      // mentioned_user_id, deleted user, etc.) the rejection had no
+      // sink and just disappeared. Surface in console so we can see
+      // notification gaps in logs without bothering the user.
+      supabase
+        .from("chat_mentions")
+        .insert(rows)
+        .then(({ error }) => {
+          if (error) {
+            console.error("[community] chat_mentions insert failed:", error);
+          }
+        });
     }
 
-    setPendingMentions([]);
+    // Only clear pending mentions on a successful send. If the
+    // message send threw above, `insertedId` stays null AND the input
+    // gets restored — but pendingMentions was being wiped here
+    // unconditionally, so the user's retry would send without their
+    // @mentions. Tying the clear to a successful insert keeps
+    // mentions intact across retries.
+    if (insertedId) {
+      setPendingMentions([]);
+    }
     setSending(false);
   };
 
@@ -1438,7 +1479,7 @@ export default function CommunityPage() {
       return re.test(content);
     });
 
-    const { data: inserted } = await supabase
+    const { data: inserted, error: insertError } = await supabase
       .from("chat_messages")
       .insert({
         user_id: user.id,
@@ -1449,7 +1490,21 @@ export default function CommunityPage() {
       .select("id")
       .single();
 
-    if (inserted?.id && activeMentions.length > 0) {
+    if (insertError || !inserted?.id) {
+      // Surface the failure — previously the catch was implicit and
+      // the reply just silently disappeared. Restore the draft so the
+      // user can retry without retyping.
+      console.error("[community] reply insert failed:", insertError);
+      toast.error(
+        isEn
+          ? "Couldn't send reply. Please try again."
+          : "Impossible d'envoyer. Réessayez."
+      );
+      setReplySending(false);
+      return;
+    }
+
+    if (activeMentions.length > 0) {
       const seen = new Set<string>();
       const rows = activeMentions
         .filter((m) => {
@@ -1462,7 +1517,14 @@ export default function CommunityPage() {
           mentioned_user_id: m.user_id,
           channel_id: parent.channel_id,
         }));
-      supabase.from("chat_mentions").insert(rows);
+      supabase
+        .from("chat_mentions")
+        .insert(rows)
+        .then(({ error }) => {
+          if (error) {
+            console.error("[community] reply mentions insert failed:", error);
+          }
+        });
     }
 
     // Keep the composer open after send so the user can fire off multiple
@@ -1512,18 +1574,36 @@ export default function CommunityPage() {
   };
 
   /* ─── Admin / self actions ──────────────────────────────── */
+  // Each of these previously swallowed errors silently — pin click
+  // that hit RLS or a network blip looked successful in the UI until
+  // refresh, when it would un-pin / un-delete itself. Surface failures
+  // so the user can retry.
   const togglePin = async (msg: ChatMessage) => {
-    await supabase
+    const { error } = await supabase
       .from("chat_messages")
       .update({ is_pinned: !msg.is_pinned })
       .eq("id", msg.id);
+    if (error) {
+      toast.error(
+        isEn
+          ? "Couldn't update pin. Please try again."
+          : "Impossible d'épingler. Réessayez."
+      );
+    }
   };
 
   const deleteMessage = async (msg: ChatMessage) => {
-    await supabase
+    const { error } = await supabase
       .from("chat_messages")
       .update({ is_deleted: true })
       .eq("id", msg.id);
+    if (error) {
+      toast.error(
+        isEn
+          ? "Couldn't delete message. Please try again."
+          : "Impossible de supprimer. Réessayez."
+      );
+    }
   };
 
   const startEdit = (msg: ChatMessage) => {
@@ -1544,10 +1624,19 @@ export default function CommunityPage() {
       cancelEdit();
       return;
     }
-    await supabase
+    const { error } = await supabase
       .from("chat_messages")
       .update({ content: trimmed, edited_at: new Date().toISOString() })
       .eq("id", msg.id);
+    if (error) {
+      toast.error(
+        isEn
+          ? "Couldn't save edit. Please try again."
+          : "Impossible d'enregistrer. Réessayez."
+      );
+      // Keep the editor open so the user can retry without retyping.
+      return;
+    }
     cancelEdit();
   };
 

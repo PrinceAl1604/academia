@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -98,6 +98,11 @@ export default function CoursePlayerPage() {
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(
     new Set()
   );
+  // Re-entrancy guard for "Complete & Next". Optimistic state flips
+  // before the RPC resolves, so a fast double-click would fire
+  // markLessonComplete twice and (worse) auto-advance two lessons in
+  // one click — landing the user on a lesson they haven't seen.
+  const markingRef = useRef(false);
 
   useEffect(() => {
     async function load() {
@@ -105,9 +110,15 @@ export default function CoursePlayerPage() {
       setCourse(data);
       if (data) {
         const allLessons = data.modules.flatMap((m) => m.lessons);
-        const targetLesson = lessonParam
-          ? allLessons.find((l) => l.id === lessonParam)
-          : allLessons[0];
+        // Validate that ?lesson=ID actually belongs to this course.
+        // Without this guard, /courses/A/learn?lesson=<id-from-course-B>
+        // would render course-B's lesson inside course-A's shell — the
+        // module/sidebar wouldn't match, the "complete & next" walk
+        // would bounce, and a Pro user could deep-link to a peer's
+        // unrelated course content.
+        const targetLesson =
+          (lessonParam && allLessons.find((l) => l.id === lessonParam)) ||
+          allLessons[0];
 
         if (targetLesson) {
           setActiveLesson(targetLesson);
@@ -141,11 +152,18 @@ export default function CoursePlayerPage() {
     fetchSecureLesson(activeLesson.id).then((result) => {
       if (cancelled) return;
       if (result) {
+        // Server-validated payload — youtube_url is null for locked
+        // lessons, populated for accessible ones.
         setSecureVideoUrl(result.youtube_url);
         setLessonLocked(result.locked);
       } else {
-        setSecureVideoUrl(activeLesson.youtube_url);
-        setLessonLocked(false);
+        // Server refused or errored — DO NOT fall back to the
+        // client-cached `activeLesson.youtube_url`. The previous
+        // version did, which silently bypassed the server's Pro
+        // gate whenever /api/lessons/:id failed (network blip,
+        // 401/403, transient 500). Treat null result as locked.
+        setSecureVideoUrl(null);
+        setLessonLocked(true);
       }
     });
     return () => { cancelled = true; };
@@ -222,10 +240,15 @@ export default function CoursePlayerPage() {
 
   const handleMarkComplete = () => {
     if (!activeLesson || !user) return;
+    if (markingRef.current) return;
+    markingRef.current = true;
     setCompletedLessons((prev) => new Set([...prev, activeLesson.id]));
     markLessonComplete(user.id, activeLesson.id)
       .then(() => refreshProgress())
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        markingRef.current = false;
+      });
 
     const currentIdx = allLessons.findIndex((l) => l.id === activeLesson.id);
     if (currentIdx < allLessons.length - 1) {

@@ -108,17 +108,33 @@ export function PushNotificationsToggle() {
         endpoint?: string;
         keys?: { p256dh?: string; auth?: string };
       };
-      const res = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          endpoint: subJson.endpoint,
-          keys: subJson.keys,
-          user_agent: navigator.userAgent,
-        }),
-      });
-      if (!res.ok) throw new Error("Server failed to register subscription");
-      setSubscribed(true);
+      try {
+        const res = await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            endpoint: subJson.endpoint,
+            keys: subJson.keys,
+            user_agent: navigator.userAgent,
+          }),
+        });
+        if (!res.ok) throw new Error("Server failed to register subscription");
+        setSubscribed(true);
+      } catch (serverErr) {
+        // Server registration failed but we already created an
+        // OS-level subscription via pushManager.subscribe(). Without
+        // rolling that back, the browser keeps a "subscribed" state
+        // that the server doesn't know about — the next time the user
+        // re-toggles, they'd hit `getSubscription()` returning the
+        // existing sub, and our subscribe() would short-circuit to a
+        // no-op while the toggle still shows OFF. Tear it down.
+        try {
+          await sub.unsubscribe();
+        } catch {
+          // best-effort — if even this fails, we'll resync on next mount
+        }
+        throw serverErr;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }

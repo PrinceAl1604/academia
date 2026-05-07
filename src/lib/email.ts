@@ -508,6 +508,12 @@ function buildIcsInvite({
   startsAtIso,
   durationMinutes,
   joinUrl,
+  // RFC 5545 SEQUENCE: revision number for the calendar event
+  // sharing the same UID. 0 = original invite; 1+ = each reschedule.
+  // Without this, Outlook/Apple Calendar may treat update emails as
+  // stale duplicates and ignore time changes — users keep showing up
+  // at the old time. Default 0; the slot-update email passes 1.
+  sequence = 0,
 }: {
   uid: string;
   title: string;
@@ -515,6 +521,7 @@ function buildIcsInvite({
   startsAtIso: string;
   durationMinutes: number;
   joinUrl: string;
+  sequence?: number;
 }): string {
   const fmt = (d: Date) =>
     d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
@@ -546,6 +553,7 @@ function buildIcsInvite({
     `LOCATION:${escape(joinUrl)}`,
     `URL:${escape(joinUrl)}`,
     `ORGANIZER;CN=${APP_NAME}:mailto:${HELP_EMAIL}`,
+    `SEQUENCE:${sequence}`,
     "STATUS:CONFIRMED",
     "TRANSP:OPAQUE",
     "END:VEVENT",
@@ -840,6 +848,10 @@ export async function sendSlotUpdatedEmail({
           startsAtIso: newStartsAtIso,
           durationMinutes,
           joinUrl,
+          // SEQUENCE:1 — this is a revision of the original booking
+          // invite. Calendars with the original (SEQUENCE:0) in their
+          // store will replace it instead of creating a duplicate.
+          sequence: 1,
         }),
       },
     ],

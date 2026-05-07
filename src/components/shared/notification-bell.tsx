@@ -244,24 +244,42 @@ export function NotificationBell() {
         (payload) => {
           const newRow = payload.new as NotificationRow;
           const oldRow = payload.old as Partial<NotificationRow>;
-          // Track count change (read state)
-          const wasUnread = !oldRow.read_at;
-          const isUnread = !newRow.read_at;
-          if (wasUnread && !isUnread) {
-            setUnreadCount((c) => Math.max(0, c - 1));
-          } else if (!wasUnread && isUnread) {
-            setUnreadCount((c) => c + 1);
-          }
-          setItems((prev) =>
-            prev.map((n) => (n.id === newRow.id ? newRow : n))
-          );
+          setItems((prev) => {
+            // Double-decrement guard: when the user clicks a row in
+            // the bell, handleClickRow optimistically decrements the
+            // count AND patches the local items.read_at, then fires
+            // the UPDATE. The UPDATE echoes back via realtime here —
+            // if we just compared payload.old.read_at to .new.read_at
+            // we'd see "was null, now set" and decrement a SECOND
+            // time. Compare against the LOCAL prior state instead:
+            // only adjust the count when this realtime event is
+            // actually flipping a row that we hadn't already marked.
+            const localPrior = prev.find((n) => n.id === newRow.id);
+            const wasUnreadLocally = localPrior
+              ? !localPrior.read_at
+              : !oldRow.read_at;
+            const isUnread = !newRow.read_at;
+            if (wasUnreadLocally && !isUnread) {
+              setUnreadCount((c) => Math.max(0, c - 1));
+            } else if (!wasUnreadLocally && isUnread) {
+              setUnreadCount((c) => c + 1);
+            }
+            return prev.map((n) => (n.id === newRow.id ? newRow : n));
+          });
         }
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+    // `t` and `router` are captured by the INSERT closure (toast text +
+    // navigation). `t` is the static translations object indexed by
+    // current language, so its reference only changes on language
+    // switch; `router` from useRouter is stable per spec. Including
+    // them ensures the closure refreshes on language change so toasts
+    // render in the user's current locale instead of whatever was
+    // active when the channel first subscribed.
+  }, [userId, t, router]);
 
   /* ─── Actions ────────────────────────────────────────────── */
   const handleClickRow = useCallback(

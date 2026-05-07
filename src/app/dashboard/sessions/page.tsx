@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
@@ -249,50 +249,64 @@ export default function StudentSessionsPage() {
     return msg;
   };
 
+  // Re-entrancy guard. setBookingId(slot.id) only takes effect on the
+  // next render, so a fast double-click can fire two inserts in
+  // flight before the disabled state propagates. The DB unique
+  // partial index `(slot_id, user_id) WHERE cancelled_at IS NULL`
+  // would reject the second, but the trigger error surfaces as
+  // errorGeneric to the user. Synchronous ref guard avoids both.
+  const bookingInFlightRef = useRef(false);
   const handleBook = async (slot: SessionSlot, note: string) => {
     if (!user) return;
+    if (bookingInFlightRef.current) return;
+    bookingInFlightRef.current = true;
     setError(null);
     setBookingId(slot.id);
-    const trimmedNote = note.trim();
-    const { data: inserted, error: dbError } = await supabase
-      .from("session_bookings")
-      .insert({
-        slot_id: slot.id,
-        user_id: user.id,
-        notes: trimmedNote || null,
-      })
-      .select("id")
-      .single();
-    if (dbError || !inserted) {
-      setError(translateError(dbError?.message));
+    try {
+      const trimmedNote = note.trim();
+      const { data: inserted, error: dbError } = await supabase
+        .from("session_bookings")
+        .insert({
+          slot_id: slot.id,
+          user_id: user.id,
+          notes: trimmedNote || null,
+        })
+        .select("id")
+        .single();
+      if (dbError || !inserted) {
+        setError(translateError(dbError?.message));
+        setBookingId(null);
+        return;
+      }
+
+      // Fire-and-forget the confirmation email. We don't block the UI
+      // refresh on Resend latency — the booking exists in the DB the
+      // moment the insert resolves, so the user already has access.
+      fetch("/api/sessions/notify-booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_id: inserted.id }),
+      }).catch(() => {
+        // intentionally swallowed — surfaced via server logs
+      });
+
+      // Refresh both lists so capacity + cap counter sync up.
+      await loadData();
       setBookingId(null);
-      return;
+      setBookTarget(null);
+      setBookNote("");
+    } finally {
+      bookingInFlightRef.current = false;
     }
-
-    // Fire-and-forget the confirmation email. We don't block the UI
-    // refresh on Resend latency — the booking exists in the DB the
-    // moment the insert resolves, so the user already has access. If
-    // email delivery fails the booking is still valid; it'll just
-    // mean the user gets the day-before reminder without an
-    // immediate confirmation.
-    fetch("/api/sessions/notify-booking", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ booking_id: inserted.id }),
-    }).catch(() => {
-      // intentionally swallowed — surfaced via server logs
-    });
-
-    // Refresh both lists so capacity + cap counter sync up.
-    await loadData();
-    setBookingId(null);
-    setBookTarget(null);
-    setBookNote("");
   };
 
   const handleSubmitFeedback = async () => {
     if (!feedbackTarget || feedbackRating === 0) return;
     setSubmittingFeedback(true);
+    // Idempotency: only update if feedback hasn't already been
+    // submitted. Without this, a stale tab (or a past-bookings list
+    // refetched after admin retroactively re-opened a slot) could
+    // overwrite the user's existing rating with a fresh submission.
     const { error: dbError } = await supabase
       .from("session_bookings")
       .update({
@@ -300,7 +314,8 @@ export default function StudentSessionsPage() {
         feedback_comment: feedbackComment.trim() || null,
         feedback_submitted_at: new Date().toISOString(),
       })
-      .eq("id", feedbackTarget.id);
+      .eq("id", feedbackTarget.id)
+      .is("feedback_submitted_at", null);
     if (dbError) {
       setError(t.sessions.errorGeneric);
       setSubmittingFeedback(false);
