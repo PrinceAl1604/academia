@@ -814,6 +814,169 @@ export const translations = {
       viewAll: "View all",
       noUpcoming: "No upcoming sessions.",
     },
+
+    // Marketing landing page (public, pre-auth). Strings are
+    // intentionally short + verb-first so the FR translation below
+    // keeps the same visual rhythm. Hero headline is split into
+    // 3 chunks so the middle phrase can render in primary color.
+    landing: {
+      // Navbar
+      navFeatures: "Features",
+      navHowItWorks: "How it works",
+      navAudience: "Who it's for",
+      navPricing: "Pricing",
+      navSignIn: "Sign in",
+      navGetStarted: "Get started",
+
+      // Hero
+      heroPreheader: "Brightroots",
+      heroTitleStart: "Build the ",
+      heroTitleHighlight: "personal brand",
+      heroTitleEnd: " that opens doors.",
+      heroSubtitle:
+        "Premium courses, live one-on-one mentors, and a focused community — built for people growing a reputation, a following, or a freelance practice.",
+      heroCtaPrimary: "Start free",
+      heroCtaSecondary: "See what's inside",
+      heroMicrocopy: "Free to join · No credit card needed",
+
+      // Stats strip
+      statsPreheader: "Built for people who actually use it",
+      statsLabel1: "Members growing with us",
+      statsLabel2: "Hours of premium content",
+      statsLabel3: "Would recommend to a friend",
+      statsLabel4: "Every course bilingual",
+
+      // 6-pillar features
+      featuresPreheader: "Features",
+      featuresTitle: "Everything you need to grow your name",
+      featuresSubtitle:
+        "Six pieces that work together — courses, mentorship, community, and the system that ties them.",
+      feature1Title: "Courses built to be used",
+      feature1Desc:
+        "Practical lessons from people who've done the work. No theory, no filler — just what helps you ship.",
+      feature2Title: "Real time with real mentors",
+      feature2Desc:
+        "Book one-on-one or small-group sessions with experts who answer your questions. Two every month, included.",
+      feature3Title: "A room of people climbing too",
+      feature3Desc:
+        "Channels for every topic. Direct messages with admins and mentors. Quiet enough to focus, busy enough to matter.",
+      feature4Title: "English and French, side by side",
+      feature4Desc:
+        "Every course, every session, every conversation — switch languages with a click.",
+      feature5Title: "One subscription, everything unlocked",
+      feature5Desc:
+        "Premium courses, live sessions, direct messages, community. One price, no upsells.",
+      feature6Title: "Refer a friend, grow together",
+      feature6Desc:
+        "Send the link. When they go Pro, you both get a month free. Your network becomes your runway.",
+
+      // Showcase 1 — Courses
+      showcase1Tag: "Courses",
+      showcase1Title: "Learn from people who've done it",
+      showcase1Body:
+        "Every course on Brightroots is taught by someone who actually built what they're teaching. You get the playbooks, the templates, the real decisions — not theory. Watch on any device, at your pace.",
+      showcase1Bullet1: "Premium video lessons with real examples",
+      showcase1Bullet2: "Step-by-step progress that picks up where you left off",
+      showcase1Bullet3: "Bilingual — every course works in English and French",
+      showcase1Bullet4: "New courses added every month",
+      showcase1Link: "Browse the catalog",
+
+      // Showcase 2 — Live sessions
+      showcase2Tag: "Live sessions",
+      showcase2Title: "Mentorship that actually shows up",
+      showcase2Body:
+        "Two live sessions a month with mentors who know your field. Bring a real question, leave with a real answer. Calendar invite, reminders, and instant join — from any device.",
+      showcase2Bullet1: "Two sessions every month with your Pro membership",
+      showcase2Bullet2: "One-on-one for deep work, small groups for breadth",
+      showcase2Bullet3: "Calendar invite + reminder so you never miss one",
+      showcase2Bullet4: "Join from your phone, laptop, anywhere",
+      showcase2Link: "See upcoming sessions",
+
+      // Showcase 3 — Community
+      showcase3Tag: "Community",
+      showcase3Title: "Grow with people doing the same",
+      showcase3Body:
+        "A focused community of people building their brand and their career. No algorithm, no doomscroll. Channels for every topic. Direct messages for the real conversations.",
+      showcase3Bullet1: "Channels for courses, careers, and craft",
+      showcase3Bullet2: "Direct message anyone — including admins and mentors",
+      showcase3Bullet3: "Mentions, threads, pinned messages — everything just works",
+      showcase3Bullet4: "Push notifications when your name comes up",
+      showcase3Link: "Step inside",
+
+      // Audience
+      audiencePreheader: "Built for",
+      audienceTitle: "Built for the work you're doing now",
+      audience1Title: "Creators & storytellers",
+      audience1Desc:
+        "If you make things — videos, writing, photography, music — Brightroots helps you turn craft into reputation. Reach more people, on your terms.",
+      audience2Title: "Freelancers & consultants",
+      audience2Desc:
+        "Stop chasing every gig. Build a name strong enough that the right clients come to you. Courses on positioning, packaging, and pricing — taught by people who charge well.",
+      audience3Title: "Students & ambitious newcomers",
+      audience3Desc:
+        "The earlier you start, the further it carries. Build the skills, the network, and the visibility that turn a job offer into the right offer.",
+      audienceLinkLabel: "See how",
+
+      // Pricing
+      pricingPreheader: "Pricing",
+      pricingTitle: "Simple pricing. Grown-up product.",
+      pricingSubtitle:
+        "Try everything that's free. Upgrade when you're ready to go further.",
+      pricingFreeName: "Free",
+      pricingFreePrice: "0",
+      pricingFreeUnit: "FCFA",
+      pricingFreeSummary: "Get a feel for Brightroots before going Pro.",
+      pricingFreeFeature1: "Browse the full course catalog",
+      pricingFreeFeature2: "Watch free lessons in every course",
+      pricingFreeFeature3: "Read the community",
+      pricingFreeFeature4: "English and French",
+      pricingFreeCta: "Join free",
+      pricingProBadge: "Most popular",
+      pricingProName: "Pro",
+      pricingProPrice: "15,000",
+      pricingProUnit: "FCFA / month",
+      pricingProCancelAnytime: "Cancel anytime.",
+      pricingProSummary: "Everything you need to build a brand that lasts.",
+      pricingProFeature1: "Every premium course, unlocked",
+      pricingProFeature2: "Two live mentor sessions every month",
+      pricingProFeature3: "Direct messages with admins and mentors",
+      pricingProFeature4: "Full community access — channels, DMs, mentions",
+      pricingProFeature5: "Push notifications and calendar sync",
+      pricingProCta: "Start Pro",
+
+      // Final CTA
+      finalCtaPreheader: "Start today",
+      finalCtaTitle: "Your brand grows when you do",
+      finalCtaSubtitle:
+        "Join the people building their reputation one lesson and one conversation at a time. Free to start, no card needed.",
+      finalCtaPrimary: "Create your free account",
+      finalCtaSecondary: "See pricing",
+
+      // Footer
+      footerTagline: "Where personal brands take root.",
+      footerColProduct: "Product",
+      footerColResources: "Resources",
+      footerColCompany: "Company",
+      footerColLegal: "Legal",
+      footerProductCourses: "Courses",
+      footerProductSessions: "Live sessions",
+      footerProductCommunity: "Community",
+      footerProductMobile: "Mobile app",
+      footerResourcesHelp: "Help center",
+      footerResourcesBlog: "Blog",
+      footerResourcesRefer: "Refer a friend",
+      footerResourcesStatus: "Status",
+      footerCompanyAbout: "About",
+      footerCompanyContact: "Contact",
+      footerCompanyCareers: "Careers",
+      footerCompanyPress: "Press",
+      footerLegalPrivacy: "Privacy",
+      footerLegalTerms: "Terms",
+      footerLegalCookies: "Cookies",
+      footerLegalImprint: "Imprint",
+      footerCopyright: "All rights reserved.",
+      footerMadeIn: "Made in West Africa, for the world",
+    },
   },
 
   fr: {
@@ -1615,6 +1778,164 @@ export const translations = {
       joinNow: "Rejoindre",
       viewAll: "Voir tout",
       noUpcoming: "Aucune session à venir.",
+    },
+
+    landing: {
+      navFeatures: "Fonctionnalités",
+      navHowItWorks: "Comment ça marche",
+      navAudience: "Pour qui",
+      navPricing: "Tarifs",
+      navSignIn: "Se connecter",
+      navGetStarted: "Commencer",
+
+      heroPreheader: "Brightroots",
+      heroTitleStart: "Construisez la ",
+      heroTitleHighlight: "marque personnelle",
+      heroTitleEnd: " qui ouvre des portes.",
+      heroSubtitle:
+        "Cours premium, mentors en direct un-à-un et une communauté ciblée — pour celles et ceux qui bâtissent une réputation, une audience ou une activité freelance.",
+      heroCtaPrimary: "Commencer gratuitement",
+      heroCtaSecondary: "Voir ce qu'il y a dedans",
+      heroMicrocopy: "Gratuit pour commencer · Aucune carte requise",
+
+      statsPreheader: "Conçu pour ceux qui s'en servent vraiment",
+      statsLabel1: "Membres qui grandissent avec nous",
+      statsLabel2: "Heures de contenu premium",
+      statsLabel3: "Recommanderaient à un ami",
+      statsLabel4: "Chaque cours bilingue",
+
+      featuresPreheader: "Fonctionnalités",
+      featuresTitle: "Tout ce qu'il faut pour faire grandir votre nom",
+      featuresSubtitle:
+        "Six pièces qui travaillent ensemble — cours, mentorat, communauté, et le système qui les relie.",
+      feature1Title: "Des cours faits pour être utilisés",
+      feature1Desc:
+        "Des leçons concrètes par celles et ceux qui ont fait le travail. Pas de théorie, pas de remplissage — juste ce qui aide à avancer.",
+      feature2Title: "Du temps réel avec de vrais mentors",
+      feature2Desc:
+        "Réservez des sessions un-à-un ou en petit groupe avec des experts qui répondent à vos questions. Deux chaque mois, incluses.",
+      feature3Title: "Une salle de gens qui grimpent aussi",
+      feature3Desc:
+        "Des canaux pour chaque sujet. Messages directs avec les admins et mentors. Assez calme pour se concentrer, assez vivant pour compter.",
+      feature4Title: "Français et anglais, côte à côte",
+      feature4Desc:
+        "Chaque cours, chaque session, chaque conversation — changez de langue en un clic.",
+      feature5Title: "Un abonnement, tout débloqué",
+      feature5Desc:
+        "Cours premium, sessions en direct, messages directs, communauté. Un prix, aucun supplément.",
+      feature6Title: "Invitez un ami, grandissez ensemble",
+      feature6Desc:
+        "Partagez le lien. Quand votre ami passe Pro, vous obtenez chacun un mois gratuit. Votre réseau devient votre élan.",
+
+      showcase1Tag: "Cours",
+      showcase1Title: "Apprenez avec ceux qui l'ont fait",
+      showcase1Body:
+        "Chaque cours sur Brightroots est enseigné par quelqu'un qui a vraiment construit ce qu'il enseigne. Vous obtenez les playbooks, les modèles, les vraies décisions — pas la théorie. Regardez sur n'importe quel appareil, à votre rythme.",
+      showcase1Bullet1: "Vidéos premium avec des exemples réels",
+      showcase1Bullet2:
+        "Progression pas-à-pas qui reprend là où vous vous êtes arrêté",
+      showcase1Bullet3:
+        "Bilingue — chaque cours fonctionne en français et en anglais",
+      showcase1Bullet4: "Nouveaux cours ajoutés chaque mois",
+      showcase1Link: "Parcourir le catalogue",
+
+      showcase2Tag: "Sessions en direct",
+      showcase2Title: "Du mentorat qui se présente vraiment",
+      showcase2Body:
+        "Deux sessions en direct par mois avec des mentors qui connaissent votre domaine. Apportez une vraie question, repartez avec une vraie réponse. Invitation calendrier, rappels et lien direct — depuis n'importe quel appareil.",
+      showcase2Bullet1: "Deux sessions chaque mois avec votre abonnement Pro",
+      showcase2Bullet2: "Un-à-un pour le fond, petit groupe pour la portée",
+      showcase2Bullet3: "Invitation calendrier + rappel pour ne rien manquer",
+      showcase2Bullet4:
+        "Rejoignez depuis votre téléphone, ordinateur, partout",
+      showcase2Link: "Voir les sessions à venir",
+
+      showcase3Tag: "Communauté",
+      showcase3Title: "Grandissez avec ceux qui font pareil",
+      showcase3Body:
+        "Une communauté ciblée de gens qui construisent leur marque et leur carrière. Pas d'algorithme, pas de défilement sans fin. Des canaux pour chaque sujet. Messages directs pour les vraies conversations.",
+      showcase3Bullet1:
+        "Des canaux pour les cours, les carrières et le métier",
+      showcase3Bullet2:
+        "Envoyez un message direct à n'importe qui — y compris admins et mentors",
+      showcase3Bullet3:
+        "Mentions, fils, messages épinglés — tout fonctionne",
+      showcase3Bullet4: "Notifications push quand on vous mentionne",
+      showcase3Link: "Entrez",
+
+      audiencePreheader: "Conçu pour",
+      audienceTitle: "Conçu pour le travail que vous faites maintenant",
+      audience1Title: "Créateurs et conteurs",
+      audience1Desc:
+        "Si vous créez des choses — vidéos, écrits, photographies, musique — Brightroots vous aide à transformer votre métier en réputation. Atteignez plus de gens, à vos conditions.",
+      audience2Title: "Freelances et consultants",
+      audience2Desc:
+        "Arrêtez de courir après chaque mission. Bâtissez un nom assez fort pour que les bons clients viennent à vous. Des cours sur le positionnement, le packaging et les prix — enseignés par des gens qui facturent bien.",
+      audience3Title: "Étudiants et ambitieux qui débutent",
+      audience3Desc:
+        "Plus tôt vous commencez, plus loin ça vous porte. Bâtissez les compétences, le réseau et la visibilité qui transforment une offre d'emploi en la bonne offre.",
+      audienceLinkLabel: "Voir comment",
+
+      pricingPreheader: "Tarifs",
+      pricingTitle: "Tarification simple. Produit sérieux.",
+      pricingSubtitle:
+        "Essayez tout ce qui est gratuit. Passez à la version supérieure quand vous êtes prêt.",
+      pricingFreeName: "Gratuit",
+      pricingFreePrice: "0",
+      pricingFreeUnit: "FCFA",
+      pricingFreeSummary: "Découvrez Brightroots avant de passer Pro.",
+      pricingFreeFeature1: "Parcourez tout le catalogue de cours",
+      pricingFreeFeature2: "Regardez les leçons gratuites de chaque cours",
+      pricingFreeFeature3: "Lisez la communauté",
+      pricingFreeFeature4: "Français et anglais",
+      pricingFreeCta: "S'inscrire gratuitement",
+      pricingProBadge: "Le plus populaire",
+      pricingProName: "Pro",
+      pricingProPrice: "15 000",
+      pricingProUnit: "FCFA / mois",
+      pricingProCancelAnytime: "Annulez quand vous voulez.",
+      pricingProSummary:
+        "Tout ce qu'il faut pour bâtir une marque qui dure.",
+      pricingProFeature1: "Tous les cours premium, débloqués",
+      pricingProFeature2: "Deux sessions avec un mentor chaque mois",
+      pricingProFeature3:
+        "Messages directs avec admins et mentors",
+      pricingProFeature4:
+        "Accès complet à la communauté — canaux, DM, mentions",
+      pricingProFeature5:
+        "Notifications push et synchronisation calendrier",
+      pricingProCta: "Passer Pro",
+
+      finalCtaPreheader: "Commencez aujourd'hui",
+      finalCtaTitle: "Votre marque grandit quand vous grandissez",
+      finalCtaSubtitle:
+        "Rejoignez ceux qui bâtissent leur réputation une leçon et une conversation à la fois. Gratuit pour commencer, aucune carte requise.",
+      finalCtaPrimary: "Créer votre compte gratuit",
+      finalCtaSecondary: "Voir les tarifs",
+
+      footerTagline: "Là où les marques personnelles prennent racine.",
+      footerColProduct: "Produit",
+      footerColResources: "Ressources",
+      footerColCompany: "Entreprise",
+      footerColLegal: "Mentions légales",
+      footerProductCourses: "Cours",
+      footerProductSessions: "Sessions en direct",
+      footerProductCommunity: "Communauté",
+      footerProductMobile: "Application mobile",
+      footerResourcesHelp: "Centre d'aide",
+      footerResourcesBlog: "Blog",
+      footerResourcesRefer: "Inviter un ami",
+      footerResourcesStatus: "Statut",
+      footerCompanyAbout: "À propos",
+      footerCompanyContact: "Contact",
+      footerCompanyCareers: "Carrières",
+      footerCompanyPress: "Presse",
+      footerLegalPrivacy: "Confidentialité",
+      footerLegalTerms: "Conditions",
+      footerLegalCookies: "Cookies",
+      footerLegalImprint: "Mentions légales",
+      footerCopyright: "Tous droits réservés.",
+      footerMadeIn: "Fait en Afrique de l'Ouest, pour le monde",
     },
   },
 } as const;

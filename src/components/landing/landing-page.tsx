@@ -16,6 +16,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/shared/logo";
+import { LanguageToggle } from "@/components/shared/language-toggle";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 /**
@@ -133,6 +135,7 @@ function Preheader({ children }: { children: React.ReactNode }) {
  * ═══════════════════════════════════════════════════════════ */
 
 function LandingNav() {
+  const { t } = useLanguage();
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -144,36 +147,39 @@ function LandingNav() {
             href="#features"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            Features
+            {t.landing.navFeatures}
           </a>
           <a
             href="#showcase"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            How it works
+            {t.landing.navHowItWorks}
           </a>
           <a
             href="#audience"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            Who it&apos;s for
+            {t.landing.navAudience}
           </a>
           <a
             href="#pricing"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            Pricing
+            {t.landing.navPricing}
           </a>
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
+          {/* Language toggle — reuses the shared component so the
+              user's choice persists into the app after sign-up. */}
+          <LanguageToggle />
           <Link
             href="/sign-in"
             className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
           >
-            Sign in
+            {t.landing.navSignIn}
           </Link>
           <Button render={<Link href="/sign-up" />}>
-            Get started
+            {t.landing.navGetStarted}
             <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -187,31 +193,32 @@ function LandingNav() {
  * ═══════════════════════════════════════════════════════════ */
 
 function Hero() {
+  const { t } = useLanguage();
   return (
     <section className="relative overflow-hidden pt-36 pb-24 lg:pt-44 lg:pb-32">
       <HeroBackdrop />
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
         <div>
-          <Preheader>Brightroots</Preheader>
+          <Preheader>{t.landing.heroPreheader}</Preheader>
           <h1 className="mt-5 text-4xl font-medium leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl xl:text-7xl">
-            Build the <span className="text-primary">personal brand</span> that opens doors.
+            {t.landing.heroTitleStart}
+            <span className="text-primary">{t.landing.heroTitleHighlight}</span>
+            {t.landing.heroTitleEnd}
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Premium courses, live one-on-one mentors, and a focused community —
-            built for people growing a reputation, a following, or a freelance
-            practice.
+            {t.landing.heroSubtitle}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button size="lg" render={<Link href="/sign-up" />}>
-              Start free
+              {t.landing.heroCtaPrimary}
               <ArrowRight className="h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" render={<Link href="#showcase" />}>
-              See what&apos;s inside
+              {t.landing.heroCtaSecondary}
             </Button>
           </div>
           <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70">
-            <span className="opacity-60">/</span> Free to join · No credit card needed
+            <span className="opacity-60">/</span> {t.landing.heroMicrocopy}
           </p>
         </div>
         <LabelledPlaceholder
@@ -228,20 +235,23 @@ function Hero() {
  * ═══════════════════════════════════════════════════════════ */
 
 function Stats() {
+  const { t } = useLanguage();
+  // Numerical values stay locale-neutral (FCFA price formatted in
+  // the pricing section uses the localized string). The labels are
+  // what the i18n controls here.
   const stats = [
-    { value: "10,000+", label: "Members growing with us" },
-    { value: "200+", label: "Hours of premium content" },
-    { value: "98%", label: "Would recommend to a friend" },
-    // Bilingual is part of the value prop, not an inflated stat —
-    // pairing the EN/FR token with a label that reads as a feature
-    // keeps the row honest at pre-launch numbers.
-    { value: "EN / FR", label: "Every course bilingual" },
+    { value: "10,000+", label: t.landing.statsLabel1 },
+    { value: "200+", label: t.landing.statsLabel2 },
+    { value: "98%", label: t.landing.statsLabel3 },
+    // Bilingual stays as "EN / FR" in both locales — it's the
+    // language pair, not translated text.
+    { value: "EN / FR", label: t.landing.statsLabel4 },
   ];
   return (
     <section className="border-y border-border/40 bg-card/20">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8 text-center">
-          <Preheader>Built for people who actually use it</Preheader>
+          <Preheader>{t.landing.statsPreheader}</Preheader>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           {stats.map((stat) => (
@@ -265,49 +275,25 @@ function Stats() {
  * ═══════════════════════════════════════════════════════════ */
 
 function Features() {
+  const { t } = useLanguage();
   const features = [
-    {
-      icon: BookOpen,
-      title: "Courses built to be used",
-      desc: "Practical lessons from people who've done the work. No theory, no filler — just what helps you ship.",
-    },
-    {
-      icon: Calendar,
-      title: "Real time with real mentors",
-      desc: "Book one-on-one or small-group sessions with experts who answer your questions. Two every month, included.",
-    },
-    {
-      icon: Users,
-      title: "A room of people climbing too",
-      desc: "Channels for every topic. Direct messages with admins and mentors. Quiet enough to focus, busy enough to matter.",
-    },
-    {
-      icon: Languages,
-      title: "English and French, side by side",
-      desc: "Every course, every session, every conversation — switch languages with a click.",
-    },
-    {
-      icon: Crown,
-      title: "One subscription, everything unlocked",
-      desc: "Premium courses, live sessions, direct messages, community. One price, no upsells.",
-    },
-    {
-      icon: Gift,
-      title: "Refer a friend, grow together",
-      desc: "Send the link. When they go Pro, you both get a month free. Your network becomes your runway.",
-    },
+    { icon: BookOpen, title: t.landing.feature1Title, desc: t.landing.feature1Desc },
+    { icon: Calendar, title: t.landing.feature2Title, desc: t.landing.feature2Desc },
+    { icon: Users, title: t.landing.feature3Title, desc: t.landing.feature3Desc },
+    { icon: Languages, title: t.landing.feature4Title, desc: t.landing.feature4Desc },
+    { icon: Crown, title: t.landing.feature5Title, desc: t.landing.feature5Desc },
+    { icon: Gift, title: t.landing.feature6Title, desc: t.landing.feature6Desc },
   ];
   return (
     <section id="features" className="relative py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <Preheader>Features</Preheader>
+          <Preheader>{t.landing.featuresPreheader}</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            Everything you need to grow your name
+            {t.landing.featuresTitle}
           </h2>
           <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-            Six pieces that work together — courses, mentorship, community,
-            and the system that ties them.
+            {t.landing.featuresSubtitle}
           </p>
         </div>
         <div className="mt-16 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -396,48 +382,49 @@ function ShowcaseSection({
 }
 
 function Showcase() {
+  const { t } = useLanguage();
   return (
     <section id="showcase" className="relative py-24 lg:py-32">
       <div className="mx-auto max-w-7xl space-y-32 px-4 sm:px-6 lg:px-8">
         <ShowcaseSection
-          tag="Courses"
-          title="Learn from people who've done it"
-          body="Every course on Brightroots is taught by someone who actually built what they're teaching. You get the playbooks, the templates, the real decisions — not theory. Watch on any device, at your pace."
+          tag={t.landing.showcase1Tag}
+          title={t.landing.showcase1Title}
+          body={t.landing.showcase1Body}
           bullets={[
-            "Premium video lessons with real examples",
-            "Step-by-step progress that picks up where you left off",
-            "Bilingual — every course works in English and French",
-            "New courses added every month",
+            t.landing.showcase1Bullet1,
+            t.landing.showcase1Bullet2,
+            t.landing.showcase1Bullet3,
+            t.landing.showcase1Bullet4,
           ]}
           placeholderLabel="Course player screenshot · 4:3"
-          linkLabel="Browse the catalog"
+          linkLabel={t.landing.showcase1Link}
         />
         <ShowcaseSection
-          tag="Live sessions"
-          title="Mentorship that actually shows up"
-          body="Two live sessions a month with mentors who know your field. Bring a real question, leave with a real answer. Calendar invite, reminders, and instant join — from any device."
+          tag={t.landing.showcase2Tag}
+          title={t.landing.showcase2Title}
+          body={t.landing.showcase2Body}
           bullets={[
-            "Two sessions every month with your Pro membership",
-            "One-on-one for deep work, small groups for breadth",
-            "Calendar invite + reminder so you never miss one",
-            "Join from your phone, laptop, anywhere",
+            t.landing.showcase2Bullet1,
+            t.landing.showcase2Bullet2,
+            t.landing.showcase2Bullet3,
+            t.landing.showcase2Bullet4,
           ]}
           placeholderLabel="Live session schedule screenshot · 4:3"
-          linkLabel="See upcoming sessions"
+          linkLabel={t.landing.showcase2Link}
           flip
         />
         <ShowcaseSection
-          tag="Community"
-          title="Grow with people doing the same"
-          body="A focused community of people building their brand and their career. No algorithm, no doomscroll. Channels for every topic. Direct messages for the real conversations."
+          tag={t.landing.showcase3Tag}
+          title={t.landing.showcase3Title}
+          body={t.landing.showcase3Body}
           bullets={[
-            "Channels for courses, careers, and craft",
-            "Direct message anyone — including admins and mentors",
-            "Mentions, threads, pinned messages — everything just works",
-            "Push notifications when your name comes up",
+            t.landing.showcase3Bullet1,
+            t.landing.showcase3Bullet2,
+            t.landing.showcase3Bullet3,
+            t.landing.showcase3Bullet4,
           ]}
           placeholderLabel="Community chat screenshot · 4:3"
-          linkLabel="Step inside"
+          linkLabel={t.landing.showcase3Link}
         />
       </div>
     </section>
@@ -449,27 +436,19 @@ function Showcase() {
  * ═══════════════════════════════════════════════════════════ */
 
 function Audience() {
+  const { t } = useLanguage();
   const personas = [
-    {
-      title: "Creators & storytellers",
-      desc: "If you make things — videos, writing, photography, music — Brightroots helps you turn craft into reputation. Reach more people, on your terms.",
-    },
-    {
-      title: "Freelancers & consultants",
-      desc: "Stop chasing every gig. Build a name strong enough that the right clients come to you. Courses on positioning, packaging, and pricing — taught by people who charge well.",
-    },
-    {
-      title: "Students & ambitious newcomers",
-      desc: "The earlier you start, the further it carries. Build the skills, the network, and the visibility that turn a job offer into the right offer.",
-    },
+    { title: t.landing.audience1Title, desc: t.landing.audience1Desc },
+    { title: t.landing.audience2Title, desc: t.landing.audience2Desc },
+    { title: t.landing.audience3Title, desc: t.landing.audience3Desc },
   ];
   return (
     <section id="audience" className="border-t border-border/40 bg-card/10 py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <Preheader>Built for</Preheader>
+          <Preheader>{t.landing.audiencePreheader}</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
-            Built for the work you&apos;re doing now
+            {t.landing.audienceTitle}
           </h2>
         </div>
         <div className="mt-16 grid gap-6 md:grid-cols-3">
@@ -489,7 +468,7 @@ function Audience() {
                 href="/sign-up"
                 className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
               >
-                See how
+                {t.landing.audienceLinkLabel}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
@@ -505,37 +484,38 @@ function Audience() {
  * ═══════════════════════════════════════════════════════════ */
 
 function Pricing() {
+  const { t } = useLanguage();
   return (
     <section id="pricing" className="relative py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <Preheader>Pricing</Preheader>
+          <Preheader>{t.landing.pricingPreheader}</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
-            Simple pricing. Grown-up product.
+            {t.landing.pricingTitle}
           </h2>
           <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-            Try everything that&apos;s free. Upgrade when you&apos;re ready to go further.
+            {t.landing.pricingSubtitle}
           </p>
         </div>
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:mx-auto lg:max-w-4xl">
           {/* Free tier */}
           <div className="rounded-2xl border border-border/60 bg-card/40 p-8">
-            <h3 className="text-lg font-medium text-foreground">Free</h3>
+            <h3 className="text-lg font-medium text-foreground">{t.landing.pricingFreeName}</h3>
             <div className="mt-4 flex items-baseline gap-1">
               <span className="font-mono text-4xl font-medium tracking-tight text-foreground">
-                0
+                {t.landing.pricingFreePrice}
               </span>
-              <span className="text-sm text-muted-foreground">FCFA</span>
+              <span className="text-sm text-muted-foreground">{t.landing.pricingFreeUnit}</span>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
-              Get a feel for Brightroots before going Pro.
+              {t.landing.pricingFreeSummary}
             </p>
             <ul className="mt-6 space-y-2.5">
               {[
-                "Browse the full course catalog",
-                "Watch free lessons in every course",
-                "Read the community",
-                "English and French",
+                t.landing.pricingFreeFeature1,
+                t.landing.pricingFreeFeature2,
+                t.landing.pricingFreeFeature3,
+                t.landing.pricingFreeFeature4,
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -548,34 +528,34 @@ function Pricing() {
               className="mt-8 w-full"
               render={<Link href="/sign-up" />}
             >
-              Join free
+              {t.landing.pricingFreeCta}
             </Button>
           </div>
           {/* Pro tier — highlighted */}
           <div className="relative rounded-2xl border border-primary/40 bg-card/60 p-8 shadow-[0_0_60px_-20px_oklch(var(--primary)/0.4)]">
             <Badge className="absolute -top-3 left-8 bg-primary text-primary-foreground">
-              Most popular
+              {t.landing.pricingProBadge}
             </Badge>
-            <h3 className="text-lg font-medium text-foreground">Pro</h3>
+            <h3 className="text-lg font-medium text-foreground">{t.landing.pricingProName}</h3>
             <div className="mt-4 flex items-baseline gap-1">
               <span className="font-mono text-4xl font-medium tracking-tight text-foreground">
-                15,000
+                {t.landing.pricingProPrice}
               </span>
-              <span className="text-sm text-muted-foreground">FCFA / month</span>
+              <span className="text-sm text-muted-foreground">{t.landing.pricingProUnit}</span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground/70">
-              Cancel anytime.
+              {t.landing.pricingProCancelAnytime}
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
-              Everything you need to build a brand that lasts.
+              {t.landing.pricingProSummary}
             </p>
             <ul className="mt-6 space-y-2.5">
               {[
-                "Every premium course, unlocked",
-                "Two live mentor sessions every month",
-                "Direct messages with admins and mentors",
-                "Full community access — channels, DMs, mentions",
-                "Push notifications and calendar sync",
+                t.landing.pricingProFeature1,
+                t.landing.pricingProFeature2,
+                t.landing.pricingProFeature3,
+                t.landing.pricingProFeature4,
+                t.landing.pricingProFeature5,
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/90">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -584,7 +564,7 @@ function Pricing() {
               ))}
             </ul>
             <Button className="mt-8 w-full" render={<Link href="/sign-up" />}>
-              Start Pro
+              {t.landing.pricingProCta}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
@@ -599,26 +579,26 @@ function Pricing() {
  * ═══════════════════════════════════════════════════════════ */
 
 function FinalCta() {
+  const { t } = useLanguage();
   return (
     <section className="relative overflow-hidden py-24 lg:py-32">
       <HeroBackdrop />
       <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-border/60 bg-card/40 p-12 text-center backdrop-blur-sm lg:p-16">
-          <Preheader>Start today</Preheader>
+          <Preheader>{t.landing.finalCtaPreheader}</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            Your brand grows when you do
+            {t.landing.finalCtaTitle}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
-            Join the people building their reputation one lesson and one
-            conversation at a time. Free to start, no card needed.
+            {t.landing.finalCtaSubtitle}
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button size="lg" render={<Link href="/sign-up" />}>
-              Create your free account
+              {t.landing.finalCtaPrimary}
               <ArrowRight className="h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" render={<Link href="#pricing" />}>
-              See pricing
+              {t.landing.finalCtaSecondary}
             </Button>
           </div>
         </div>
@@ -632,22 +612,43 @@ function FinalCta() {
  * ═══════════════════════════════════════════════════════════ */
 
 function Footer() {
+  const { t } = useLanguage();
   const columns = [
     {
-      heading: "Product",
-      links: ["Courses", "Live sessions", "Community", "Mobile app"],
+      heading: t.landing.footerColProduct,
+      links: [
+        t.landing.footerProductCourses,
+        t.landing.footerProductSessions,
+        t.landing.footerProductCommunity,
+        t.landing.footerProductMobile,
+      ],
     },
     {
-      heading: "Resources",
-      links: ["Help center", "Blog", "Refer a friend", "Status"],
+      heading: t.landing.footerColResources,
+      links: [
+        t.landing.footerResourcesHelp,
+        t.landing.footerResourcesBlog,
+        t.landing.footerResourcesRefer,
+        t.landing.footerResourcesStatus,
+      ],
     },
     {
-      heading: "Company",
-      links: ["About", "Contact", "Careers", "Press"],
+      heading: t.landing.footerColCompany,
+      links: [
+        t.landing.footerCompanyAbout,
+        t.landing.footerCompanyContact,
+        t.landing.footerCompanyCareers,
+        t.landing.footerCompanyPress,
+      ],
     },
     {
-      heading: "Legal",
-      links: ["Privacy", "Terms", "Cookies", "Imprint"],
+      heading: t.landing.footerColLegal,
+      links: [
+        t.landing.footerLegalPrivacy,
+        t.landing.footerLegalTerms,
+        t.landing.footerLegalCookies,
+        t.landing.footerLegalImprint,
+      ],
     },
   ];
   return (
@@ -657,7 +658,7 @@ function Footer() {
           <div>
             <Logo />
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Where personal brands take root.
+              {t.landing.footerTagline}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
@@ -684,10 +685,10 @@ function Footer() {
         </div>
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border/40 pt-8 text-xs text-muted-foreground sm:flex-row sm:items-center">
           <p>
-            © {new Date().getFullYear()} Brightroots. All rights reserved.
+            © {new Date().getFullYear()} Brightroots. {t.landing.footerCopyright}
           </p>
           <p className="font-mono uppercase tracking-[0.18em]">
-            Made in West Africa, for the world
+            {t.landing.footerMadeIn}
           </p>
         </div>
       </div>
