@@ -34,8 +34,13 @@ export async function middleware(request: NextRequest) {
   // omission rather than fail-open via `!isAuthRoute`. Reviewable
   // here in one place instead of mentally re-deriving from the
   // matcher pattern on every read.
+  //
+  // NOTE: `/` is NOT in this list because it now serves a public
+  // marketing landing page for unauthenticated visitors. Logged-in
+  // students still see the catalog there (handled in the page
+  // component itself), and logged-in admins still get the explicit
+  // redirect to /admin below.
   const isProtectedRoute =
-    pathname === "/" ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/admin") ||
     pathname === "/onboarding" ||

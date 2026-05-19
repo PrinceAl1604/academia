@@ -10,6 +10,7 @@ import { getCourses, getCategories, type CourseRow, type CategoryRow } from "@/l
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Illustration } from "@/components/shared/illustration";
+import { LandingPage } from "@/components/landing/landing-page";
 
 /**
  * Home / browse — Cook-OS-flavored refresh.
@@ -25,7 +26,7 @@ import { Illustration } from "@/components/shared/illustration";
  * "no results yet" tone).
  */
 export default function HomePage() {
-  const { isPro } = useAuth();
+  const { isPro, isAuthenticated, loading: authLoading } = useAuth();
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -34,6 +35,24 @@ export default function HomePage() {
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const isEn = t.nav.signIn === "Sign In";
+
+  // ── Auth-driven render branch ──────────────────────────────
+  // `/` now serves a public marketing landing for unauthenticated
+  // visitors and the student catalog for authenticated users.
+  // We branch BEFORE the catalog effects matter — the landing
+  // doesn't need courses data. While auth resolves we show a
+  // small spinner; the auth-context already has a 2.5s safety
+  // timer so this never sticks indefinitely.
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return <LandingPage />;
+  }
 
   useEffect(() => {
     const q = searchParams.get("q");
