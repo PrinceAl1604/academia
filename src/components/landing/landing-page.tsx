@@ -144,25 +144,25 @@ function LandingNav() {
             href="#features"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            Lorem
+            Features
           </a>
           <a
             href="#showcase"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            Ipsum
-          </a>
-          <a
-            href="#pricing"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Dolor
+            How it works
           </a>
           <a
             href="#audience"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            Sit amet
+            Who it&apos;s for
+          </a>
+          <a
+            href="#pricing"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Pricing
           </a>
         </nav>
         <div className="flex items-center gap-3">
@@ -194,25 +194,24 @@ function Hero() {
         <div>
           <Preheader>Brightroots</Preheader>
           <h1 className="mt-5 text-4xl font-medium leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl xl:text-7xl">
-            Lorem ipsum dolor sit amet,{" "}
-            <span className="text-primary">consectetur</span> elit.
+            Build the <span className="text-primary">personal brand</span> that opens doors.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
-            nisi ut aliquip ex ea commodo consequat.
+            Premium courses, live one-on-one mentors, and a focused community —
+            built for people growing a reputation, a following, or a freelance
+            practice.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button size="lg" render={<Link href="/sign-up" />}>
-              Lorem ipsum
+              Start free
               <ArrowRight className="h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" render={<Link href="#showcase" />}>
-              Dolor sit amet
+              See what&apos;s inside
             </Button>
           </div>
           <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70">
-            <span className="opacity-60">/</span> Free to start · No card required
+            <span className="opacity-60">/</span> Free to join · No credit card needed
           </p>
         </div>
         <LabelledPlaceholder
@@ -230,16 +229,19 @@ function Hero() {
 
 function Stats() {
   const stats = [
-    { value: "10,000+", label: "Lorem ipsum" },
-    { value: "200+", label: "Dolor sit" },
-    { value: "98%", label: "Consectetur" },
-    { value: "24/7", label: "Adipiscing" },
+    { value: "10,000+", label: "Members growing with us" },
+    { value: "200+", label: "Hours of premium content" },
+    { value: "98%", label: "Would recommend to a friend" },
+    // Bilingual is part of the value prop, not an inflated stat —
+    // pairing the EN/FR token with a label that reads as a feature
+    // keeps the row honest at pre-launch numbers.
+    { value: "EN / FR", label: "Every course bilingual" },
   ];
   return (
     <section className="border-y border-border/40 bg-card/20">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8 text-center">
-          <Preheader>Trusted by learners worldwide</Preheader>
+          <Preheader>Built for people who actually use it</Preheader>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           {stats.map((stat) => (
@@ -266,33 +268,33 @@ function Features() {
   const features = [
     {
       icon: BookOpen,
-      title: "Lorem ipsum",
-      desc: "Dolor sit amet consectetur adipiscing elit sed do eiusmod tempor.",
+      title: "Courses built to be used",
+      desc: "Practical lessons from people who've done the work. No theory, no filler — just what helps you ship.",
     },
     {
       icon: Calendar,
-      title: "Dolor sit amet",
-      desc: "Ut labore et dolore magna aliqua ut enim ad minim veniam quis.",
+      title: "Real time with real mentors",
+      desc: "Book one-on-one or small-group sessions with experts who answer your questions. Two every month, included.",
     },
     {
       icon: Users,
-      title: "Consectetur",
-      desc: "Nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo.",
+      title: "A room of people climbing too",
+      desc: "Channels for every topic. Direct messages with admins and mentors. Quiet enough to focus, busy enough to matter.",
     },
     {
       icon: Languages,
-      title: "Adipiscing elit",
-      desc: "Duis aute irure dolor in reprehenderit in voluptate velit esse.",
+      title: "English and French, side by side",
+      desc: "Every course, every session, every conversation — switch languages with a click.",
     },
     {
       icon: Crown,
-      title: "Sed do eiusmod",
-      desc: "Cillum dolore eu fugiat nulla pariatur excepteur sint occaecat.",
+      title: "One subscription, everything unlocked",
+      desc: "Premium courses, live sessions, direct messages, community. One price, no upsells.",
     },
     {
       icon: Gift,
-      title: "Tempor incididunt",
-      desc: "Cupidatat non proident sunt in culpa qui officia deserunt mollit.",
+      title: "Refer a friend, grow together",
+      desc: "Send the link. When they go Pro, you both get a month free. Your network becomes your runway.",
     },
   ];
   return (
@@ -301,11 +303,11 @@ function Features() {
         <div className="mx-auto max-w-2xl text-center">
           <Preheader>Features</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            Lorem ipsum dolor sit amet consectetur
+            Everything you need to grow your name
           </h2>
           <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-            Adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore
-            magna aliqua.
+            Six pieces that work together — courses, mentorship, community,
+            and the system that ties them.
           </p>
         </div>
         <div className="mt-16 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -344,6 +346,7 @@ interface ShowcaseSectionProps {
   body: string;
   bullets: string[];
   placeholderLabel: string;
+  linkLabel: string;
   flip?: boolean;
 }
 
@@ -353,6 +356,7 @@ function ShowcaseSection({
   body,
   bullets,
   placeholderLabel,
+  linkLabel,
   flip = false,
 }: ShowcaseSectionProps) {
   return (
@@ -378,8 +382,8 @@ function ShowcaseSection({
             </li>
           ))}
         </ul>
-        <Button variant="ghost" className="mt-6 -ml-3" render={<Link href="#features" />}>
-          Lorem ipsum
+        <Button variant="ghost" className="mt-6 -ml-3" render={<Link href="/sign-up" />}>
+          {linkLabel}
           <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -397,40 +401,43 @@ function Showcase() {
       <div className="mx-auto max-w-7xl space-y-32 px-4 sm:px-6 lg:px-8">
         <ShowcaseSection
           tag="Courses"
-          title="Lorem ipsum dolor sit amet"
-          body="Consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris."
+          title="Learn from people who've done it"
+          body="Every course on Brightroots is taught by someone who actually built what they're teaching. You get the playbooks, the templates, the real decisions — not theory. Watch on any device, at your pace."
           bullets={[
-            "Lorem ipsum dolor sit amet consectetur",
-            "Adipiscing elit sed do eiusmod tempor",
-            "Incididunt ut labore et dolore magna",
-            "Aliqua ut enim ad minim veniam quis",
+            "Premium video lessons with real examples",
+            "Step-by-step progress that picks up where you left off",
+            "Bilingual — every course works in English and French",
+            "New courses added every month",
           ]}
           placeholderLabel="Course player screenshot · 4:3"
+          linkLabel="Browse the catalog"
         />
         <ShowcaseSection
           tag="Live sessions"
-          title="Dolor sit amet consectetur elit"
-          body="Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum."
+          title="Mentorship that actually shows up"
+          body="Two live sessions a month with mentors who know your field. Bring a real question, leave with a real answer. Calendar invite, reminders, and instant join — from any device."
           bullets={[
-            "Duis aute irure dolor in reprehenderit",
-            "In voluptate velit esse cillum dolore",
-            "Eu fugiat nulla pariatur excepteur sint",
-            "Occaecat cupidatat non proident sunt",
+            "Two sessions every month with your Pro membership",
+            "One-on-one for deep work, small groups for breadth",
+            "Calendar invite + reminder so you never miss one",
+            "Join from your phone, laptop, anywhere",
           ]}
           placeholderLabel="Live session schedule screenshot · 4:3"
+          linkLabel="See upcoming sessions"
           flip
         />
         <ShowcaseSection
           tag="Community"
-          title="Adipiscing elit sed do eiusmod"
-          body="Tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip."
+          title="Grow with people doing the same"
+          body="A focused community of people building their brand and their career. No algorithm, no doomscroll. Channels for every topic. Direct messages for the real conversations."
           bullets={[
-            "Excepteur sint occaecat cupidatat non",
-            "Proident sunt in culpa qui officia",
-            "Deserunt mollit anim id est laborum",
-            "Lorem ipsum dolor sit amet consectetur",
+            "Channels for courses, careers, and craft",
+            "Direct message anyone — including admins and mentors",
+            "Mentions, threads, pinned messages — everything just works",
+            "Push notifications when your name comes up",
           ]}
           placeholderLabel="Community chat screenshot · 4:3"
+          linkLabel="Step inside"
         />
       </div>
     </section>
@@ -444,16 +451,16 @@ function Showcase() {
 function Audience() {
   const personas = [
     {
-      title: "Lorem ipsum",
-      desc: "Dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore.",
+      title: "Creators & storytellers",
+      desc: "If you make things — videos, writing, photography, music — Brightroots helps you turn craft into reputation. Reach more people, on your terms.",
     },
     {
-      title: "Dolor sit amet",
-      desc: "Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo.",
+      title: "Freelancers & consultants",
+      desc: "Stop chasing every gig. Build a name strong enough that the right clients come to you. Courses on positioning, packaging, and pricing — taught by people who charge well.",
     },
     {
-      title: "Consectetur",
-      desc: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla.",
+      title: "Students & ambitious newcomers",
+      desc: "The earlier you start, the further it carries. Build the skills, the network, and the visibility that turn a job offer into the right offer.",
     },
   ];
   return (
@@ -462,7 +469,7 @@ function Audience() {
         <div className="mx-auto max-w-2xl text-center">
           <Preheader>Built for</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
-            Lorem ipsum dolor sit amet
+            Built for the work you&apos;re doing now
           </h2>
         </div>
         <div className="mt-16 grid gap-6 md:grid-cols-3">
@@ -479,10 +486,10 @@ function Audience() {
                 {p.desc}
               </p>
               <Link
-                href="#features"
+                href="/sign-up"
                 className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
               >
-                Lorem ipsum
+                See how
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
@@ -504,10 +511,10 @@ function Pricing() {
         <div className="mx-auto max-w-2xl text-center">
           <Preheader>Pricing</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
-            Lorem ipsum dolor sit amet
+            Simple pricing. Grown-up product.
           </h2>
           <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-            Consectetur adipiscing elit. Sed do eiusmod tempor incididunt.
+            Try everything that&apos;s free. Upgrade when you&apos;re ready to go further.
           </p>
         </div>
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:mx-auto lg:max-w-4xl">
@@ -521,14 +528,14 @@ function Pricing() {
               <span className="text-sm text-muted-foreground">FCFA</span>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
-              Lorem ipsum dolor sit amet consectetur adipiscing elit.
+              Get a feel for Brightroots before going Pro.
             </p>
             <ul className="mt-6 space-y-2.5">
               {[
-                "Lorem ipsum dolor",
-                "Sit amet consectetur",
-                "Adipiscing elit sed do",
-                "Eiusmod tempor",
+                "Browse the full course catalog",
+                "Watch free lessons in every course",
+                "Read the community",
+                "English and French",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -541,7 +548,7 @@ function Pricing() {
               className="mt-8 w-full"
               render={<Link href="/sign-up" />}
             >
-              Lorem ipsum
+              Join free
             </Button>
           </div>
           {/* Pro tier — highlighted */}
@@ -556,16 +563,19 @@ function Pricing() {
               </span>
               <span className="text-sm text-muted-foreground">FCFA / month</span>
             </div>
+            <p className="mt-1 text-xs text-muted-foreground/70">
+              Cancel anytime.
+            </p>
             <p className="mt-3 text-sm text-muted-foreground">
-              Consectetur adipiscing elit sed do eiusmod tempor incididunt.
+              Everything you need to build a brand that lasts.
             </p>
             <ul className="mt-6 space-y-2.5">
               {[
-                "Lorem ipsum dolor sit amet",
-                "Consectetur adipiscing elit",
-                "Sed do eiusmod tempor incididunt",
-                "Ut labore et dolore magna aliqua",
-                "Ut enim ad minim veniam",
+                "Every premium course, unlocked",
+                "Two live mentor sessions every month",
+                "Direct messages with admins and mentors",
+                "Full community access — channels, DMs, mentions",
+                "Push notifications and calendar sync",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/90">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -574,7 +584,7 @@ function Pricing() {
               ))}
             </ul>
             <Button className="mt-8 w-full" render={<Link href="/sign-up" />}>
-              Lorem ipsum
+              Start Pro
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
@@ -596,19 +606,19 @@ function FinalCta() {
         <div className="rounded-3xl border border-border/60 bg-card/40 p-12 text-center backdrop-blur-sm lg:p-16">
           <Preheader>Start today</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            Lorem ipsum dolor sit amet consectetur
+            Your brand grows when you do
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
-            Adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore
-            magna aliqua.
+            Join the people building their reputation one lesson and one
+            conversation at a time. Free to start, no card needed.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button size="lg" render={<Link href="/sign-up" />}>
-              Lorem ipsum
+              Create your free account
               <ArrowRight className="h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" render={<Link href="#pricing" />}>
-              Dolor sit amet
+              See pricing
             </Button>
           </div>
         </div>
@@ -625,19 +635,19 @@ function Footer() {
   const columns = [
     {
       heading: "Product",
-      links: ["Lorem", "Ipsum", "Dolor", "Sit"],
+      links: ["Courses", "Live sessions", "Community", "Mobile app"],
     },
     {
       heading: "Resources",
-      links: ["Amet", "Consectetur", "Adipiscing", "Elit"],
+      links: ["Help center", "Blog", "Refer a friend", "Status"],
     },
     {
       heading: "Company",
-      links: ["Sed", "Eiusmod", "Tempor", "Incididunt"],
+      links: ["About", "Contact", "Careers", "Press"],
     },
     {
       heading: "Legal",
-      links: ["Privacy", "Terms", "Cookies", "Contact"],
+      links: ["Privacy", "Terms", "Cookies", "Imprint"],
     },
   ];
   return (
@@ -647,8 +657,7 @@ function Footer() {
           <div>
             <Logo />
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Lorem ipsum dolor sit amet consectetur adipiscing elit sed do
-              eiusmod tempor.
+              Where personal brands take root.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
@@ -678,7 +687,7 @@ function Footer() {
             © {new Date().getFullYear()} Brightroots. All rights reserved.
           </p>
           <p className="font-mono uppercase tracking-[0.18em]">
-            Made with care
+            Made in West Africa, for the world
           </p>
         </div>
       </div>
