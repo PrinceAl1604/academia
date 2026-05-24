@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -18,7 +19,17 @@ import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/shared/logo";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { useFadeUp } from "@/lib/hooks/use-fade-up";
+import { CountUp } from "@/components/landing/count-up";
 import { cn } from "@/lib/utils";
+
+// Tailwind class strings reused across every fade-up section. Hoisted
+// so we tune the timing in one place. duration-700 + ease-out matches
+// the rest of the app's transitions; translate-y-6 keeps the upward
+// movement subtle (24px) — anything bigger reads as a swoosh.
+const FADE_INITIAL = "opacity-0 translate-y-6";
+const FADE_VISIBLE = "opacity-100 translate-y-0";
+const FADE_TRANSITION = "transition-all duration-700 ease-out";
 
 /**
  * Marketing landing page — Supabase-inspired anatomy.
@@ -43,6 +54,20 @@ import { cn } from "@/lib/utils";
  * real screenshots arrive).
  */
 export function LandingPage() {
+  // Enable smooth-scroll only while the landing page is mounted —
+  // setting it on <html> globally affects every page in the app, and
+  // the dashboard's quick anchor jumps feel sluggish with it on.
+  // Scoping to mount/unmount keeps it landing-only.
+  //
+  // Browsers automatically respect prefers-reduced-motion for
+  // scroll-behavior: smooth, so no manual gate needed here.
+  useEffect(() => {
+    document.documentElement.style.scrollBehavior = "smooth";
+    return () => {
+      document.documentElement.style.scrollBehavior = "";
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <LandingNav />
@@ -235,29 +260,63 @@ function Hero() {
  * ═══════════════════════════════════════════════════════════ */
 
 function Stats() {
-  const { t } = useLanguage();
-  // Numerical values stay locale-neutral (FCFA price formatted in
-  // the pricing section uses the localized string). The labels are
-  // what the i18n controls here.
-  const stats = [
-    { value: "10,000+", label: t.landing.statsLabel1 },
-    { value: "200+", label: t.landing.statsLabel2 },
-    { value: "98%", label: t.landing.statsLabel3 },
-    // Bilingual stays as "EN / FR" in both locales — it's the
-    // language pair, not translated text.
-    { value: "EN / FR", label: t.landing.statsLabel4 },
+  const { t, language } = useLanguage();
+  const [ref, inView] = useFadeUp<HTMLElement>();
+
+  // Stats split into two shapes:
+  //   - numeric → CountUp animates 0 → end (with optional suffix)
+  //   - literal → static string (used for the "EN / FR" pair which
+  //     isn't a number at all)
+  // The CountUp component locale-formats the running value so FR
+  // visitors see "10 000+" while EN visitors see "10,000+".
+  const locale = language === "fr" ? "fr-FR" : "en-US";
+  const stats: Array<
+    | { kind: "numeric"; end: number; suffix?: string; label: string }
+    | { kind: "literal"; value: string; label: string }
+  > = [
+    { kind: "numeric", end: 10000, suffix: "+", label: t.landing.statsLabel1 },
+    { kind: "numeric", end: 200, suffix: "+", label: t.landing.statsLabel2 },
+    { kind: "numeric", end: 98, suffix: "%", label: t.landing.statsLabel3 },
+    { kind: "literal", value: "EN / FR", label: t.landing.statsLabel4 },
   ];
   return (
-    <section className="border-y border-border/40 bg-card/20">
+    <section
+      ref={ref}
+      className={cn(
+        "border-y border-border/40 bg-card/20",
+        FADE_TRANSITION,
+        inView ? FADE_VISIBLE : FADE_INITIAL
+      )}
+    >
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8 text-center">
           <Preheader>{t.landing.statsPreheader}</Preheader>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
+          {stats.map((stat, i) => (
+            <div
+              key={stat.label}
+              className={cn(
+                "text-center",
+                FADE_TRANSITION,
+                inView ? FADE_VISIBLE : FADE_INITIAL
+              )}
+              // Tiny per-stat stagger (80ms) so the four numbers
+              // appear in a wave from left to right rather than
+              // landing all at once. Subtle enough that you don't
+              // consciously notice — just feels "alive".
+              style={{ transitionDelay: `${i * 80}ms` }}
+            >
               <p className="font-mono text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
-                {stat.value}
+                {stat.kind === "numeric" ? (
+                  <CountUp
+                    end={stat.end}
+                    suffix={stat.suffix}
+                    locale={locale}
+                  />
+                ) : (
+                  stat.value
+                )}
               </p>
               <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                 {stat.label}
@@ -274,8 +333,57 @@ function Stats() {
  *  4. 6-pillar feature grid
  * ═══════════════════════════════════════════════════════════ */
 
+/**
+ * Extracted so each card can call useFadeUp independently — required
+ * by the Rules of Hooks (you can't call a hook inside a .map). The
+ * `index` prop drives the stagger delay so cards appear in sequence
+ * rather than landing as a single block.
+ *
+ * Hover enhancement:
+ *   - Border shifts toward the primary green (was border-border)
+ *   - Tiny scale on the icon chip (1.0 → 1.05)
+ *   - Subtle green glow shadow appears (matches the hero glow palette)
+ * Each effect is gated behind `group-hover:` so they fire together.
+ */
+function FeatureCard({
+  icon: Icon,
+  title,
+  desc,
+  index,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc: string;
+  index: number;
+}) {
+  const [ref, inView] = useFadeUp<HTMLDivElement>();
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "group rounded-2xl border border-border/60 bg-card/40 p-6",
+        "transition-all duration-300 ease-out",
+        "hover:-translate-y-1 hover:border-primary/40 hover:bg-card/60",
+        "hover:shadow-[0_0_40px_-10px_oklch(var(--primary)/0.25)]",
+        FADE_TRANSITION,
+        inView ? FADE_VISIBLE : FADE_INITIAL
+      )}
+      style={{ transitionDelay: `${index * 80}ms` }}
+    >
+      <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
+        <Icon className="h-5 w-5" />
+      </div>
+      <h3 className="text-base font-medium text-foreground">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+        {desc}
+      </p>
+    </div>
+  );
+}
+
 function Features() {
   const { t } = useLanguage();
+  const [headerRef, headerInView] = useFadeUp<HTMLDivElement>();
   const features = [
     { icon: BookOpen, title: t.landing.feature1Title, desc: t.landing.feature1Desc },
     { icon: Calendar, title: t.landing.feature2Title, desc: t.landing.feature2Desc },
@@ -287,7 +395,14 @@ function Features() {
   return (
     <section id="features" className="relative py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
+        <div
+          ref={headerRef}
+          className={cn(
+            "mx-auto max-w-2xl text-center",
+            FADE_TRANSITION,
+            headerInView ? FADE_VISIBLE : FADE_INITIAL
+          )}
+        >
           <Preheader>{t.landing.featuresPreheader}</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             {t.landing.featuresTitle}
@@ -297,25 +412,15 @@ function Features() {
           </p>
         </div>
         <div className="mt-16 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => {
-            const Icon = f.icon;
-            return (
-              <div
-                key={f.title}
-                className="group rounded-2xl border border-border/60 bg-card/40 p-6 transition-all hover:-translate-y-0.5 hover:border-border hover:bg-card/60"
-              >
-                <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h3 className="text-base font-medium text-foreground">
-                  {f.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {f.desc}
-                </p>
-              </div>
-            );
-          })}
+          {features.map((f, i) => (
+            <FeatureCard
+              key={f.title}
+              icon={f.icon}
+              title={f.title}
+              desc={f.desc}
+              index={i}
+            />
+          ))}
         </div>
       </div>
     </section>
@@ -345,11 +450,15 @@ function ShowcaseSection({
   linkLabel,
   flip = false,
 }: ShowcaseSectionProps) {
+  const [ref, inView] = useFadeUp<HTMLDivElement>();
   return (
     <div
+      ref={ref}
       className={cn(
         "grid items-center gap-12 lg:grid-cols-2 lg:gap-16",
-        flip && "lg:[&>div:first-child]:order-2"
+        flip && "lg:[&>div:first-child]:order-2",
+        FADE_TRANSITION,
+        inView ? FADE_VISIBLE : FADE_INITIAL
       )}
     >
       <div>
@@ -435,8 +544,52 @@ function Showcase() {
  *  6. Audience matrix
  * ═══════════════════════════════════════════════════════════ */
 
+function PersonaCard({
+  title,
+  desc,
+  index,
+  ctaLabel,
+}: {
+  title: string;
+  desc: string;
+  index: number;
+  ctaLabel: string;
+}) {
+  const [ref, inView] = useFadeUp<HTMLDivElement>();
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "group rounded-2xl border border-border/60 bg-card/40 p-8",
+        "transition-all duration-300 ease-out",
+        "hover:-translate-y-1 hover:border-primary/40",
+        "hover:shadow-[0_0_40px_-10px_oklch(var(--primary)/0.25)]",
+        FADE_TRANSITION,
+        inView ? FADE_VISIBLE : FADE_INITIAL
+      )}
+      style={{ transitionDelay: `${index * 100}ms` }}
+    >
+      <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
+        <Sparkles className="h-5 w-5" />
+      </div>
+      <h3 className="text-lg font-medium text-foreground">{title}</h3>
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        {desc}
+      </p>
+      <Link
+        href="/sign-up"
+        className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-transform duration-300 hover:gap-2 hover:underline"
+      >
+        {ctaLabel}
+        <ArrowRight className="h-3.5 w-3.5" />
+      </Link>
+    </div>
+  );
+}
+
 function Audience() {
   const { t } = useLanguage();
+  const [headerRef, headerInView] = useFadeUp<HTMLDivElement>();
   const personas = [
     { title: t.landing.audience1Title, desc: t.landing.audience1Desc },
     { title: t.landing.audience2Title, desc: t.landing.audience2Desc },
@@ -445,33 +598,28 @@ function Audience() {
   return (
     <section id="audience" className="border-t border-border/40 bg-card/10 py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
+        <div
+          ref={headerRef}
+          className={cn(
+            "mx-auto max-w-2xl text-center",
+            FADE_TRANSITION,
+            headerInView ? FADE_VISIBLE : FADE_INITIAL
+          )}
+        >
           <Preheader>{t.landing.audiencePreheader}</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
             {t.landing.audienceTitle}
           </h2>
         </div>
         <div className="mt-16 grid gap-6 md:grid-cols-3">
-          {personas.map((p) => (
-            <div
+          {personas.map((p, i) => (
+            <PersonaCard
               key={p.title}
-              className="rounded-2xl border border-border/60 bg-card/40 p-8"
-            >
-              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <h3 className="text-lg font-medium text-foreground">{p.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {p.desc}
-              </p>
-              <Link
-                href="/sign-up"
-                className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-              >
-                {t.landing.audienceLinkLabel}
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
+              title={p.title}
+              desc={p.desc}
+              index={i}
+              ctaLabel={t.landing.audienceLinkLabel}
+            />
           ))}
         </div>
       </div>
@@ -485,10 +633,19 @@ function Audience() {
 
 function Pricing() {
   const { t } = useLanguage();
+  const [headerRef, headerInView] = useFadeUp<HTMLDivElement>();
+  const [cardsRef, cardsInView] = useFadeUp<HTMLDivElement>();
   return (
     <section id="pricing" className="relative py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
+        <div
+          ref={headerRef}
+          className={cn(
+            "mx-auto max-w-2xl text-center",
+            FADE_TRANSITION,
+            headerInView ? FADE_VISIBLE : FADE_INITIAL
+          )}
+        >
           <Preheader>{t.landing.pricingPreheader}</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
             {t.landing.pricingTitle}
@@ -497,9 +654,18 @@ function Pricing() {
             {t.landing.pricingSubtitle}
           </p>
         </div>
-        <div className="mt-16 grid gap-6 md:grid-cols-2 lg:mx-auto lg:max-w-4xl">
-          {/* Free tier */}
-          <div className="rounded-2xl border border-border/60 bg-card/40 p-8">
+        <div
+          ref={cardsRef}
+          className={cn(
+            "mt-16 grid gap-6 md:grid-cols-2 lg:mx-auto lg:max-w-4xl",
+            FADE_TRANSITION,
+            cardsInView ? FADE_VISIBLE : FADE_INITIAL
+          )}
+        >
+          {/* Free tier — gentle hover lift, no glow (the Pro card
+              owns the green glow so the visual hierarchy stays
+              clear about which plan we want them on). */}
+          <div className="rounded-2xl border border-border/60 bg-card/40 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-border">
             <h3 className="text-lg font-medium text-foreground">{t.landing.pricingFreeName}</h3>
             <div className="mt-4 flex items-baseline gap-1">
               <span className="font-mono text-4xl font-medium tracking-tight text-foreground">
@@ -531,8 +697,11 @@ function Pricing() {
               {t.landing.pricingFreeCta}
             </Button>
           </div>
-          {/* Pro tier — highlighted */}
-          <div className="relative rounded-2xl border border-primary/40 bg-card/60 p-8 shadow-[0_0_60px_-20px_oklch(var(--primary)/0.4)]">
+          {/* Pro tier — highlighted. On hover the green glow shadow
+              intensifies (was -20px feathered, becomes -10px) AND the
+              card lifts 1px — reads as "leaning toward the visitor"
+              when they consider it. */}
+          <div className="relative rounded-2xl border border-primary/40 bg-card/60 p-8 shadow-[0_0_60px_-20px_oklch(var(--primary)/0.4)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_80px_-10px_oklch(var(--primary)/0.6)]">
             <Badge className="absolute -top-3 left-8 bg-primary text-primary-foreground">
               {t.landing.pricingProBadge}
             </Badge>
@@ -580,11 +749,19 @@ function Pricing() {
 
 function FinalCta() {
   const { t } = useLanguage();
+  const [ref, inView] = useFadeUp<HTMLDivElement>();
   return (
     <section className="relative overflow-hidden py-24 lg:py-32">
       <HeroBackdrop />
       <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-border/60 bg-card/40 p-12 text-center backdrop-blur-sm lg:p-16">
+        <div
+          ref={ref}
+          className={cn(
+            "rounded-3xl border border-border/60 bg-card/40 p-12 text-center backdrop-blur-sm lg:p-16",
+            FADE_TRANSITION,
+            inView ? FADE_VISIBLE : FADE_INITIAL
+          )}
+        >
           <Preheader>{t.landing.finalCtaPreheader}</Preheader>
           <h2 className="mt-4 text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             {t.landing.finalCtaTitle}
