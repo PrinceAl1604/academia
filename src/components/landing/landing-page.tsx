@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -30,6 +30,74 @@ import { cn } from "@/lib/utils";
 const FADE_INITIAL = "opacity-0 translate-y-6";
 const FADE_VISIBLE = "opacity-100 translate-y-0";
 const FADE_TRANSITION = "transition-all duration-700 ease-out";
+
+/**
+ * Returns true once the page has scrolled past `threshold` pixels.
+ * Used by the sticky-nav fade-in and could be reused for "back to
+ * top" buttons etc. Listener uses passive:true so scrolling stays
+ * smooth on mobile; browsers throttle scroll events natively so no
+ * manual rAF debounce is needed at this volume.
+ */
+function useScrolled(threshold: number) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > threshold);
+    onScroll(); // sync state with current scroll position on mount
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [threshold]);
+  return scrolled;
+}
+
+/**
+ * Fixed-position progress bar pinned to the very top of the viewport.
+ * Width = scrollY / (scrollHeight - viewportHeight). Updates on every
+ * scroll tick via direct style mutation (state-based would cause a
+ * React render per tick, which dominates the budget on long pages).
+ *
+ * Rendered before the nav so it sits visually above it; z-[60] beats
+ * the nav's z-50.
+ */
+function ScrollProgress() {
+  // Direct style mutation on every scroll tick — using React state
+  // would re-render the whole component (and parents) per tick, which
+  // adds up fast on long pages. The bar's only DOM property that
+  // changes is `width`, so we set it imperatively. The render output
+  // never changes after mount.
+  const barRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const update = () => {
+      const scrolled = window.scrollY;
+      const max =
+        document.documentElement.scrollHeight - window.innerHeight;
+      const pct = max > 0 ? (scrolled / max) * 100 : 0;
+      el.style.width = `${pct}%`;
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5 bg-transparent"
+    >
+      <div
+        ref={barRef}
+        className="h-full bg-primary transition-[width] duration-75 ease-out"
+        style={{ width: "0%" }}
+      />
+    </div>
+  );
+}
 
 /**
  * Marketing landing page — Supabase-inspired anatomy.
@@ -70,6 +138,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <ScrollProgress />
       <LandingNav />
       <main>
         <Hero />
@@ -135,9 +204,12 @@ function HeroBackdrop() {
         aria-hidden
         className="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle,_oklch(var(--muted-foreground)/0.18)_1px,_transparent_1px)] [background-size:24px_24px] opacity-50"
       />
+      {/* H1 — slow opacity pulse (5s cycle, 1 → 0.65 → 1) defined in
+          globals.css as `.animate-glow-pulse`. Subtle enough that you
+          don't consciously notice motion, just feels "alive". */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-32 h-[520px] [background:radial-gradient(ellipse_60%_50%_at_50%_0%,_oklch(var(--primary)/0.18)_0%,_transparent_70%)]"
+        className="animate-glow-pulse pointer-events-none absolute inset-x-0 -top-32 h-[520px] [background:radial-gradient(ellipse_60%_50%_at_50%_0%,_oklch(var(--primary)/0.18)_0%,_transparent_70%)]"
       />
     </>
   );
@@ -159,37 +231,52 @@ function Preheader({ children }: { children: React.ReactNode }) {
  *  1. Navbar
  * ═══════════════════════════════════════════════════════════ */
 
+// Tailwind utility chain for the nav-link underline-draw effect (T1).
+// Hoisted so all 4 links share the exact same chain — easier to tune.
+//   - `relative`: parent for the ::after pseudo-element
+//   - `after:absolute inset-x-0 -bottom-1 h-px`: 1px underline beneath
+//   - `after:bg-current`: matches the link's text color (gray → white
+//     on hover, no extra color logic needed)
+//   - `after:origin-left after:scale-x-0`: starts hidden, anchored left
+//   - `after:transition-transform after:duration-200 after:ease-out`
+//   - `hover:after:scale-x-100`: full-width on hover
+const NAV_LINK_CLASS =
+  "relative text-sm text-muted-foreground transition-colors hover:text-foreground " +
+  "after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:bg-current " +
+  "after:origin-left after:scale-x-0 after:transition-transform after:duration-200 after:ease-out " +
+  "hover:after:scale-x-100";
+
 function LandingNav() {
   const { t } = useLanguage();
+  // P3 — nav is transparent at top, solidifies after ~60px scroll.
+  // The threshold is small (not 200+) so the effect kicks in as
+  // soon as the user starts engaging with the page, not after they
+  // pass the hero.
+  const scrolled = useScrolled(60);
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-md">
+    <header
+      className={cn(
+        "fixed inset-x-0 top-0 z-50 transition-all duration-300 ease-out",
+        scrolled
+          ? "border-b border-border/40 bg-background/70 backdrop-blur-md"
+          : "border-b border-transparent bg-transparent"
+      )}
+    >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
           <Logo />
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
-          <a
-            href="#features"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
+          <a href="#features" className={NAV_LINK_CLASS}>
             {t.landing.navFeatures}
           </a>
-          <a
-            href="#showcase"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
+          <a href="#showcase" className={NAV_LINK_CLASS}>
             {t.landing.navHowItWorks}
           </a>
-          <a
-            href="#audience"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
+          <a href="#audience" className={NAV_LINK_CLASS}>
             {t.landing.navAudience}
           </a>
-          <a
-            href="#pricing"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
+          <a href="#pricing" className={NAV_LINK_CLASS}>
             {t.landing.navPricing}
           </a>
         </nav>
@@ -470,8 +557,30 @@ function ShowcaseSection({
           {body}
         </p>
         <ul className="mt-6 space-y-2.5">
-          {bullets.map((b) => (
-            <li key={b} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+          {bullets.map((b, i) => (
+            // S1 — each bullet fades in independently with a stagger.
+            // Delay = 400 + i*80ms from when the section becomes
+            // in-view, so bullets start appearing as the parent
+            // section's 700ms fade is settling. Last bullet visible
+            // ~1140ms after the section first enters the viewport.
+            //
+            // Note on CSS opacity composition: while the PARENT
+            // section is at opacity-0, its bullets are invisible
+            // regardless of their own opacity state (multiplicative).
+            // Once the parent reaches opacity-1, the bullets'
+            // own delayed transition becomes visible — giving the
+            // staggered "appear" effect.
+            <li
+              key={b}
+              className={cn(
+                "flex items-start gap-2.5 text-sm text-muted-foreground",
+                "transition-all duration-500 ease-out",
+                inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+              )}
+              style={{
+                transitionDelay: inView ? `${400 + i * 80}ms` : "0ms",
+              }}
+            >
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <span>{b}</span>
             </li>

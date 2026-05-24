@@ -252,3 +252,29 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ─── Landing-page animations ───────────────────────────────────────────
+   Lives here (not in landing-page.tsx) because Tailwind's animate-pulse
+   is the wrong shape: too fast (2s) and too dramatic (1 → 0.5). The
+   hero glow needs a slow, gentle breath that signals "this surface is
+   alive" without competing with the headline for attention.
+
+   5s cycle + 1 → 0.65 range was tuned by eye against the dot-grid
+   backdrop. Faster reads as "hover state stuck on"; slower reads as
+   nothing animating at all.
+
+   prefers-reduced-motion: animation disabled outright. Visitors with
+   the OS-level setting see a static glow.
+*/
+@keyframes brightroots-glow-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+.animate-glow-pulse {
+  animation: brightroots-glow-pulse 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow-pulse {
+    animation: none;
+  }
+}
