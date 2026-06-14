@@ -50,6 +50,7 @@ export async function POST(req: Request) {
     starts_at?: string;
     duration_minutes?: number;
     max_attendees?: number;
+    meeting_url?: string | null;
   };
   try {
     body = await req.json();
@@ -91,6 +92,8 @@ export async function POST(req: Request) {
     update.duration_minutes = body.duration_minutes;
   if (body.max_attendees !== undefined)
     update.max_attendees = body.max_attendees;
+  if (body.meeting_url !== undefined)
+    update.meeting_url = body.meeting_url?.trim() || null;
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });

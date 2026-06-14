@@ -653,6 +653,12 @@ export const translations = {
       formErrorPast: "Start time must be in the future",
       formErrorTitle: "Title is required",
       formErrorCapacity: "Group sessions need at least 2 attendees",
+      formErrorMeetingUrl: "Enter a valid https:// meeting link",
+      // Meeting link (Zoom / Google Meet / etc.)
+      formMeetingUrlLabel: "Meeting link",
+      formMeetingUrlPlaceholder: "https://zoom.us/j/…",
+      formMeetingUrlHint:
+        "Paste the Zoom (or other) join link. Students click it to join. You can add it later.",
       // List
       listColTitle: "Title",
       listColType: "Type",
@@ -694,11 +700,19 @@ export const translations = {
       errorFull: "This slot is full.",
       errorGeneric: "Something went wrong. Please try again.",
       // Room lifecycle states
-      roomTooEarlyTitle: "Doors aren't open yet",
+      roomTooEarlyTitle: "Not open yet",
       roomTooEarlyBody:
-        "The room opens 15 minutes before the session starts. Hang tight.",
+        "The join button appears 15 minutes before the session starts. Hang tight.",
       roomOpensIn: "Opens in {time}",
-      roomTestSetup: "Test camera & mic",
+      // Live — Join on Zoom
+      roomLiveTitle: "The session is live",
+      roomLiveBody:
+        "Click below to join. It opens in Zoom (app or browser).",
+      roomJoinButton: "Join on Zoom",
+      roomNoLinkStudent:
+        "The host hasn't added the join link yet. Refresh in a moment — it'll appear here.",
+      roomNoLinkAdmin:
+        "No meeting link set for this slot. Add one via Edit so attendees can join.",
       roomEndedTitle: "This session has ended",
       roomEndedBody:
         "Hope it went well. Browse upcoming slots if you'd like to book another.",
@@ -1566,6 +1580,11 @@ export const translations = {
       formErrorPast: "L'heure de début doit être dans le futur",
       formErrorTitle: "Le titre est requis",
       formErrorCapacity: "Les sessions de groupe doivent accueillir au moins 2 personnes",
+      formErrorMeetingUrl: "Entrez un lien de réunion https:// valide",
+      formMeetingUrlLabel: "Lien de la réunion",
+      formMeetingUrlPlaceholder: "https://zoom.us/j/…",
+      formMeetingUrlHint:
+        "Collez le lien Zoom (ou autre). Les étudiants cliquent dessus pour rejoindre. Vous pouvez l'ajouter plus tard.",
       listColTitle: "Titre",
       listColType: "Type",
       listColStartsAt: "Début",
@@ -1600,11 +1619,18 @@ export const translations = {
       errorCap: "Vous avez déjà réservé 2 sessions ce mois-ci.",
       errorFull: "Ce créneau est complet.",
       errorGeneric: "Une erreur s'est produite. Veuillez réessayer.",
-      roomTooEarlyTitle: "La salle n'est pas encore ouverte",
+      roomTooEarlyTitle: "Pas encore ouvert",
       roomTooEarlyBody:
-        "La salle ouvre 15 minutes avant le début de la session. Patience.",
+        "Le bouton pour rejoindre apparaît 15 minutes avant le début de la session. Patience.",
       roomOpensIn: "Ouvre dans {time}",
-      roomTestSetup: "Tester caméra & micro",
+      roomLiveTitle: "La session est en direct",
+      roomLiveBody:
+        "Cliquez ci-dessous pour rejoindre. Ça s'ouvre dans Zoom (app ou navigateur).",
+      roomJoinButton: "Rejoindre sur Zoom",
+      roomNoLinkStudent:
+        "L'hôte n'a pas encore ajouté le lien. Actualisez dans un instant — il apparaîtra ici.",
+      roomNoLinkAdmin:
+        "Aucun lien de réunion pour ce créneau. Ajoutez-en un via Modifier pour que les participants puissent rejoindre.",
       roomEndedTitle: "Cette session est terminée",
       roomEndedBody:
         "Nous espérons que ça s'est bien passé. Parcourez les créneaux à venir si vous souhaitez réserver à nouveau.",

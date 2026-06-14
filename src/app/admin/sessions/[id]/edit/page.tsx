@@ -41,6 +41,7 @@ interface SessionSlot {
   starts_at: string;
   duration_minutes: number;
   max_attendees: number;
+  meeting_url: string | null;
   status: "open" | "cancelled" | "completed";
 }
 
@@ -59,6 +60,7 @@ export default function AdminSlotEditPage({
   const [startsAt, setStartsAt] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [maxAttendees, setMaxAttendees] = useState(1);
+  const [meetingUrl, setMeetingUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +87,7 @@ export default function AdminSlotEditPage({
         setStartsAt(localIso);
         setDurationMinutes(s.duration_minutes);
         setMaxAttendees(s.max_attendees);
+        setMeetingUrl(s.meeting_url ?? "");
       }
       setLoading(false);
     })();
@@ -108,6 +111,20 @@ export default function AdminSlotEditPage({
       setError(t.sessions.formErrorCapacity);
       return;
     }
+    // Validate the meeting link if present: must be a valid https URL.
+    const trimmedUrl = meetingUrl.trim();
+    if (trimmedUrl) {
+      let parsed: URL | null = null;
+      try {
+        parsed = new URL(trimmedUrl);
+      } catch {
+        parsed = null;
+      }
+      if (!parsed || parsed.protocol !== "https:") {
+        setError(t.sessions.formErrorMeetingUrl);
+        return;
+      }
+    }
 
     setSaving(true);
     const res = await fetch("/api/sessions/update-slot", {
@@ -120,6 +137,9 @@ export default function AdminSlotEditPage({
         starts_at: new Date(startsAt).toISOString(),
         duration_minutes: durationMinutes,
         max_attendees: maxAttendees,
+        // Empty string -> null so "cleared the field" actually removes
+        // the link rather than storing "".
+        meeting_url: trimmedUrl || null,
       }),
     });
     if (!res.ok) {
@@ -264,6 +284,22 @@ export default function AdminSlotEditPage({
                   {t.sessions.formCapacityHint}
                 </p>
               )}
+            </div>
+
+            {/* Zoom / meeting link */}
+            <div className="space-y-2">
+              <Label htmlFor="meeting_url">{t.sessions.formMeetingUrlLabel}</Label>
+              <Input
+                id="meeting_url"
+                type="url"
+                inputMode="url"
+                value={meetingUrl}
+                onChange={(e) => setMeetingUrl(e.target.value)}
+                placeholder={t.sessions.formMeetingUrlPlaceholder}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t.sessions.formMeetingUrlHint}
+              </p>
             </div>
 
             {error && (

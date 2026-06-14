@@ -24,14 +24,15 @@ import { ArrowLeft, Loader2, User, Users, Repeat } from "lucide-react";
 /**
  * Admin Sessions — create slot
  *
- * Wires up the form for publishing a new live session slot. The room
- * name is auto-generated as `brightroots-{slot-id}` server-side after
- * insert (the DB requires the room_name at insert time, so we generate
- * a UUID-shortened slug client-side and pass it in).
+ * Wires up the form for publishing a new live session slot. The admin
+ * pastes the Zoom (or any video) join link; students get a
+ * "Join on Zoom" button on the session page. The link is optional at
+ * creation — the admin can publish the slot and add the link later
+ * via the edit form before it goes live.
  *
- * The Daily.co join URL becomes `https://{NEXT_PUBLIC_DAILY_DOMAIN}.daily.co/{room_name}`
- * — the actual Daily room is created lazily on first visit by
- * /api/sessions/ensure-room. We just store the name here.
+ * Recurring publication shares ONE link across all occurrences — a
+ * recurring Zoom meeting has a single persistent join URL, so the
+ * admin pastes it once and it applies to every week.
  */
 
 type SessionType = "one_on_one" | "group";
@@ -43,6 +44,7 @@ interface SlotInput {
   startsAt: string; // ISO string from datetime-local input
   durationMinutes: number;
   maxAttendees: number;
+  meetingUrl: string;
 }
 
 /**
@@ -115,20 +117,25 @@ function validateSlot(
     return t.sessions.formErrorCapacity;
   }
 
-  return null;
-}
+  // Meeting link — optional at creation (admin can add it later), but
+  // if provided it must be a valid https URL. We don't hard-require
+  // "zoom.us" so the admin can paste a Google Meet / Teams link too,
+  // but we do require https so we never render an http:// or
+  // garbage-string join button.
+  const url = input.meetingUrl.trim();
+  if (url) {
+    let parsed: URL | null = null;
+    try {
+      parsed = new URL(url);
+    } catch {
+      parsed = null;
+    }
+    if (!parsed || parsed.protocol !== "https:") {
+      return t.sessions.formErrorMeetingUrl;
+    }
+  }
 
-/**
- * Generate a stable, URL-safe room name. Used as the unique part of
- * the Daily room URL. Format: `brightroots-{12 hex chars}`. We don't
- * use the slot's UUID directly because Daily room names with long
- * hyphenated UUIDs read badly in URLs — short hex is cleaner.
- */
-function generateRoomName(): string {
-  const hex = Array.from({ length: 12 }, () =>
-    Math.floor(Math.random() * 16).toString(16)
-  ).join("");
-  return `brightroots-${hex}`;
+  return null;
 }
 
 export default function AdminSessionsNewPage() {
@@ -142,6 +149,7 @@ export default function AdminSessionsNewPage() {
   const [startsAt, setStartsAt] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [maxAttendees, setMaxAttendees] = useState(1);
+  const [meetingUrl, setMeetingUrl] = useState("");
   // Recurring publication: when on, we insert N rows at once with
   // the same time-of-day across consecutive weeks. Saves the admin
   // from filling this form 4-8 times per month for office hours.
@@ -172,6 +180,7 @@ export default function AdminSessionsNewPage() {
       startsAt,
       durationMinutes,
       maxAttendees,
+      meetingUrl,
     };
 
     const validationError = validateSlot(input, t);
@@ -183,10 +192,12 @@ export default function AdminSessionsNewPage() {
     setSaving(true);
 
     // Build the row(s) to insert. Recurring weekly = N rows with the
-    // same time-of-day pushed forward by 7 days each. Each row gets
-    // its own random room_name so Daily creates distinct rooms.
+    // same time-of-day pushed forward by 7 days each. All occurrences
+    // share the SAME meeting_url — a recurring Zoom meeting has one
+    // persistent join link.
     const baseStart = new Date(input.startsAt);
     const count = repeatWeekly ? Math.max(1, Math.min(52, repeatWeeks)) : 1;
+    const trimmedUrl = input.meetingUrl.trim() || null;
     const rows = [];
     for (let i = 0; i < count; i++) {
       const dt = new Date(baseStart);
@@ -199,7 +210,7 @@ export default function AdminSessionsNewPage() {
         starts_at: dt.toISOString(),
         duration_minutes: input.durationMinutes,
         max_attendees: input.maxAttendees,
-        room_name: generateRoomName(),
+        meeting_url: trimmedUrl,
       });
     }
 
@@ -369,6 +380,24 @@ export default function AdminSessionsNewPage() {
                   {t.sessions.formCapacityHint}
                 </p>
               )}
+            </div>
+
+            {/* Zoom / meeting link — what the student clicks to join.
+                 Optional at creation: the admin can publish the slot
+                 now and paste the link later via Edit. */}
+            <div className="space-y-2">
+              <Label htmlFor="meeting_url">{t.sessions.formMeetingUrlLabel}</Label>
+              <Input
+                id="meeting_url"
+                type="url"
+                inputMode="url"
+                value={meetingUrl}
+                onChange={(e) => setMeetingUrl(e.target.value)}
+                placeholder={t.sessions.formMeetingUrlPlaceholder}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t.sessions.formMeetingUrlHint}
+              </p>
             </div>
 
             {/* Recurrence — toggle + week count.

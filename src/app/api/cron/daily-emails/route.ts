@@ -6,18 +6,16 @@ import {
   sendInactiveNudgeEmail,
   sendSessionReminderEmail,
 } from "@/lib/email";
-import { getDailyMeetingParticipants } from "@/lib/daily";
 import { mapWithConcurrency } from "@/lib/parallel";
 
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app";
 
-// Concurrency caps — Resend's free tier is 10 req/s, Daily's is 5 req/s.
-// 5 here keeps us comfortably under both while pipelining most of the
-// email-send wall time. Was sequential (await in for-loop) before, which
-// risked Vercel's 10-s function timeout at scale.
+// Resend's free tier is 10 req/s. 5 in flight keeps us comfortably under
+// while pipelining most of the email-send wall time. Was sequential
+// (await in for-loop) before, which risked Vercel's 10-s function
+// timeout at scale.
 const EMAIL_CONCURRENCY = 5;
-const DAILY_CONCURRENCY = 3;
 
 /**
  * True iff the user has muted this email category in their
@@ -77,7 +75,6 @@ export async function GET(req: Request) {
     nudges: 0,
     sessionReminders: 0,
     sessionsCompleted: 0,
-    noShowsFlagged: 0,
     errors: [] as string[],
   };
 
@@ -326,13 +323,10 @@ export async function GET(req: Request) {
   // is 240 min, so anything older than (240+30)min from now is
   // definitely past), then resolve per-row in app code.
   try {
-    const widestEndCutoff = new Date(
-      now.getTime() - (240 + 30) * 60 * 1000
-    ); // anything older than this is DEFINITELY past
     const earliestPossiblyPast = new Date(now.getTime() - 30 * 60 * 1000);
     const { data: candidates } = await supabase
       .from("session_slots")
-      .select("id, starts_at, duration_minutes, room_name")
+      .select("id, starts_at, duration_minutes")
       .eq("status", "open")
       .lte("starts_at", earliestPossiblyPast.toISOString())
       .gte("starts_at", new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString());
@@ -354,92 +348,14 @@ export async function GET(req: Request) {
         .eq("status", "open");
       results.sessionsCompleted = toComplete.length;
 
-      // For each just-completed slot, query Daily for the meeting's
-      // participant list and flag bookings whose user didn't appear.
-      // No-shows still consume the user's monthly cap (that's the
-      // whole point — book → ghost → cap is gone, so they think
-      // twice next time).
-      //
-      // Two perf wins on this block:
-      //  1. Pull room_name in the original candidates query so we
-      //     don't issue a follow-up SELECT per slot.
-      //  2. mapWithConcurrency at DAILY_CONCURRENCY=3 — Daily's free
-      //     tier rate-limits at 5 req/s, so 3 in flight gives slack
-      //     for parallel cron jobs without 429s.
-      const slotMeta = new Map<string, { room_name: string }>();
-      for (const c of candidates ?? []) {
-        const r = c as { id: string; room_name?: string };
-        if (r.room_name) slotMeta.set(r.id, { room_name: r.room_name });
-      }
-
-      await mapWithConcurrency(toComplete, DAILY_CONCURRENCY, async (slotId) => {
-        try {
-          const meta = slotMeta.get(slotId);
-          if (!meta) return;
-          const roomName = meta.room_name;
-
-          const participants = await getDailyMeetingParticipants(roomName);
-          // Empty set is informative — meeting never happened. We
-          // don't flag the booking as no-show in that case (the host
-          // didn't show up either). Skip.
-          if (participants.length === 0) return;
-
-          // Pre-compute the lookup sets once per slot. Sessions with a
-          // server-minted token report participant.user_id directly →
-          // exact UUID match. Sessions joined before the token mint
-          // was deployed (or by anyone using the legacy URL flow)
-          // only have user_name → fall back to fuzzy substring match.
-          const userIdSet = new Set(
-            participants.map((p) => p.user_id).filter(Boolean) as string[]
-          );
-          const nameSet = participants.map((p) => p.name).filter(Boolean);
-
-          const { data: slotBookings } = await supabase
-            .from("session_bookings")
-            .select("id, user_id, users!inner(name, email)")
-            .eq("slot_id", slotId)
-            .is("cancelled_at", null)
-            .is("no_show_at", null);
-
-          for (const row of slotBookings ?? []) {
-            const r = row as unknown as {
-              id: string;
-              user_id: string;
-              users: { name: string | null; email: string };
-            };
-            // 1) Exact match by Daily-token user_id (preferred).
-            let attended = userIdSet.has(r.user_id);
-
-            // 2) Fuzzy fallback for legacy / token-less joins.
-            if (!attended) {
-              const u = r.users;
-              const candidatesLocal = [
-                u.name?.toLowerCase().trim(),
-                u.email.split("@")[0].toLowerCase().trim(),
-                u.name?.split(" ")[0].toLowerCase().trim(),
-              ].filter(Boolean) as string[];
-              attended = candidatesLocal.some((c) =>
-                nameSet.some((p) => p.includes(c) || c.includes(p))
-              );
-            }
-
-            if (!attended) {
-              await supabase
-                .from("session_bookings")
-                .update({ no_show_at: new Date().toISOString() })
-                .eq("id", r.id);
-              results.noShowsFlagged++;
-            }
-          }
-        } catch (err) {
-          results.errors.push(
-            `no_show_check_${slotId}:${String(err)}`
-          );
-        }
-      });
+      // No-show auto-detection used to live here — it queried Daily's
+      // /meetings participant API to flag bookings whose user never
+      // joined. With sessions moved to externally-hosted Zoom links
+      // (no provider API integration), we can't observe attendance,
+      // so that detection is gone. Bookings simply auto-complete.
+      // If no-show tracking matters later, an admin-facing "mark
+      // no-show" control on the slot detail page is the lightest path.
     }
-    // widestEndCutoff intentionally referenced via comment for context
-    void widestEndCutoff;
   } catch (err) {
     results.errors.push(`auto_complete:${String(err)}`);
   }
@@ -465,7 +381,6 @@ export async function GET(req: Request) {
         nudges: results.nudges,
         sessionReminders: results.sessionReminders,
         sessionsCompleted: results.sessionsCompleted,
-        noShowsFlagged: results.noShowsFlagged,
       },
       errors: results.errors.length > 0 ? results.errors : null,
       duration_ms: durationMs,
@@ -513,7 +428,6 @@ export async function GET(req: Request) {
       nudges: results.nudges,
       sessionReminders: results.sessionReminders,
       sessionsCompleted: results.sessionsCompleted,
-      noShowsFlagged: results.noShowsFlagged,
     },
     errors: results.errors.length > 0 ? results.errors : undefined,
     duration_ms: durationMs,

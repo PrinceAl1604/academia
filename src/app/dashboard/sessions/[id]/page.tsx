@@ -24,25 +24,25 @@ import {
 /**
  * Live session room — `/dashboard/sessions/[id]`
  *
- * Three lifecycle states gate the iframe:
+ * Three lifecycle states gate the join button:
  *
  *   1. PRE  — current time is more than 15 min before slot start.
- *             Render a countdown card; iframe is hidden so users don't
- *             join an empty room and wonder if they're in the right place.
+ *             Render a countdown card; the join button is hidden so
+ *             users don't jump into a meeting that hasn't started.
  *
  *   2. LIVE — within [start - 15min, start + duration + 30min buffer].
- *             Iframe renders — actual Daily.co meeting time.
+ *             Show a "Join on Zoom" button pointing at the admin-set
+ *             meeting_url, which opens Zoom (native app or browser).
  *
  *   3. PAST — past the LIVE window OR slot.status is completed/cancelled.
- *             Show a closing card with a back link. Iframe is hidden so
- *             we don't burn an embed on a meeting that's done.
+ *             Show a closing card with a back link.
  *
  * Authorization (orthogonal to lifecycle): user must have an active
  * (non-cancelled) booking, OR be admin. Anyone else gets bounced.
  *
- * The actual Daily.co room is created lazily on first visit via
- * /api/sessions/ensure-room — idempotent, so multiple visits don't
- * mint multiple rooms.
+ * The meeting link is pasted by the admin when creating/editing the
+ * slot (Zoom, Google Meet, etc.). No video is embedded — joining
+ * happens in the external client.
  */
 
 interface SessionSlot {
@@ -53,7 +53,7 @@ interface SessionSlot {
   starts_at: string;
   duration_minutes: number;
   max_attendees: number;
-  room_name: string;
+  meeting_url: string | null;
   status: "open" | "cancelled" | "completed";
   /** Set when admin first lands on the room — promotes slot to LIVE
    * for students even before the scheduled start time. NULL = host
@@ -134,13 +134,11 @@ export default function SessionRoomPage({
   // Compute the lifecycle state from the slot + the current tick.
   // useMemo with `tick` as a dep means it re-evaluates every second.
   //
-  // Admin bypass: the host wants to be able to prep the Daily room
-  // (test screenshare, drop a welcome message in chat) before
-  // attendees arrive. The PRE gate exists to spare students the "I
-  // joined an empty room" confusion — the host expects emptiness, so
-  // we skip the gate for them. POST is also skipped so admin can keep
-  // a room open if a session runs long. CANCELLED still applies —
-  // the slot was killed, no room to enter.
+  // Admin bypass: the host wants to be able to open the meeting and
+  // prep before attendees arrive. The PRE gate exists to spare
+  // students the "I joined too early" confusion — the host expects
+  // that, so we skip the gate for them. POST is also skipped so admin
+  // can keep a session going if it runs long. CANCELLED still applies.
   //
   // Host-started bypass: when admin lands on this page we POST to
   // /api/sessions/mark-started which sets host_started_at. From that
@@ -314,23 +312,13 @@ export default function SessionRoomPage({
       )}
 
       {lifecycle === "pre" && (
-        <PreSessionCard
-          startsAt={slot.starts_at}
-          slotId={slot.id}
-          tick={tick}
-        />
+        <PreSessionCard startsAt={slot.starts_at} tick={tick} />
       )}
 
       {lifecycle === "live" && (
-        <LiveSessionFrame
-          slotId={slot.id}
-          title={slot.title}
-          displayName={
-            user?.user_metadata?.full_name ||
-            user?.email?.split("@")[0] ||
-            "Guest"
-          }
-          isEn={isEn}
+        <LiveSessionJoin
+          meetingUrl={slot.meeting_url}
+          isAdmin={isAdmin}
         />
       )}
 
@@ -344,41 +332,17 @@ export default function SessionRoomPage({
 /* ─── PRE state — countdown card ──────────────────────────── */
 /**
  * Shown when the user arrives more than 15 min before their slot.
- * Better than rendering an empty room (confusing) or 404'ing (rude).
- * Includes a "test cam/mic" link that opens the same Daily room in a
- * new tab so the user can verify their setup. We pre-fetch the room
- * URL via ensure-room so the test link works on first click.
+ * Better than showing the join button early (they'd jump into a
+ * meeting that hasn't started) or 404'ing (rude). Just a countdown.
  */
 function PreSessionCard({
   startsAt,
-  slotId,
   tick,
 }: {
   startsAt: string;
-  slotId: string;
   tick: number;
 }) {
   const { t } = useLanguage();
-  const [roomUrl, setRoomUrl] = useState<string | null>(null);
-
-  // Pre-mint the Daily room so the "Test camera & mic" link works
-  // the moment the user clicks it.
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/sessions/ensure-room", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slot_id: slotId }),
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!cancelled && data?.url) setRoomUrl(data.url);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [slotId]);
 
   // Compute time-until-doors-open. tick keeps this fresh every second
   // without an explicit dependency.
@@ -418,22 +382,6 @@ function PreSessionCard({
           <p className="text-sm text-muted-foreground max-w-prose">
             {t.sessions.roomTooEarlyBody}
           </p>
-          <Button
-            variant="outline"
-            className="gap-1.5 mt-2"
-            size="sm"
-            disabled={!roomUrl}
-            render={
-              roomUrl ? (
-                <a href={roomUrl} target="_blank" rel="noopener noreferrer" />
-              ) : (
-                <span />
-              )
-            }
-          >
-            <Video className="h-3.5 w-3.5" />
-            {t.sessions.roomTestSetup}
-          </Button>
         </div>
         <div className="hidden sm:block">
           <Illustration name="email-sent" alt="" size="md" />
@@ -443,138 +391,67 @@ function PreSessionCard({
   );
 }
 
-/* ─── LIVE state — Daily.co iframe ────────────────────────── */
+/* ─── LIVE state — Join on Zoom button ────────────────────── */
 /**
- * Fetches the Daily room URL via /api/sessions/ensure-room (which
- * lazy-creates the room on Daily if it doesn't exist yet) and
- * embeds it as an iframe. The display name rides on the URL via
- * `?userName=` so Daily pre-fills it in the avatar.
+ * The session is live. Show a prominent "Join on Zoom" button that
+ * opens the admin-set meeting_url in a new tab (Zoom native app or
+ * browser). No video is embedded — the join happens in the external
+ * client.
  *
- * Module-level cache survives component re-mounts (e.g. lifecycle
- * PRE → LIVE swap on host_started_at flip). Without it, the iframe
- * would briefly unmount and re-POST to Daily on every state change,
- * burning quota and causing a flash of the loading spinner.
- *
- * Loading state is a centered spinner — the API call is fast (one
- * Daily POST) but networks vary. Error state surfaces a friendly
- * message; the underlying detail goes to the console for debugging.
+ * If the admin hasn't pasted a link yet, show a calm "no link" state
+ * instead of a dead button. For admins, the message nudges them to
+ * add the link via the edit form.
  */
-const dailyUrlCache = new Map<string, string>();
-
-function LiveSessionFrame({
-  slotId,
-  title,
-  displayName,
-  isEn,
+function LiveSessionJoin({
+  meetingUrl,
+  isAdmin,
 }: {
-  slotId: string;
-  title: string;
-  displayName: string;
-  isEn: boolean;
+  meetingUrl: string | null;
+  isAdmin: boolean;
 }) {
-  // Cache lookup keyed by slot+name pair. The displayName is part of
-  // the URL so changing accounts on the same machine doesn't show a
-  // stale name.
-  const cacheKey = `${slotId}|${displayName}`;
-  const [roomUrl, setRoomUrl] = useState<string | null>(
-    dailyUrlCache.get(cacheKey) ?? null
-  );
-  const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
-  useEffect(() => {
-    if (roomUrl) return; // cache hit — skip the network call
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/sessions/ensure-room", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slot_id: slotId }),
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          if (!cancelled) {
-            setError(
-              isEn
-                ? "Couldn't open the room. Please refresh the page."
-                : "Impossible d'ouvrir la salle. Veuillez actualiser la page."
-            );
-            console.error("ensure-room failed:", body);
-          }
-          return;
-        }
-        const { url, token } = await res.json();
-        if (cancelled) return;
-        // Prefer the server-minted meeting token: it pins both
-        // user_name (so users can't rename to something else and
-        // confuse no-show detection) and user_id (so the cron
-        // matches bookings → attendance by exact UUID). If for any
-        // reason the server didn't return a token (older deploy,
-        // Daily token API hiccup), fall back to the user-name URL
-        // param — fuzzy match still catches most attendees.
-        const fullUrl = token
-          ? `${url}?t=${encodeURIComponent(token)}`
-          : `${url}?userName=${encodeURIComponent(displayName)}`;
-        dailyUrlCache.set(cacheKey, fullUrl);
-        setRoomUrl(fullUrl);
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            isEn
-              ? "Couldn't open the room. Please refresh the page."
-              : "Impossible d'ouvrir la salle. Veuillez actualiser la page."
-          );
-          console.error(err);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [slotId, displayName, isEn, roomUrl, cacheKey]);
-
-  if (error) {
+  if (!meetingUrl) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-16 text-sm text-destructive">
-          {error}
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!roomUrl) {
-    return (
-      <Card>
-        <CardContent
-          className="flex items-center justify-center"
-          style={{ minHeight: "480px" }}
-        >
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/70" />
+      <Card className="border-dashed">
+        <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
+          <Video className="h-8 w-8 text-muted-foreground/60" />
+          <p className="text-sm text-muted-foreground max-w-prose">
+            {isAdmin
+              ? t.sessions.roomNoLinkAdmin
+              : t.sessions.roomNoLinkStudent}
+          </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <>
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <iframe
-            src={roomUrl}
-            allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write"
-            className="block w-full"
-            style={{ height: "min(70vh, 720px)", minHeight: "480px", border: 0 }}
-            title={title}
-          />
-        </CardContent>
-      </Card>
-      <p className="text-xs text-muted-foreground/70 text-center">
-        {isEn
-          ? "Powered by Daily.co — production-grade video, no account required."
-          : "Propulsé par Daily.co — vidéo de qualité production, sans compte."}
-      </p>
-    </>
+    <Card>
+      <CardContent className="flex flex-col items-center gap-5 py-14 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Video className="h-7 w-7" />
+        </div>
+        <div className="space-y-1.5">
+          <h2 className="text-xl sm:text-2xl font-medium tracking-tight text-foreground">
+            {t.sessions.roomLiveTitle}
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-prose">
+            {t.sessions.roomLiveBody}
+          </p>
+        </div>
+        <Button
+          size="lg"
+          className="gap-2"
+          render={
+            <a href={meetingUrl} target="_blank" rel="noopener noreferrer" />
+          }
+        >
+          <Video className="h-4 w-4" />
+          {t.sessions.roomJoinButton}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 

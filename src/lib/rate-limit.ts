@@ -13,7 +13,7 @@ import { getSupabaseAdmin } from "./supabase-server";
  * Bucket convention: `<route-name>:<key>` so different routes can
  * share the same client identifier without colliding. Examples:
  *   `licence-activate:198.51.100.7`
- *   `ensure-room:user-uuid`
+ *   `payment-init:user-uuid`
  */
 export async function checkRateLimit(opts: {
   bucket: string;

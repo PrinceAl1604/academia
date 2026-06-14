@@ -49,7 +49,6 @@ interface SessionSlot {
   starts_at: string;
   duration_minutes: number;
   max_attendees: number;
-  room_name: string;
   status: "open" | "cancelled" | "completed";
   created_at: string;
 }
@@ -78,7 +77,7 @@ export default function AdminSessionsPage() {
     const { data: slotData } = await supabase
       .from("session_slots")
       .select(
-        "id, type, title, description, starts_at, duration_minutes, max_attendees, room_name, status, created_at, bookings:session_bookings(cancelled_at)"
+        "id, type, title, description, starts_at, duration_minutes, max_attendees, status, created_at, bookings:session_bookings(cancelled_at)"
       )
       .order("starts_at", { ascending: true });
 

@@ -72,11 +72,6 @@ export const metadata: Metadata = {
 // want this resolved at HTML-parse time, not after hydration.
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL || "https://axignnpghzhbirxoppyw.supabase.co";
-const DAILY_DOMAIN = process.env.NEXT_PUBLIC_DAILY_DOMAIN || "brightroots";
-const DAILY_ORIGIN = `https://${DAILY_DOMAIN
-  .replace(/^https?:\/\//, "")
-  .replace(/\.daily\.co\/?$/i, "")
-  .replace(/\/$/, "")}.daily.co`;
 
 export default function RootLayout({
   children,
@@ -100,11 +95,6 @@ export default function RootLayout({
              first round-trip after hydration. */}
         <link rel="preconnect" href={SUPABASE_URL} crossOrigin="anonymous" />
         <link rel="dns-prefetch" href={SUPABASE_URL} />
-        {/* DNS-prefetch to Daily — warming the TCP/TLS would be
-             wasteful (only session-room pages use Daily) but DNS
-             resolution is cheap and saves ~20-120ms when the user
-             does navigate to a session room. */}
-        <link rel="dns-prefetch" href={DAILY_ORIGIN} />
       </head>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <LanguageProvider>

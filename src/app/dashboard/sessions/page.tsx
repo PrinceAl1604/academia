@@ -51,7 +51,6 @@ interface SessionSlot {
   starts_at: string;
   duration_minutes: number;
   max_attendees: number;
-  room_name: string;
   status: "open" | "cancelled" | "completed";
   /** Set when the host first opened the room. Drives the LIVE NOW
    * badge on booking cards so students can spot active sessions. */
@@ -159,7 +158,7 @@ export default function StudentSessionsPage() {
       supabase
         .from("session_slots")
         .select(
-          "id, type, title, description, starts_at, duration_minutes, max_attendees, room_name, status, host_started_at, bookings:session_bookings(cancelled_at)"
+          "id, type, title, description, starts_at, duration_minutes, max_attendees, status, host_started_at, bookings:session_bookings(cancelled_at)"
         )
         .eq("status", "open")
         .gte("starts_at", nowIso)
