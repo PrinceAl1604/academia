@@ -279,7 +279,7 @@ function SubscriptionContent() {
           {/* Step 1: Buy via Chariow Snap */}
           <Card className="p-6">
             <div className="flex items-start gap-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-sm font-bold text-white shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shrink-0">
                 1
               </div>
               <div className="flex-1">
@@ -342,7 +342,7 @@ function SubscriptionContent() {
                             }}
                             className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-xs transition-colors ${
                               selectedCurrency.code === c.code
-                                ? "bg-card text-white"
+                                ? "bg-primary text-primary-foreground"
                                 : "hover:bg-muted text-foreground/90"
                             }`}
                           >
@@ -388,7 +388,7 @@ function SubscriptionContent() {
           {/* Step 2: Enter licence key */}
           <Card className="p-6">
             <div className="flex items-start gap-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-sm font-bold text-white shrink-0">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shrink-0">
                 2
               </div>
               <div className="flex-1">

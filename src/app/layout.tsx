@@ -79,14 +79,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Force dark mode app-wide. Cook-OS-inspired warm-charcoal palette is
-    // defined in globals.css under the combined `:root, .dark` selector.
-    // `color-scheme: dark` (set in globals.css) ensures native form
-    // controls (scrollbars, date pickers, etc.) match the theme without a
-    // per-element override.
+    // Light theme app-wide (Visible brand). The palette lives in
+    // globals.css under `:root`; `color-scheme: light` (set there)
+    // makes native form chrome (scrollbars, date pickers) match.
+    // No `dark` class — dark mode was removed in the rebrand.
     <html
       lang="en"
-      className={`dark ${geist.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         {/* Preconnect to Supabase — every authenticated page makes
