@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   BookOpen,
-  Users,
+  TrendingUp,
   Calendar,
   Languages,
   Crown,
@@ -474,7 +474,7 @@ function Features() {
   const features = [
     { icon: BookOpen, title: t.landing.feature1Title, desc: t.landing.feature1Desc },
     { icon: Calendar, title: t.landing.feature2Title, desc: t.landing.feature2Desc },
-    { icon: Users, title: t.landing.feature3Title, desc: t.landing.feature3Desc },
+    { icon: TrendingUp, title: t.landing.feature3Title, desc: t.landing.feature3Desc },
     { icon: Languages, title: t.landing.feature4Title, desc: t.landing.feature4Desc },
     { icon: Crown, title: t.landing.feature5Title, desc: t.landing.feature5Desc },
     { icon: Gift, title: t.landing.feature6Title, desc: t.landing.feature6Desc },
@@ -630,19 +630,6 @@ function Showcase() {
           placeholderLabel="Live session schedule screenshot · 4:3"
           linkLabel={t.landing.showcase2Link}
           flip
-        />
-        <ShowcaseSection
-          tag={t.landing.showcase3Tag}
-          title={t.landing.showcase3Title}
-          body={t.landing.showcase3Body}
-          bullets={[
-            t.landing.showcase3Bullet1,
-            t.landing.showcase3Bullet2,
-            t.landing.showcase3Bullet3,
-            t.landing.showcase3Bullet4,
-          ]}
-          placeholderLabel="Community chat screenshot · 4:3"
-          linkLabel={t.landing.showcase3Link}
         />
       </div>
     </section>
@@ -905,7 +892,7 @@ function Footer() {
       links: [
         t.landing.footerProductCourses,
         t.landing.footerProductSessions,
-        t.landing.footerProductCommunity,
+        t.landing.footerProductPricing,
         t.landing.footerProductMobile,
       ],
     },

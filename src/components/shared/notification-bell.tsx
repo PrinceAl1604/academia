@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   Bell,
-  MessageSquare,
-  AtSign,
   Calendar as CalendarIcon,
   Clock,
   XCircle,
@@ -15,7 +13,6 @@ import {
   Crown,
   Gift,
   Video,
-  Megaphone,
   BookPlus,
   Sparkles,
   UserPlus,
@@ -48,9 +45,6 @@ import { cn } from "@/lib/utils";
  */
 
 type NotifType =
-  | "dm_message"
-  | "chat_mention"
-  | "announcement"
   | "new_course"
   | "session_booked"
   | "session_reminder"
@@ -493,9 +487,6 @@ function NotificationRowItem({
 /* ─── Type-specific config ────────────────────────────────── */
 
 const ICON_BY_TYPE: Record<NotifType, React.ComponentType<{ className?: string }>> = {
-  dm_message: MessageSquare,
-  chat_mention: AtSign,
-  announcement: Megaphone,
   new_course: BookPlus,
   session_booked: CalendarIcon,
   session_reminder: Clock,
@@ -511,9 +502,6 @@ const ICON_BY_TYPE: Record<NotifType, React.ComponentType<{ className?: string }
 };
 
 const TONE_BY_TYPE: Record<NotifType, "primary" | "amber" | "destructive" | "muted"> = {
-  dm_message: "primary",
-  chat_mention: "primary",
-  announcement: "amber",
   new_course: "primary",
   session_booked: "primary",
   session_reminder: "amber",
@@ -562,21 +550,6 @@ function renderTitleBody(
     );
 
   switch (n.type) {
-    case "dm_message":
-      return {
-        title: sub(ns.dmMessageTitle, { sender: get("sender_name") }),
-        body: get("preview")
-          ? sub(ns.dmMessageBody, { preview: get("preview") })
-          : null,
-      };
-    case "chat_mention":
-      return {
-        title: sub(ns.chatMentionTitle, { sender: get("sender_name") }),
-        body: sub(ns.chatMentionBody, {
-          channel: get("channel_name") || "—",
-          preview: get("preview") || "",
-        }),
-      };
     case "session_booked":
       return {
         title: ns.sessionBookedTitle,
@@ -619,16 +592,6 @@ function renderTitleBody(
       return {
         title: ns.referralRewardedTitle,
         body: ns.referralRewardedBody,
-      };
-    case "announcement":
-      return {
-        title: sub(ns.announcementTitle, {
-          sender: get("sender_name"),
-          channel: get("channel_name") || "—",
-        }),
-        body: get("preview")
-          ? sub(ns.announcementBody, { preview: get("preview") })
-          : null,
       };
     case "new_course":
       return {

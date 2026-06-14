@@ -99,12 +99,6 @@ function renderPushTitle(n: { type: string; payload: Record<string, unknown> }):
   const p = n.payload || {};
   const get = (k: string) => (p[k] as string | undefined) ?? "";
   switch (n.type) {
-    case "dm_message":
-      return `New message from ${get("sender_name") || "someone"}`;
-    case "chat_mention":
-      return `${get("sender_name") || "Someone"} mentioned you`;
-    case "announcement":
-      return `${get("sender_name") || "Admin"} posted an announcement`;
     case "new_course":
       return `New course: ${get("title") || ""}`;
     case "session_booked":
@@ -138,10 +132,6 @@ function renderPushBody(n: { type: string; payload: Record<string, unknown> }): 
   const p = n.payload || {};
   const get = (k: string) => (p[k] as string | undefined) ?? "";
   switch (n.type) {
-    case "dm_message":
-    case "chat_mention":
-    case "announcement":
-      return get("preview") || "";
     case "session_live":
       return "Tap to join the room";
     case "session_reminder":

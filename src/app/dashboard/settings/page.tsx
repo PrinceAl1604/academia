@@ -92,14 +92,6 @@ const NOTIF_CATEGORIES: Array<{
   inAppTypes?: string[];
   emailCategory?: string;
 }> = [
-  { id: "dm", labelKey: "typeLabelDmMessage", inAppTypes: ["dm_message"] },
-  { id: "mention", labelKey: "typeLabelChatMention", inAppTypes: ["chat_mention"] },
-  {
-    id: "announcement",
-    labelKey: "typeLabelAnnouncement",
-    inAppTypes: ["announcement"],
-    emailCategory: "announcement",
-  },
   {
     id: "new_course",
     labelKey: "typeLabelNewCourse",

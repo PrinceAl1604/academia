@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -15,13 +15,11 @@ import {
   FolderOpen,
   Users,
   Gift,
-  MessageSquare,
   Video,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSidebar } from "@/lib/sidebar-context";
-import { supabase } from "@/lib/supabase";
 import { ReferralModal } from "@/components/shared/referral-modal";
 import { Logo } from "@/components/shared/logo";
 import { Symbol } from "@/components/shared/symbol";
@@ -44,83 +42,10 @@ import { Symbol } from "@/components/shared/symbol";
  */
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { isAdmin, isAuthenticated } = useAuth();
+  const { isAdmin } = useAuth();
   const { t } = useLanguage();
   const { collapsed } = useSidebar();
   const [referralOpen, setReferralOpen] = useState(false);
-  const [unreadChat, setUnreadChat] = useState(0);
-
-  // Unread chat count: one initial fetch, then refresh on Realtime
-  // INSERT events on chat_messages. Beats polling every 30s — the
-  // count updates instantly when a new message lands AND we don't
-  // burn an HTTP round-trip every 30 seconds for every signed-in
-  // user, regardless of activity.
-  const fetchUnread = useCallback(async () => {
-    try {
-      const res = await fetch("/api/chat/unread");
-      if (res.ok) {
-        const { count } = await res.json();
-        setUnreadChat(count ?? 0);
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    fetchUnread();
-
-    // The previous shape fetched /api/chat/unread on EVERY chat
-    // message insert anywhere in the app — meaning a busy
-    // #announcements channel firing 50 messages/min triggered 50
-    // unread-count fetches per minute per signed-in tab. The
-    // chat_unread_total RPC is cheap, but the badge only changes
-    // when a message is actually unread by THIS user, and we don't
-    // need sub-second freshness. Trailing-edge debounce: after the
-    // first event in a quiet window, fire once 1s later, swallow
-    // any further events that arrive in that window. The badge
-    // catches up within a second; we save dozens of round trips per
-    // minute on busy channels.
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    const debouncedFetch = () => {
-      if (debounceTimer) return;
-      debounceTimer = setTimeout(() => {
-        debounceTimer = null;
-        fetchUnread();
-      }, 1000);
-    };
-
-    const channel = supabase
-      .channel("sidebar_unread_chat")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "chat_messages" },
-        debouncedFetch
-      )
-      .subscribe();
-
-    // Recompute when the user navigates to the community page (they
-    // may have just read messages and we want the badge to drop).
-    const onFocus = () => fetchUnread();
-    window.addEventListener("focus", onFocus);
-
-    return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      supabase.removeChannel(channel);
-      window.removeEventListener("focus", onFocus);
-    };
-  }, [isAuthenticated, fetchUnread]);
-
-  // When the user lands on community/* the server-side endpoint
-  // re-evaluates last-read markers; force a quick refresh on path
-  // change so the badge clears without waiting on the next event.
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    if (pathname.startsWith("/dashboard/community")) {
-      fetchUnread();
-    }
-  }, [pathname, isAuthenticated, fetchUnread]);
 
   // ─── Navigation (grouped) ────────────────────────────────────
   type NavItem = {
@@ -140,13 +65,7 @@ export function DashboardSidebar() {
         { label: t.dashboard.title || "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { label: t.dashboard.browse || "Browse", href: "/", icon: Compass },
         { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
-        { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
-        // Live sessions has its own top-level entry — they're a
-        // calendar/booking concern, distinct from chat. Embedding
-        // them inside Community's sidebar (Phase A/B/C of an earlier
-        // merge attempt) bloated the visual hierarchy and added a
-        // "No upcoming sessions" empty-state into a sidebar slot
-        // that should stay focused. Reverted to the original split.
+        // Live sessions has its own top-level entry — calendar/booking concern.
         { label: t.sessions?.title || "Live sessions", href: "/dashboard/sessions", icon: Video },
       ],
     },
@@ -178,7 +97,6 @@ export function DashboardSidebar() {
     {
       label: t.sidebar.engage || "Engage",
       items: [
-        { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare, badge: unreadChat },
         { label: t.admin.sessions || "Live sessions", href: "/admin/sessions", icon: Video },
       ],
     },

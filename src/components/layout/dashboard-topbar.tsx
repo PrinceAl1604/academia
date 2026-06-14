@@ -21,7 +21,6 @@ import {
   LayoutDashboard,
   Compass,
   BookOpen,
-  MessageSquare,
   HelpCircle,
   LogOut,
   PanelLeftClose,
@@ -51,7 +50,6 @@ function usePageTitle(): string {
 
   // Most-specific routes first so admin/courses/foo doesn't match /admin
   if (pathname === "/") return isEn ? "Browse" : "Explorer";
-  if (pathname.startsWith("/dashboard/community")) return t.community?.title || "Community";
   if (pathname.startsWith("/dashboard/courses")) return t.myCourses.title;
   if (pathname.startsWith("/dashboard/subscription")) return t.subscription.title;
   if (pathname.startsWith("/dashboard/settings")) return t.settings.title;
@@ -128,7 +126,6 @@ export function DashboardTopbar() {
     { label: t.dashboard.title || "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: t.dashboard.browse || "Browse", href: "/", icon: Compass },
     { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
-    { label: t.community?.title || "Community", href: "/dashboard/community", icon: MessageSquare },
     { label: t.subscription.title || "Subscription", href: "/dashboard/subscription", icon: CreditCard },
     { label: t.settings.title || "Settings", href: "/dashboard/settings", icon: Settings },
   ];

@@ -360,7 +360,6 @@ export const translations = {
       accessAllCourses: "Access to all courses",
       exclusiveMaterials: "Exclusive learning materials",
       downloadableResources: "Downloadable resources",
-      communityAccess: "Community access",
       prioritySupport: "Priority support",
       newCoursesLaunch: "New courses as they launch",
     },
@@ -415,49 +414,6 @@ export const translations = {
       optional: "optional",
     },
 
-    // Community
-    community: {
-      title: "Community",
-      subtitle: "Chat with fellow students",
-      channels: "Channels",
-      general: "General",
-      announcements: "Announcements",
-      courseChannels: "Courses",
-      announcementsDesc: "Important updates from admins",
-      courseChat: "Course discussion",
-      pinnedMessages: "Pinned Messages",
-      noMessages: "No messages yet",
-      beFirst: "Be the first to say hello!",
-      announcementsEmpty: "No announcements yet",
-      announcementsOnly: "Only admins can post in this channel",
-      // Direct messages
-      directMessages: "Direct messages",
-      newMessage: "New message",
-      newDmTitle: "Start a conversation",
-      newDmSubtitle:
-        "Pick a Pro member or message the host directly.",
-      newDmSearchPlaceholder: "Search by name or email…",
-      newDmEmptyResults: "No matching members.",
-      noDmsYet: "No direct messages yet.",
-      dmProGate:
-        "Direct messages are a Pro benefit. Upgrade to start a conversation.",
-      dmProGateUpgrade: "Upgrade to Pro",
-      dmYouAndOther: "You and {name}",
-      dmAdminBadge: "Host",
-      dmStartingConversation: "Starting conversation…",
-      dmCannotMessage: "Couldn't open that conversation.",
-      // Per-channel mute
-      channelMute: "Mute notifications",
-      channelUnmute: "Unmute",
-      channelMuted: "Muted",
-      // Community Home (Phase B of community/sessions merge)
-      home: "Home",
-      unreadChannels: "Unread channels",
-      recentDms: "Recent messages",
-      allCaughtUp: "All caught up",
-      allCaughtUpDesc:
-        "No live sessions, unread messages, or upcoming events. Check back later.",
-    },
 
     // Notifications — type+payload model. Each `*Title`/`*Body` takes
     // {placeholder} substitutions resolved client-side from payload.
@@ -471,10 +427,6 @@ export const translations = {
       timeHoursAgo: "{n}h ago",
       timeDaysAgo: "{n}d ago",
       // Per-type strings
-      dmMessageTitle: "New message from {sender}",
-      dmMessageBody: "{preview}",
-      chatMentionTitle: "{sender} mentioned you",
-      chatMentionBody: "in #{channel} — {preview}",
       sessionBookedTitle: "Session booked",
       sessionBookedBody: "{title} · {when}",
       sessionReminderTitle: "Tomorrow: {title}",
@@ -490,8 +442,6 @@ export const translations = {
       referralRewardedTitle: "You earned a free month",
       referralRewardedBody: "A friend you invited just upgraded.",
       // New types
-      announcementTitle: "{sender}: {channel} announcement",
-      announcementBody: "{preview}",
       newCourseTitle: "New course: {title}",
       newCourseBody: "Just published — check it out.",
       proRenewedTitle: "Pro renewed",
@@ -510,9 +460,6 @@ export const translations = {
       preferencesMutedLabel: "Muted",
       preferencesSaved: "Preferences saved.",
       // Type labels for the preferences page
-      typeLabelDmMessage: "Direct messages",
-      typeLabelChatMention: "Mentions in chat",
-      typeLabelAnnouncement: "Announcements from the host",
       typeLabelNewCourse: "New courses published",
       typeLabelSession: "Live sessions (booked / reminder / live / cancelled)",
       typeLabelPro: "Subscription updates",
@@ -834,7 +781,7 @@ export const translations = {
       heroTitleHighlight: "personal brand",
       heroTitleEnd: " that opens doors.",
       heroSubtitle:
-        "Premium courses, live one-on-one mentors, and a focused community — built for people growing a reputation, a following, or a freelance practice.",
+        "Premium courses and live one-on-one mentors — built for people growing a reputation, a following, or a freelance practice.",
       heroCtaPrimary: "Start free",
       heroCtaSecondary: "See what's inside",
       heroMicrocopy: "Free to join · No credit card needed",
@@ -850,22 +797,22 @@ export const translations = {
       featuresPreheader: "Features",
       featuresTitle: "Everything you need to grow your name",
       featuresSubtitle:
-        "Six pieces that work together — courses, mentorship, community, and the system that ties them.",
+        "Six pieces that work together — courses, mentorship, recognition, and the system that ties them.",
       feature1Title: "Courses built to be used",
       feature1Desc:
         "Practical lessons from people who've done the work. No theory, no filler — just what helps you ship.",
       feature2Title: "Real time with real mentors",
       feature2Desc:
         "Book one-on-one or small-group sessions with experts who answer your questions. Two every month, included.",
-      feature3Title: "A room of people climbing too",
+      feature3Title: "Progress that follows you",
       feature3Desc:
-        "Channels for every topic. Direct messages with admins and mentors. Quiet enough to focus, busy enough to matter.",
+        "Pick up exactly where you left off. Track completion across every course and watch your skills compound.",
       feature4Title: "English and French, side by side",
       feature4Desc:
         "Every course, every session, every conversation — switch languages with a click.",
       feature5Title: "One subscription, everything unlocked",
       feature5Desc:
-        "Premium courses, live sessions, direct messages, community. One price, no upsells.",
+        "Premium courses, live mentor sessions, and everything in between. One price, no upsells.",
       feature6Title: "Refer a friend, grow together",
       feature6Desc:
         "Send the link. When they go Pro, you both get a month free. Your network becomes your runway.",
@@ -891,17 +838,6 @@ export const translations = {
       showcase2Bullet3: "Calendar invite + reminder so you never miss one",
       showcase2Bullet4: "Join from your phone, laptop, anywhere",
       showcase2Link: "See upcoming sessions",
-
-      // Showcase 3 — Community
-      showcase3Tag: "Community",
-      showcase3Title: "Grow with people doing the same",
-      showcase3Body:
-        "A focused community of people building their brand and their career. No algorithm, no doomscroll. Channels for every topic. Direct messages for the real conversations.",
-      showcase3Bullet1: "Channels for courses, careers, and craft",
-      showcase3Bullet2: "Direct message anyone — including admins and mentors",
-      showcase3Bullet3: "Mentions, threads, pinned messages — everything just works",
-      showcase3Bullet4: "Push notifications when your name comes up",
-      showcase3Link: "Step inside",
 
       // Audience
       audiencePreheader: "Built for",
@@ -939,8 +875,8 @@ export const translations = {
       pricingProSummary: "Everything you need to build a brand that lasts.",
       pricingProFeature1: "Every premium course, unlocked",
       pricingProFeature2: "Two live mentor sessions every month",
-      pricingProFeature3: "Direct messages with admins and mentors",
-      pricingProFeature4: "Full community access — channels, DMs, mentions",
+      pricingProFeature3: "One-on-one or small-group — your choice",
+      pricingProFeature4: "New premium courses every month, included",
       pricingProFeature5: "Push notifications and calendar sync",
       pricingProCta: "Start Pro",
 
@@ -960,7 +896,7 @@ export const translations = {
       footerColLegal: "Legal",
       footerProductCourses: "Courses",
       footerProductSessions: "Live sessions",
-      footerProductCommunity: "Community",
+      footerProductPricing: "Pricing",
       footerProductMobile: "Mobile app",
       footerResourcesHelp: "Help center",
       footerResourcesBlog: "Blog",
@@ -1344,7 +1280,6 @@ export const translations = {
       accessAllCourses: "Accès à tous les cours",
       exclusiveMaterials: "Supports d'apprentissage exclusifs",
       downloadableResources: "Ressources téléchargeables",
-      communityAccess: "Accès à la communauté",
       prioritySupport: "Support prioritaire",
       newCoursesLaunch: "Nouveaux cours dès leur sortie",
     },
@@ -1399,47 +1334,6 @@ export const translations = {
       optional: "optionnel",
     },
 
-    // Community
-    community: {
-      title: "Communauté",
-      subtitle: "Discutez avec les autres étudiants",
-      channels: "Salons",
-      general: "Général",
-      announcements: "Annonces",
-      courseChannels: "Cours",
-      announcementsDesc: "Mises à jour importantes des administrateurs",
-      courseChat: "Discussion du cours",
-      pinnedMessages: "Messages épinglés",
-      noMessages: "Aucun message",
-      beFirst: "Soyez le premier à dire bonjour !",
-      announcementsEmpty: "Aucune annonce pour le moment",
-      announcementsOnly: "Seuls les administrateurs peuvent publier ici",
-      directMessages: "Messages directs",
-      newMessage: "Nouveau message",
-      newDmTitle: "Démarrer une conversation",
-      newDmSubtitle:
-        "Choisissez un membre Pro ou écrivez directement à l'hôte.",
-      newDmSearchPlaceholder: "Rechercher par nom ou e-mail…",
-      newDmEmptyResults: "Aucun membre correspondant.",
-      noDmsYet: "Aucun message direct pour l'instant.",
-      dmProGate:
-        "Les messages directs sont un avantage Pro. Passez à Pro pour démarrer une conversation.",
-      dmProGateUpgrade: "Passer à Pro",
-      dmYouAndOther: "Vous et {name}",
-      dmAdminBadge: "Hôte",
-      dmStartingConversation: "Ouverture de la conversation…",
-      dmCannotMessage: "Impossible d'ouvrir cette conversation.",
-      channelMute: "Couper les notifications",
-      channelUnmute: "Réactiver",
-      channelMuted: "Coupé",
-      // Community Home (Phase B of community/sessions merge)
-      home: "Accueil",
-      unreadChannels: "Salons non lus",
-      recentDms: "Messages récents",
-      allCaughtUp: "Tout est à jour",
-      allCaughtUpDesc:
-        "Aucune session en direct, message non lu ou événement à venir. Revenez plus tard.",
-    },
 
     notifications: {
       title: "Notifications",
@@ -1450,10 +1344,6 @@ export const translations = {
       timeMinutesAgo: "il y a {n}min",
       timeHoursAgo: "il y a {n}h",
       timeDaysAgo: "il y a {n}j",
-      dmMessageTitle: "Nouveau message de {sender}",
-      dmMessageBody: "{preview}",
-      chatMentionTitle: "{sender} vous a mentionné",
-      chatMentionBody: "dans #{channel} — {preview}",
       sessionBookedTitle: "Session réservée",
       sessionBookedBody: "{title} · {when}",
       sessionReminderTitle: "Demain : {title}",
@@ -1469,8 +1359,6 @@ export const translations = {
       proExpiringBody: "Renouvelez pour garder l'accès illimité aux cours.",
       referralRewardedTitle: "Vous avez gagné un mois gratuit",
       referralRewardedBody: "Un ami que vous avez invité vient de passer Pro.",
-      announcementTitle: "{sender} : annonce {channel}",
-      announcementBody: "{preview}",
       newCourseTitle: "Nouveau cours : {title}",
       newCourseBody: "Tout juste publié — découvrez-le.",
       proRenewedTitle: "Pro renouvelé",
@@ -1488,9 +1376,6 @@ export const translations = {
       preferencesEnabledLabel: "Recevoir dans l'app",
       preferencesMutedLabel: "Muet",
       preferencesSaved: "Préférences enregistrées.",
-      typeLabelDmMessage: "Messages directs",
-      typeLabelChatMention: "Mentions dans le chat",
-      typeLabelAnnouncement: "Annonces de l'hôte",
       typeLabelNewCourse: "Nouveaux cours publiés",
       typeLabelSession: "Sessions live (réservation / rappel / live / annulation)",
       typeLabelPro: "Mises à jour d'abonnement",
@@ -1793,7 +1678,7 @@ export const translations = {
       heroTitleHighlight: "marque personnelle",
       heroTitleEnd: " qui ouvre des portes.",
       heroSubtitle:
-        "Cours premium, mentors en direct un-à-un et une communauté ciblée — pour celles et ceux qui bâtissent une réputation, une audience ou une activité freelance.",
+        "Cours premium et mentors en direct un-à-un — pour celles et ceux qui bâtissent une réputation, une audience ou une activité freelance.",
       heroCtaPrimary: "Commencer gratuitement",
       heroCtaSecondary: "Voir ce qu'il y a dedans",
       heroMicrocopy: "Gratuit pour commencer · Aucune carte requise",
@@ -1807,22 +1692,22 @@ export const translations = {
       featuresPreheader: "Fonctionnalités",
       featuresTitle: "Tout ce qu'il faut pour faire grandir votre nom",
       featuresSubtitle:
-        "Six pièces qui travaillent ensemble — cours, mentorat, communauté, et le système qui les relie.",
+        "Six pièces qui travaillent ensemble — cours, mentorat, reconnaissance, et le système qui les relie.",
       feature1Title: "Des cours faits pour être utilisés",
       feature1Desc:
         "Des leçons concrètes par celles et ceux qui ont fait le travail. Pas de théorie, pas de remplissage — juste ce qui aide à avancer.",
       feature2Title: "Du temps réel avec de vrais mentors",
       feature2Desc:
         "Réservez des sessions un-à-un ou en petit groupe avec des experts qui répondent à vos questions. Deux chaque mois, incluses.",
-      feature3Title: "Une salle de gens qui grimpent aussi",
+      feature3Title: "Une progression qui vous suit",
       feature3Desc:
-        "Des canaux pour chaque sujet. Messages directs avec les admins et mentors. Assez calme pour se concentrer, assez vivant pour compter.",
+        "Reprenez exactement où vous vous êtes arrêté. Suivez votre progression sur chaque cours et regardez vos compétences se cumuler.",
       feature4Title: "Français et anglais, côte à côte",
       feature4Desc:
         "Chaque cours, chaque session, chaque conversation — changez de langue en un clic.",
       feature5Title: "Un abonnement, tout débloqué",
       feature5Desc:
-        "Cours premium, sessions en direct, messages directs, communauté. Un prix, aucun supplément.",
+        "Cours premium, sessions de mentorat en direct, et tout le reste. Un prix, aucun supplément.",
       feature6Title: "Invitez un ami, grandissez ensemble",
       feature6Desc:
         "Partagez le lien. Quand votre ami passe Pro, vous obtenez chacun un mois gratuit. Votre réseau devient votre élan.",
@@ -1849,19 +1734,6 @@ export const translations = {
       showcase2Bullet4:
         "Rejoignez depuis votre téléphone, ordinateur, partout",
       showcase2Link: "Voir les sessions à venir",
-
-      showcase3Tag: "Communauté",
-      showcase3Title: "Grandissez avec ceux qui font pareil",
-      showcase3Body:
-        "Une communauté ciblée de gens qui construisent leur marque et leur carrière. Pas d'algorithme, pas de défilement sans fin. Des canaux pour chaque sujet. Messages directs pour les vraies conversations.",
-      showcase3Bullet1:
-        "Des canaux pour les cours, les carrières et le métier",
-      showcase3Bullet2:
-        "Envoyez un message direct à n'importe qui — y compris admins et mentors",
-      showcase3Bullet3:
-        "Mentions, fils, messages épinglés — tout fonctionne",
-      showcase3Bullet4: "Notifications push quand on vous mentionne",
-      showcase3Link: "Entrez",
 
       audiencePreheader: "Conçu pour",
       audienceTitle: "Conçu pour le travail que vous faites maintenant",
@@ -1899,9 +1771,9 @@ export const translations = {
       pricingProFeature1: "Tous les cours premium, débloqués",
       pricingProFeature2: "Deux sessions avec un mentor chaque mois",
       pricingProFeature3:
-        "Messages directs avec admins et mentors",
+        "Un-à-un ou petit groupe — à votre choix",
       pricingProFeature4:
-        "Accès complet à la communauté — canaux, DM, mentions",
+        "De nouveaux cours premium chaque mois, inclus",
       pricingProFeature5:
         "Notifications push et synchronisation calendrier",
       pricingProCta: "Passer Pro",
@@ -1920,7 +1792,7 @@ export const translations = {
       footerColLegal: "Mentions légales",
       footerProductCourses: "Cours",
       footerProductSessions: "Sessions en direct",
-      footerProductCommunity: "Communauté",
+      footerProductPricing: "Tarifs",
       footerProductMobile: "Application mobile",
       footerResourcesHelp: "Centre d'aide",
       footerResourcesBlog: "Blog",

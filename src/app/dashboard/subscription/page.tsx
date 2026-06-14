@@ -476,7 +476,6 @@ function SubscriptionContent() {
             t.subscription.accessAllCourses,
             t.subscription.exclusiveMaterials,
             t.subscription.downloadableResources,
-            t.subscription.communityAccess,
             t.subscription.prioritySupport,
             t.subscription.newCoursesLaunch,
           ].map((feature) => (
