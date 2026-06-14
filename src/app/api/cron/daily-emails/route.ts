@@ -401,9 +401,9 @@ export async function GET(req: Request) {
         await resend.emails.send({
           from:
             process.env.FROM_EMAIL ||
-            "Brightroots <noreply@resend.dev>",
+            "Visible <noreply@resend.dev>",
           to: adminAlert,
-          subject: `[Brightroots cron] daily-emails had ${results.errors.length} error(s)`,
+          subject: `[Visible cron] daily-emails had ${results.errors.length} error(s)`,
           text: [
             `Run at ${now.toISOString()}`,
             `Duration: ${durationMs}ms`,

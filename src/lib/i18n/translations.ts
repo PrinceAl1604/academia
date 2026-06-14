@@ -405,7 +405,7 @@ export const translations = {
       copyLink: "Copy link",
       copied: "Copied!",
       share: "Share your link",
-      shareText: "Join me on Brightroots and learn from the best! Use my link to sign up:",
+      shareText: "Join me on Visible and learn from the best! Use my link to sign up:",
       invited: "Invited",
       daysEarned: "Days earned",
       inviteFriends: "Invite Friends",
@@ -450,7 +450,7 @@ export const translations = {
       proExpiredBody: "Renew to regain access to premium courses.",
       referralSignupTitle: "{name} signed up via your link",
       referralSignupBody: "When they upgrade, you'll earn a free month.",
-      welcomeTitle: "Welcome to Brightroots",
+      welcomeTitle: "Welcome to Visible",
       welcomeBody: "Browse the catalog and pick your first course.",
       // Preferences page
       preferencesTitle: "Notification preferences",
@@ -790,7 +790,7 @@ export const translations = {
       navGetStarted: "Get started",
 
       // Hero
-      heroPreheader: "Brightroots",
+      heroPreheader: "Visible",
       heroTitleStart: "Build the ",
       heroTitleHighlight: "personal brand",
       heroTitleEnd: " that opens doors.",
@@ -835,7 +835,7 @@ export const translations = {
       showcase1Tag: "Courses",
       showcase1Title: "Learn from people who've done it",
       showcase1Body:
-        "Every course on Brightroots is taught by someone who actually built what they're teaching. You get the playbooks, the templates, the real decisions — not theory. Watch on any device, at your pace.",
+        "Every course on Visible is taught by someone who actually built what they're teaching. You get the playbooks, the templates, the real decisions — not theory. Watch on any device, at your pace.",
       showcase1Bullet1: "Premium video lessons with real examples",
       showcase1Bullet2: "Step-by-step progress that picks up where you left off",
       showcase1Bullet3: "Bilingual — every course works in English and French",
@@ -858,7 +858,7 @@ export const translations = {
       audienceTitle: "Built for the work you're doing now",
       audience1Title: "Creators & storytellers",
       audience1Desc:
-        "If you make things — videos, writing, photography, music — Brightroots helps you turn craft into reputation. Reach more people, on your terms.",
+        "If you make things — videos, writing, photography, music — Visible helps you turn craft into reputation. Reach more people, on your terms.",
       audience2Title: "Freelancers & consultants",
       audience2Desc:
         "Stop chasing every gig. Build a name strong enough that the right clients come to you. Courses on positioning, packaging, and pricing — taught by people who charge well.",
@@ -875,7 +875,7 @@ export const translations = {
       pricingFreeName: "Free",
       pricingFreePrice: "0",
       pricingFreeUnit: "FCFA",
-      pricingFreeSummary: "Get a feel for Brightroots before going Pro.",
+      pricingFreeSummary: "Get a feel for Visible before going Pro.",
       pricingFreeFeature1: "Browse the full course catalog",
       pricingFreeFeature2: "Watch free lessons in every course",
       pricingFreeFeature3: "Read the community",
@@ -1339,7 +1339,7 @@ export const translations = {
       copyLink: "Copier le lien",
       copied: "Copié !",
       share: "Partagez votre lien",
-      shareText: "Rejoignez-moi sur Brightroots et apprenez des meilleurs ! Utilisez mon lien pour vous inscrire :",
+      shareText: "Rejoignez-moi sur Visible et apprenez des meilleurs ! Utilisez mon lien pour vous inscrire :",
       invited: "Invités",
       daysEarned: "Jours gagnés",
       inviteFriends: "Inviter des amis",
@@ -1382,7 +1382,7 @@ export const translations = {
       referralSignupTitle: "{name} s'est inscrit via votre lien",
       referralSignupBody:
         "Quand cette personne passera Pro, vous gagnerez un mois gratuit.",
-      welcomeTitle: "Bienvenue sur Brightroots",
+      welcomeTitle: "Bienvenue sur Visible",
       welcomeBody: "Parcourez le catalogue et choisissez votre premier cours.",
       preferencesTitle: "Préférences de notification",
       preferencesSubtitle:
@@ -1699,7 +1699,7 @@ export const translations = {
       navSignIn: "Se connecter",
       navGetStarted: "Commencer",
 
-      heroPreheader: "Brightroots",
+      heroPreheader: "Visible",
       heroTitleStart: "Construisez la ",
       heroTitleHighlight: "marque personnelle",
       heroTitleEnd: " qui ouvre des portes.",
@@ -1741,7 +1741,7 @@ export const translations = {
       showcase1Tag: "Cours",
       showcase1Title: "Apprenez avec ceux qui l'ont fait",
       showcase1Body:
-        "Chaque cours sur Brightroots est enseigné par quelqu'un qui a vraiment construit ce qu'il enseigne. Vous obtenez les playbooks, les modèles, les vraies décisions — pas la théorie. Regardez sur n'importe quel appareil, à votre rythme.",
+        "Chaque cours sur Visible est enseigné par quelqu'un qui a vraiment construit ce qu'il enseigne. Vous obtenez les playbooks, les modèles, les vraies décisions — pas la théorie. Regardez sur n'importe quel appareil, à votre rythme.",
       showcase1Bullet1: "Vidéos premium avec des exemples réels",
       showcase1Bullet2:
         "Progression pas-à-pas qui reprend là où vous vous êtes arrêté",
@@ -1765,7 +1765,7 @@ export const translations = {
       audienceTitle: "Conçu pour le travail que vous faites maintenant",
       audience1Title: "Créateurs et conteurs",
       audience1Desc:
-        "Si vous créez des choses — vidéos, écrits, photographies, musique — Brightroots vous aide à transformer votre métier en réputation. Atteignez plus de gens, à vos conditions.",
+        "Si vous créez des choses — vidéos, écrits, photographies, musique — Visible vous aide à transformer votre métier en réputation. Atteignez plus de gens, à vos conditions.",
       audience2Title: "Freelances et consultants",
       audience2Desc:
         "Arrêtez de courir après chaque mission. Bâtissez un nom assez fort pour que les bons clients viennent à vous. Des cours sur le positionnement, le packaging et les prix — enseignés par des gens qui facturent bien.",
@@ -1781,7 +1781,7 @@ export const translations = {
       pricingFreeName: "Gratuit",
       pricingFreePrice: "0",
       pricingFreeUnit: "FCFA",
-      pricingFreeSummary: "Découvrez Brightroots avant de passer Pro.",
+      pricingFreeSummary: "Découvrez Visible avant de passer Pro.",
       pricingFreeFeature1: "Parcourez tout le catalogue de cours",
       pricingFreeFeature2: "Regardez les leçons gratuites de chaque cours",
       pricingFreeFeature3: "Lisez la communauté",

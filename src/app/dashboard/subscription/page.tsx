@@ -110,7 +110,7 @@ function SubscriptionContent() {
 
     const popup = window.open(
       checkoutUrl,
-      "brightroots-checkout",
+      "visible-checkout",
       `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
     );
 

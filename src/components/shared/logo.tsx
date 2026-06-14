@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Logo — full Brightroots wordmark + symbol.
+ * Logo — full Visible wordmark + symbol.
  *
  * Single asset (`/logo.svg`) since the app is force-dark; the previous
  * dual light/dark variants were a pre-Phase-1 hangover when the app
@@ -16,7 +16,7 @@ export function Logo({ className = "h-5" }: { className?: string }) {
   return (
     <img
       src="/logo.svg"
-      alt="Brightroots"
+      alt="Visible"
       className={className}
     />
   );

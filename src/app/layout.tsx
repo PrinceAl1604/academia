@@ -25,8 +25,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Brightroots — Learn from the best",
-    template: "%s | Brightroots",
+    default: "Visible — Learn from the best",
+    template: "%s | Visible",
   },
   description:
     "Access premium courses taught by industry experts. One subscription, unlimited learning.",
@@ -43,15 +43,15 @@ export const metadata: Metadata = {
   ),
   openGraph: {
     type: "website",
-    siteName: "Brightroots",
-    title: "Brightroots — Learn from the best",
+    siteName: "Visible",
+    title: "Visible — Learn from the best",
     description:
       "Access premium courses taught by industry experts. One subscription, unlimited learning.",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Brightroots — Learn from the best",
+    title: "Visible — Learn from the best",
     description:
       "Access premium courses taught by industry experts. One subscription, unlimited learning.",
   },

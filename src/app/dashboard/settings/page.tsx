@@ -995,7 +995,7 @@ export default function SettingsPage() {
                           size="sm"
                           onClick={() => {
                             const url = "https://jwxfcqrf.mychariow.shop/prd_o6clpf/checkout";
-                            window.open(url, "brightroots-checkout", `width=500,height=700,left=${(screen.width - 500) / 2},top=${(screen.height - 700) / 2}`);
+                            window.open(url, "visible-checkout", `width=500,height=700,left=${(screen.width - 500) / 2},top=${(screen.height - 700) / 2}`);
                           }}
                         >
                           <Crown className="h-3.5 w-3.5" />

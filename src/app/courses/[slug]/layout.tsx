@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = course.title;
   const description =
-    course.description || `Learn ${course.title} on Brightroots`;
+    course.description || `Learn ${course.title} on Visible`;
   const category = (course.category as unknown as { name: string }[] | null)?.[0]?.name;
   const instructor = (course.instructor as unknown as { name: string }[] | null)?.[0]?.name;
 

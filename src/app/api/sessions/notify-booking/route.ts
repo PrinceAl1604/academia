@@ -17,7 +17,7 @@ const APP_URL =
  *
  * Authorization: the caller must be the booking's owner. We re-check
  * server-side rather than trusting the client's claim, because email
- * sends are an authority — sending mail "from Brightroots" to an
+ * sends are an authority — sending mail "from Visible" to an
  * arbitrary address is exactly the kind of thing an attacker would
  * abuse.
  */

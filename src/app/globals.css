@@ -266,12 +266,12 @@
    prefers-reduced-motion: animation disabled outright. Visitors with
    the OS-level setting see a static glow.
 */
-@keyframes brightroots-glow-pulse {
+@keyframes visible-glow-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.65; }
 }
 .animate-glow-pulse {
-  animation: brightroots-glow-pulse 5s ease-in-out infinite;
+  animation: visible-glow-pulse 5s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .animate-glow-pulse {

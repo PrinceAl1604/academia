@@ -958,7 +958,7 @@ function Footer() {
         </div>
         <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-border/40 pt-8 text-xs text-muted-foreground sm:flex-row sm:items-center">
           <p>
-            © {new Date().getFullYear()} Brightroots. {t.landing.footerCopyright}
+            © {new Date().getFullYear()} Visible. {t.landing.footerCopyright}
           </p>
           <p className="font-mono uppercase tracking-[0.18em]">
             {t.landing.footerMadeIn}

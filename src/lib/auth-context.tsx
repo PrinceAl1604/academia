@@ -42,7 +42,7 @@ type Plan = "free" | "pro";
 // incident; the layout itself is now fine, but historical cache
 // versions are a one-line cost so we keep the suffix for the
 // schema-change pattern.
-const PROFILE_CACHE_KEY = "brightroots_profile_v4";
+const PROFILE_CACHE_KEY = "visible_profile_v4";
 
 interface CachedProfile {
   userId: string;

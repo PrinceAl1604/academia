@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Symbol — Brightroots mark only (no wordmark).
+ * Symbol — Visible mark only (no wordmark).
  *
  * Use this in tight horizontal contexts where the full Logo's wordmark
  * would be cropped or illegible:
@@ -16,7 +16,7 @@ export function Symbol({ className = "h-7 w-7" }: { className?: string }) {
   return (
     <img
       src="/symbol.svg"
-      alt="Brightroots"
+      alt="Visible"
       className={className}
     />
   );

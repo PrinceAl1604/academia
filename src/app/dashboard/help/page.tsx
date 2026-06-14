@@ -75,7 +75,7 @@ export default function HelpPage() {
           <Mail className="h-6 w-6 text-foreground/90" />
           <h3 className="mt-3 font-semibold text-foreground">{t.help.emailUs}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            support@brightroots.com
+            support@visible.com
           </p>
         </Card>
       </div>

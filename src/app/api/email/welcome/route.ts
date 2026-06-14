@@ -7,7 +7,7 @@ import { validateUserAccess } from "@/lib/supabase-server";
  *
  * Sends a welcome email to the AUTHENTICATED user. Recipient and
  * name are derived from the server session — never from request
- * body — so an unauth attacker can't trigger Brightroots-branded
+ * body — so an unauth attacker can't trigger Visible-branded
  * emails to arbitrary addresses.
  *
  * Idempotency is loose; the sign-up page calls this once after

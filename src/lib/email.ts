@@ -5,11 +5,11 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
-const FROM_EMAIL = process.env.FROM_EMAIL || "Brightroots <noreply@resend.dev>";
-const APP_NAME = "Brightroots";
+const FROM_EMAIL = process.env.FROM_EMAIL || "Visible <noreply@resend.dev>";
+const APP_NAME = "Visible";
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app";
-const HELP_EMAIL = "support@brightroots.com";
+const HELP_EMAIL = "support@visible.com";
 
 /* ─── Shared email wrapper ────────────────────────────────────
  * Premium template — top accent, refined card, polished footer
@@ -540,11 +540,11 @@ function buildIcsInvite({
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Brightroots//Live Sessions//EN",
+    "PRODID:-//Visible//Live Sessions//EN",
     "METHOD:REQUEST",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
-    `UID:${uid}@brightroots`,
+    `UID:${uid}@visible`,
     `DTSTAMP:${fmt(stamp)}`,
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,

@@ -122,9 +122,9 @@ function renderPushTitle(n: { type: string; payload: Record<string, unknown> }):
     case "referral_rewarded":
       return "You earned a free month";
     case "welcome":
-      return "Welcome to Brightroots";
+      return "Welcome to Visible";
     default:
-      return "Brightroots";
+      return "Visible";
   }
 }
 

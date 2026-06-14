@@ -37,5 +37,5 @@ export function generateLicenceKey(): string {
 export const SUBSCRIPTION_PRICE = 15000;
 export const SUBSCRIPTION_CURRENCY = "XOF"; // ISO 4217 code for FCFA
 export const SUBSCRIPTION_CURRENCY_DISPLAY = "FCFA"; // Human-friendly label
-export const SUBSCRIPTION_NAME = "Brightroots Pro - Monthly";
+export const SUBSCRIPTION_NAME = "Visible Pro - Monthly";
 export const CHARIOW_PRODUCT_URL = process.env.NEXT_PUBLIC_CHARIOW_PRODUCT_URL || "https://jwxfcqrf.mychariow.shop/prd_o6clpf";

@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Brightroots",
-    short_name: "Brightroots",
+    name: "Visible",
+    short_name: "Visible",
     description:
       "Access premium courses taught by industry experts. One subscription, unlimited learning.",
     start_url: "/",

@@ -70,7 +70,7 @@ interface NotificationRow {
 const PAGE_LIMIT = 20;
 // Cache the unread count in localStorage so the badge renders
 // instantly on next page load instead of waiting for a network call.
-const COUNT_CACHE_KEY = "brightroots_notif_unread_v1";
+const COUNT_CACHE_KEY = "visible_notif_unread_v1";
 
 export function NotificationBell() {
   const { user, isAuthenticated } = useAuth();
