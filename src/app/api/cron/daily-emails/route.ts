@@ -350,7 +350,7 @@ export async function GET(req: Request) {
 
       // No-show auto-detection used to live here — it queried Daily's
       // /meetings participant API to flag bookings whose user never
-      // joined. With sessions moved to externally-hosted Zoom links
+      // joined. With sessions moved to externally-hosted meeting links
       // (no provider API integration), we can't observe attendance,
       // so that detection is gone. Bookings simply auto-complete.
       // If no-show tracking matters later, an admin-facing "mark

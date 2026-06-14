@@ -286,7 +286,7 @@ export default function AdminSlotEditPage({
               )}
             </div>
 
-            {/* Zoom / meeting link */}
+            {/* Meeting link */}
             <div className="space-y-2">
               <Label htmlFor="meeting_url">{t.sessions.formMeetingUrlLabel}</Label>
               <Input

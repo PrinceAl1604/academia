@@ -25,13 +25,13 @@ import { ArrowLeft, Loader2, User, Users, Repeat } from "lucide-react";
  * Admin Sessions — create slot
  *
  * Wires up the form for publishing a new live session slot. The admin
- * pastes the Zoom (or any video) join link; students get a
- * "Join on Zoom" button on the session page. The link is optional at
+ * pastes the Google Meet join link; students get a
+ * "Join on Google Meet" button on the session page. The link is optional at
  * creation — the admin can publish the slot and add the link later
  * via the edit form before it goes live.
  *
  * Recurring publication shares ONE link across all occurrences — a
- * recurring Zoom meeting has a single persistent join URL, so the
+ * recurring Google Meet has a single persistent join URL, so the
  * admin pastes it once and it applies to every week.
  */
 
@@ -119,9 +119,9 @@ function validateSlot(
 
   // Meeting link — optional at creation (admin can add it later), but
   // if provided it must be a valid https URL. We don't hard-require
-  // "zoom.us" so the admin can paste a Google Meet / Teams link too,
-  // but we do require https so we never render an http:// or
-  // garbage-string join button.
+  // "meet.google.com" so an admin could paste a different provider's
+  // link if needed, but we do require https so we never render an
+  // http:// or garbage-string join button.
   const url = input.meetingUrl.trim();
   if (url) {
     let parsed: URL | null = null;
@@ -193,7 +193,7 @@ export default function AdminSessionsNewPage() {
 
     // Build the row(s) to insert. Recurring weekly = N rows with the
     // same time-of-day pushed forward by 7 days each. All occurrences
-    // share the SAME meeting_url — a recurring Zoom meeting has one
+    // share the SAME meeting_url — a recurring Google Meet has one
     // persistent join link.
     const baseStart = new Date(input.startsAt);
     const count = repeatWeekly ? Math.max(1, Math.min(52, repeatWeeks)) : 1;
@@ -382,7 +382,7 @@ export default function AdminSessionsNewPage() {
               )}
             </div>
 
-            {/* Zoom / meeting link — what the student clicks to join.
+            {/* Meeting link — what the student clicks to join.
                  Optional at creation: the admin can publish the slot
                  now and paste the link later via Edit. */}
             <div className="space-y-2">

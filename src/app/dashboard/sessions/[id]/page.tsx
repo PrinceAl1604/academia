@@ -31,8 +31,8 @@ import {
  *             users don't jump into a meeting that hasn't started.
  *
  *   2. LIVE — within [start - 15min, start + duration + 30min buffer].
- *             Show a "Join on Zoom" button pointing at the admin-set
- *             meeting_url, which opens Zoom (native app or browser).
+ *             Show a "Join on Google Meet" button pointing at the admin-set
+ *             meeting_url, which opens Google Meet (browser or app).
  *
  *   3. PAST — past the LIVE window OR slot.status is completed/cancelled.
  *             Show a closing card with a back link.
@@ -41,7 +41,7 @@ import {
  * (non-cancelled) booking, OR be admin. Anyone else gets bounced.
  *
  * The meeting link is pasted by the admin when creating/editing the
- * slot (Zoom, Google Meet, etc.). No video is embedded — joining
+ * slot (Google Meet). No video is embedded — joining. No video is embedded — joining
  * happens in the external client.
  */
 
@@ -391,10 +391,10 @@ function PreSessionCard({
   );
 }
 
-/* ─── LIVE state — Join on Zoom button ────────────────────── */
+/* ─── LIVE state — Join on Google Meet button ────────────────────── */
 /**
- * The session is live. Show a prominent "Join on Zoom" button that
- * opens the admin-set meeting_url in a new tab (Zoom native app or
+ * The session is live. Show a prominent "Join on Google Meet" button that
+ * opens the admin-set meeting_url in a new tab (Google Meet, browser or
  * browser). No video is embedded — the join happens in the external
  * client.
  *

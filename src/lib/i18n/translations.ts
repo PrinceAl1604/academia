@@ -654,11 +654,11 @@ export const translations = {
       formErrorTitle: "Title is required",
       formErrorCapacity: "Group sessions need at least 2 attendees",
       formErrorMeetingUrl: "Enter a valid https:// meeting link",
-      // Meeting link (Zoom / Google Meet / etc.)
+      // Meeting link (Google Meet)
       formMeetingUrlLabel: "Meeting link",
-      formMeetingUrlPlaceholder: "https://zoom.us/j/…",
+      formMeetingUrlPlaceholder: "https://meet.google.com/abc-defg-hij",
       formMeetingUrlHint:
-        "Paste the Zoom (or other) join link. Students click it to join. You can add it later.",
+        "Paste the Google Meet link. Students click it to join. You can add it later.",
       // List
       listColTitle: "Title",
       listColType: "Type",
@@ -704,11 +704,11 @@ export const translations = {
       roomTooEarlyBody:
         "The join button appears 15 minutes before the session starts. Hang tight.",
       roomOpensIn: "Opens in {time}",
-      // Live — Join on Zoom
+      // Live — Join on Google Meet
       roomLiveTitle: "The session is live",
       roomLiveBody:
-        "Click below to join. It opens in Zoom (app or browser).",
-      roomJoinButton: "Join on Zoom",
+        "Click below to join. It opens in Google Meet (browser or app).",
+      roomJoinButton: "Join on Google Meet",
       roomNoLinkStudent:
         "The host hasn't added the join link yet. Refresh in a moment — it'll appear here.",
       roomNoLinkAdmin:
@@ -1582,9 +1582,9 @@ export const translations = {
       formErrorCapacity: "Les sessions de groupe doivent accueillir au moins 2 personnes",
       formErrorMeetingUrl: "Entrez un lien de réunion https:// valide",
       formMeetingUrlLabel: "Lien de la réunion",
-      formMeetingUrlPlaceholder: "https://zoom.us/j/…",
+      formMeetingUrlPlaceholder: "https://meet.google.com/abc-defg-hij",
       formMeetingUrlHint:
-        "Collez le lien Zoom (ou autre). Les étudiants cliquent dessus pour rejoindre. Vous pouvez l'ajouter plus tard.",
+        "Collez le lien Google Meet. Les étudiants cliquent dessus pour rejoindre. Vous pouvez l'ajouter plus tard.",
       listColTitle: "Titre",
       listColType: "Type",
       listColStartsAt: "Début",
@@ -1625,8 +1625,8 @@ export const translations = {
       roomOpensIn: "Ouvre dans {time}",
       roomLiveTitle: "La session est en direct",
       roomLiveBody:
-        "Cliquez ci-dessous pour rejoindre. Ça s'ouvre dans Zoom (app ou navigateur).",
-      roomJoinButton: "Rejoindre sur Zoom",
+        "Cliquez ci-dessous pour rejoindre. Ça s'ouvre dans Google Meet (navigateur ou app).",
+      roomJoinButton: "Rejoindre sur Google Meet",
       roomNoLinkStudent:
         "L'hôte n'a pas encore ajouté le lien. Actualisez dans un instant — il apparaîtra ici.",
       roomNoLinkAdmin:
