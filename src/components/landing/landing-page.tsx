@@ -32,6 +32,14 @@ import {
   Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Logo } from "@/components/shared/logo";
 import { useFadeUp } from "@/lib/hooks/use-fade-up";
 import { CountUp } from "@/components/landing/count-up";
@@ -62,10 +70,20 @@ import { cn } from "@/lib/utils";
  * ═══════════════════════════════════════════════════════════════════ */
 
 /* ─── Lien de paiement ───────────────────────────────────────────────
-   Tous les CTA mènent au checkout Chariow de l’abonnement VISIBLE
-   (« Produit 2 »). On dérive l’URL du même constant que le reste de
-   l’app (licence.ts) — surchargeable via NEXT_PUBLIC_CHARIOW_PRODUCT_URL. */
-const PAYMENT_URL = `${CHARIOW_PRODUCT_URL}/checkout`;
+   Les boutons « Rejoindre VISIBLE » de la page défilent vers la section
+   prix (#tarif) — point de conversion unique. Là, le CTA ouvre une modale
+   de choix : Chariow (mobile money + carte, FCFA) ou Stripe (carte
+   internationale). Liens surchargeables via les variables ci-dessous. */
+const PRICING_ANCHOR = "#tarif";
+
+// Checkout Chariow — mobile money + carte, en FCFA (Produit 2 / abonnement).
+const CHARIOW_CHECKOUT_URL = `${CHARIOW_PRODUCT_URL}/checkout`;
+
+// [À CONFIGURER] Lien de paiement Stripe (carte internationale). Renseigner
+// NEXT_PUBLIC_STRIPE_PAYMENT_URL (ex. https://buy.stripe.com/xxxxxxxx).
+const STRIPE_CHECKOUT_URL =
+  process.env.NEXT_PUBLIC_STRIPE_PAYMENT_URL ||
+  "https://buy.stripe.com/REMPLACER";
 
 const PRICE = "50 000 FCFA";
 const PRICE_UNIT = "/mois";
@@ -237,7 +255,7 @@ function CtaButton({
       size={size}
       variant={variant}
       className={className}
-      render={<a href={PAYMENT_URL} />}
+      render={<a href={PRICING_ANCHOR} />}
     >
       {children}
     </Button>
@@ -254,7 +272,7 @@ function PayReassurance({ className }: { className?: string }) {
       )}
     >
       <Lock className="h-3.5 w-3.5 text-primary" />
-      Paiement sécurisé via Chariow
+      Paiement sécurisé
       <span className="opacity-40">·</span>
       <Smartphone className="h-3.5 w-3.5" />
       mobile money
@@ -262,6 +280,79 @@ function PayReassurance({ className }: { className?: string }) {
       <CreditCard className="h-3.5 w-3.5" />
       carte
     </p>
+  );
+}
+
+/**
+ * Sélecteur de paiement — ouvert par le CTA de la section prix (#tarif).
+ * Deux options présentées en cartes : Chariow (mobile money + carte, en
+ * FCFA — recommandé pour l’Afrique francophone) et Stripe (carte bancaire
+ * internationale, pour la diaspora). Le déclencheur garde le style passé
+ * via `triggerClassName` ; la modale réutilise le Dialog du design system.
+ */
+function PaymentChooser({
+  triggerClassName,
+  children,
+}: {
+  triggerClassName?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger className={triggerClassName}>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-lg">
+            Choisis ton moyen de paiement
+          </DialogTitle>
+          <DialogDescription>
+            Abonnement VISIBLE — {PRICE}
+            {PRICE_UNIT}, sans engagement.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-2 grid gap-3">
+          {/* Chariow — recommandé (mobile money local, FCFA) */}
+          <a
+            href={CHARIOW_CHECKOUT_URL}
+            className="group relative flex items-start gap-4 rounded-2xl border border-primary/40 bg-primary/[0.05] p-4 transition-colors hover:border-primary hover:bg-primary/[0.08]"
+          >
+            <span className="absolute -top-2 right-3 rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary-foreground">
+              Recommandé
+            </span>
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Smartphone className="h-5 w-5" />
+            </span>
+            <div className="flex-1">
+              <p className="font-medium text-foreground">Mobile money &amp; carte</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Wave, Orange Money, MTN MoMo ou carte — en FCFA, via Chariow.
+              </p>
+            </div>
+            <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-0.5" />
+          </a>
+          {/* Stripe — carte bancaire internationale */}
+          <a
+            href={STRIPE_CHECKOUT_URL}
+            className="group flex items-start gap-4 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-muted/40"
+          >
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+              <CreditCard className="h-5 w-5" />
+            </span>
+            <div className="flex-1">
+              <p className="font-medium text-foreground">Carte bancaire</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Visa, Mastercard — paiement international, via Stripe.
+              </p>
+            </div>
+            <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </a>
+        </div>
+        <p className="flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
+          <Lock className="h-3 w-3" />
+          Paiement 100 % sécurisé · sans engagement · résilie en un clic
+        </p>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -914,7 +1005,7 @@ function Offer() {
     "Tous les bonus",
   ];
   return (
-    <section id="tarif" className="px-5 py-16 sm:py-24">
+    <section id="tarif" className="scroll-mt-16 px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-2xl">
         <Reveal className="text-center">
           <Eyebrow>L’offre</Eyebrow>
@@ -954,13 +1045,10 @@ function Offer() {
                 tout inclus · pas de frais d’entrée
               </p>
 
-              <a
-                href={PAYMENT_URL}
-                className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-card px-6 py-3.5 text-base font-medium text-primary shadow-sm transition-transform duration-200 hover:scale-[1.02]"
-              >
+              <PaymentChooser triggerClassName="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-card px-6 py-3.5 text-base font-medium text-primary shadow-sm transition-transform duration-200 hover:scale-[1.02]">
                 Rejoindre VISIBLE — tarif fondateur
                 <ArrowRight className="h-4 w-4" />
-              </a>
+              </PaymentChooser>
               <PayReassurance className="mt-3 justify-center text-primary-foreground/70" />
             </div>
           </div>
@@ -1111,7 +1199,7 @@ function Urgency() {
           )}
 
           <a
-            href={PAYMENT_URL}
+            href={PRICING_ANCHOR}
             className="mt-8 inline-flex items-center justify-center gap-2 rounded-lg bg-card px-6 py-3.5 text-base font-medium text-foreground transition-transform duration-200 hover:scale-[1.02]"
           >
             Bloquer mon tarif fondateur
@@ -1279,7 +1367,7 @@ function StickyMobileCta() {
       )}
     >
       <a
-        href={PAYMENT_URL}
+        href={PRICING_ANCHOR}
         className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-medium text-primary-foreground shadow-sm"
       >
         Rejoindre VISIBLE — {PRICE}{PRICE_UNIT}
