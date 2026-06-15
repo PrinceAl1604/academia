@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -441,10 +441,74 @@ function LandingNav() {
  *  2. Hero
  * ═══════════════════════════════════════════════════════════════════ */
 
+/**
+ * Faint brand seal — a decorative watermark (concentric rings + dotted
+ * ring + curved tagline + the Visible mark), inspired by editorial
+ * "stamp" backgrounds. Purely decorative: aria-hidden, no pointer events,
+ * very low opacity, sits behind content. Tint/size/position via className
+ * (e.g. `absolute -right-20 w-[560px] text-foreground/[0.05]`). Each
+ * instance gets unique <path> ids (useId) so the curved-text references
+ * never collide when several seals render on one page.
+ */
+function BrandSeal({ className }: { className?: string }) {
+  const id = useId();
+  const top = `${id}-t`;
+  const bot = `${id}-b`;
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 360 360"
+      fill="none"
+      stroke="currentColor"
+      className={cn("pointer-events-none select-none", className)}
+    >
+      <defs>
+        <path id={top} d="M 23,180 A 157,157 0 0 1 337,180" />
+        <path id={bot} d="M 47,180 A 133,133 0 0 0 313,180" />
+      </defs>
+      <circle cx="180" cy="180" r="177" strokeWidth="1" />
+      <circle cx="180" cy="180" r="143" strokeWidth="1" />
+      <circle cx="180" cy="180" r="104" strokeWidth="1" />
+      <circle
+        cx="180"
+        cy="180"
+        r="120"
+        strokeWidth="2.5"
+        strokeDasharray="0.5 7"
+        strokeLinecap="round"
+      />
+      <g
+        fill="currentColor"
+        stroke="none"
+        style={{ fontFamily: "var(--font-sans)", fontWeight: 500 }}
+      >
+        <text style={{ fontSize: "13px", letterSpacing: "0.26em" }}>
+          <textPath href={`#${top}`} startOffset="50%" textAnchor="middle">
+            VISIBLE • PROGRAMME POUR DESIGNERS
+          </textPath>
+        </text>
+        <text style={{ fontSize: "12px", letterSpacing: "0.22em" }}>
+          <textPath href={`#${bot}`} startOffset="50%" textAnchor="middle">
+            DE DESIGNER INVISIBLE À DEMANDÉ
+          </textPath>
+        </text>
+      </g>
+      {/* Visible mark (the diagonal stroke from symbol.svg), centered. */}
+      <polygon
+        fill="currentColor"
+        stroke="none"
+        points="78.81 42.68 125.88 195.76 159.64 195.76 112.56 42.68"
+        transform="translate(94.3 94.2) scale(0.72)"
+      />
+    </svg>
+  );
+}
+
 function Hero() {
   return (
     <section className="relative overflow-hidden px-5 pt-32 pb-16 sm:pt-40 sm:pb-24">
       <HeroBackdrop />
+      <BrandSeal className="absolute -right-28 top-6 w-[420px] text-foreground/[0.05] sm:-right-20 sm:w-[560px]" />
       <div className="relative mx-auto max-w-3xl text-center">
         <Reveal>
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary sm:text-[11px]">
@@ -741,8 +805,9 @@ function Modules() {
     },
   ];
   return (
-    <section id="modules" className="border-y border-border bg-muted/30 px-5 py-16 sm:py-24">
-      <div className="mx-auto max-w-5xl">
+    <section id="modules" className="relative overflow-hidden border-y border-border bg-muted/30 px-5 py-16 sm:py-24">
+      <BrandSeal className="absolute -left-32 top-1/2 w-[460px] -translate-y-1/2 text-foreground/[0.04]" />
+      <div className="relative mx-auto max-w-5xl">
         <Reveal className="mx-auto max-w-2xl text-center">
           <Eyebrow>Ce que tu obtiens</Eyebrow>
           <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
@@ -1286,6 +1351,7 @@ function FinalCta() {
   return (
     <section className="relative overflow-hidden px-5 py-20 sm:py-28">
       <HeroBackdrop />
+      <BrandSeal className="absolute left-1/2 top-1/2 w-[620px] -translate-x-1/2 -translate-y-1/2 text-foreground/[0.045]" />
       <Reveal className="relative mx-auto max-w-2xl text-center">
         <h2 className="text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
           Tu peux rester invisible. Ou devenir{" "}
