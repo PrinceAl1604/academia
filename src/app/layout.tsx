@@ -1,12 +1,24 @@
 import type { Metadata } from "next";
+import { EB_Garamond } from "next/font/google";
 
 // Typography is the native system stack (SF on Apple, Roboto/Segoe
 // elsewhere) + SF Mono, declared in globals.css @theme per the Workshop
-// style guide. No webfont download for the app shell — lighter on 3G and
-// native to the Apple-heavy designer audience. The marketing landing
-// additionally loads EB Garamond (italic) for its <em> accents; that
-// import lives in the landing component, so the serif never ships with
-// the product UI.
+// style guide. No sans webfont for the app shell.
+//
+// EB Garamond (italic) loads HERE, in the Server Component layout —
+// next/font must NOT be called from a "use client" module: it survives
+// the Turbopack build but `garamond.variable` is undefined at runtime,
+// which threw on the landing's first render. It only defines the
+// --font-eb-garamond CSS var; the face downloads only where an <em>
+// under [data-landing] uses it (the marketing landing), so the serif
+// never ships with the product UI.
+const garamond = EB_Garamond({
+  subsets: ["latin"],
+  style: ["italic"],
+  weight: ["400"],
+  variable: "--font-eb-garamond",
+  display: "swap",
+});
 
 import { LanguageProvider } from "@/lib/i18n/language-context";
 import { AuthProvider } from "@/lib/auth-context";
@@ -76,7 +88,7 @@ export default function RootLayout({
     // No `dark` class — dark mode was removed in the rebrand.
     <html
       lang="en"
-      className="h-full antialiased"
+      className={`${garamond.variable} h-full antialiased`}
     >
       <head>
         {/* Preconnect to Supabase — every authenticated page makes

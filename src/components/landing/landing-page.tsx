@@ -45,19 +45,6 @@ import { useFadeUp } from "@/lib/hooks/use-fade-up";
 import { CountUp } from "@/components/landing/count-up";
 import { CHARIOW_PRODUCT_URL } from "@/lib/licence";
 import { cn } from "@/lib/utils";
-import { EB_Garamond } from "next/font/google";
-
-// Italic Garamond — the landing's <em> editorial accent (Workshop style
-// guide). Loaded here so the serif ships only with the marketing page,
-// never the app shell. Activated by the data-landing root below + the
-// `[data-landing] em` rule in globals.css.
-const garamond = EB_Garamond({
-  subsets: ["latin"],
-  style: ["italic"],
-  weight: ["400"],
-  variable: "--font-eb-garamond",
-  display: "swap",
-});
 
 /* ═══════════════════════════════════════════════════════════════════
  *  VISIBLE — Landing du PROGRAMME (l’abonnement)
@@ -386,7 +373,7 @@ export function LandingPage() {
   return (
     <div
       data-landing
-      className={cn(garamond.variable, "min-h-screen bg-background text-foreground")}
+      className="min-h-screen bg-background text-foreground"
     >
       <ScrollProgress />
       <LandingNav />
