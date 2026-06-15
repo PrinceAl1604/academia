@@ -1522,35 +1522,6 @@ function TheMath() {
             remboursé.
           </p>
         </Reveal>
-
-        <Reveal delay={180} className="mt-10">
-          <div className="rounded-3xl border border-border bg-card p-8 text-center sm:p-10">
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Ton investissement
-            </p>
-            <div className="mt-3 flex items-end justify-center gap-1">
-              <span className="font-mono text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
-                {PRICE}
-              </span>
-              <span className="mb-2 text-lg text-muted-foreground">
-                {PRICE_UNIT}
-              </span>
-            </div>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
-              Soit moins de 12 000 FCFA par semaine — le prix d’un seul projet
-              sous-payé.
-            </p>
-            <div className="mt-7 flex flex-col items-center gap-3">
-              <CtaButton className="w-full sm:w-auto">
-                Rejoindre VISIBLE — tarif fondateur
-                <ArrowRight className="h-4 w-4" />
-              </CtaButton>
-              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                Sans engagement · garantie 90 jours · mobile money
-              </p>
-            </div>
-          </div>
-        </Reveal>
       </div>
     </section>
   );
