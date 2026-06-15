@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   Check,
@@ -966,11 +967,15 @@ function Founder() {
     <section className="px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-4xl">
         <Reveal className="grid items-center gap-10 md:grid-cols-2">
-          <LabelledPlaceholder
-            label="Photo d’Alex"
-            aspect="aspect-[4/5]"
-            className="mx-auto max-w-xs md:max-w-none"
-          />
+          <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-2xl border border-border md:max-w-none">
+            <Image
+              src="/alex.jpg"
+              alt="Alex, fondateur de LogoMint, en interview"
+              fill
+              sizes="(min-width: 768px) 22rem, 20rem"
+              className="object-cover"
+            />
+          </div>
           <div>
             <Eyebrow>Qui t’accompagne</Eyebrow>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
