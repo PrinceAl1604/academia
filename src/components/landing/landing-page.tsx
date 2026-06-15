@@ -389,6 +389,7 @@ export function LandingPage() {
         <Bonuses />
         <Founder />
         <SocialProof />
+        <TheMath />
         <Offer />
         <Guarantee />
         <Urgency />
@@ -1092,7 +1093,7 @@ function Offer() {
               <p className="text-sm text-primary-foreground/70">
                 Valeur totale :{" "}
                 <span className="line-through decoration-primary-foreground/40">
-                  [—] FCFA
+                  2 000 000 FCFA
                 </span>
               </p>
               <div className="mt-2 flex items-end justify-center gap-1">
@@ -1437,5 +1438,120 @@ function StickyMobileCta() {
         <ArrowRight className="h-4 w-4" />
       </a>
     </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  Le calcul — ROI honnête : ce que tu paies vs la valeur reçue.
+ *  Rendu entre la preuve sociale et l’offre (voir <main>). Hoisté, donc
+ *  défini ici en fin de fichier. Pas de revenus « moyens » inventés :
+ *  côté gauche = coûts réels, côté droit = valeur du programme + objectif
+ *  garanti. La seule promesse chiffrée reste la garantie 90 jours.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+function TheMath() {
+  const spend = [
+    { big: "150 000 FCFA", label: "ton investissement sur 90 jours" },
+    { big: "≈ 12 000 FCFA", label: "par semaine" },
+    { big: "0 risque", label: "remboursé sans client premium en 90 jours" },
+  ];
+  const receive = [
+    { big: "2 000 000 FCFA", label: "de valeur — modules, lives, communauté, bonus" },
+    { big: "1 client premium", label: "l’objectif, en 90 jours" },
+    { big: "Une marque", label: "qui attire des clients, à vie" },
+  ];
+  return (
+    <section className="px-5 py-16 sm:py-24">
+      <div className="mx-auto max-w-4xl">
+        <Reveal className="mx-auto max-w-2xl text-center">
+          <Eyebrow>Le calcul</Eyebrow>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Bon, faisons le calcul.
+          </h2>
+        </Reveal>
+
+        <Reveal delay={100} className="mt-10">
+          <div className="grid overflow-hidden rounded-3xl border border-border sm:grid-cols-2">
+            {/* Ce que tu paies — coûts réels */}
+            <div className="border-b border-border p-6 sm:border-b-0 sm:border-r sm:p-8">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Ce que tu paies
+              </p>
+              <ul className="mt-6 space-y-6">
+                {spend.map((r) => (
+                  <li key={r.big}>
+                    <p className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                      {r.big}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">{r.label}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {/* Ce que tu reçois — valeur + objectif */}
+            <div className="bg-primary/[0.04] p-6 sm:p-8">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-primary">
+                Ce que tu reçois
+              </p>
+              <ul className="mt-6 space-y-6">
+                {receive.map((r) => (
+                  <li key={r.big}>
+                    <p className="text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
+                      {r.big}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">{r.label}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Reveal>
+
+        <Reveal delay={140}>
+          <p className="mx-auto mt-6 max-w-2xl text-center text-lg leading-relaxed text-foreground">
+            Tu paies <em>150 000 FCFA</em> sur 90 jours. Un seul client premium
+            peut le rembourser — et la garantie couvre le reste.
+          </p>
+        </Reveal>
+
+        <Reveal delay={160}>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-xs leading-relaxed text-muted-foreground">
+            La valeur affichée reflète ce que vaut le programme, pas une
+            promesse de revenus : tes résultats dépendent de ton travail. Notre
+            seul engagement chiffré — ton premier client premium en 90 jours, ou
+            remboursé.
+          </p>
+        </Reveal>
+
+        <Reveal delay={180} className="mt-10">
+          <div className="rounded-3xl border border-border bg-card p-8 text-center sm:p-10">
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              Ton investissement
+            </p>
+            <div className="mt-3 flex items-end justify-center gap-1">
+              <span className="font-mono text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
+                {PRICE}
+              </span>
+              <span className="mb-2 text-lg text-muted-foreground">
+                {PRICE_UNIT}
+              </span>
+            </div>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+              Soit moins de 12 000 FCFA par semaine — le prix d’un seul projet
+              sous-payé.
+            </p>
+            <div className="mt-7 flex flex-col items-center gap-3">
+              <CtaButton className="w-full sm:w-auto">
+                Rejoindre VISIBLE — tarif fondateur
+                <ArrowRight className="h-4 w-4" />
+              </CtaButton>
+              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                Sans engagement · garantie 90 jours · mobile money
+              </p>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
   );
 }
