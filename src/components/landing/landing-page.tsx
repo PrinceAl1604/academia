@@ -45,6 +45,19 @@ import { useFadeUp } from "@/lib/hooks/use-fade-up";
 import { CountUp } from "@/components/landing/count-up";
 import { CHARIOW_PRODUCT_URL } from "@/lib/licence";
 import { cn } from "@/lib/utils";
+import { EB_Garamond } from "next/font/google";
+
+// Italic Garamond — the landing's <em> editorial accent (Workshop style
+// guide). Loaded here so the serif ships only with the marketing page,
+// never the app shell. Activated by the data-landing root below + the
+// `[data-landing] em` rule in globals.css.
+const garamond = EB_Garamond({
+  subsets: ["latin"],
+  style: ["italic"],
+  weight: ["400"],
+  variable: "--font-eb-garamond",
+  display: "swap",
+});
 
 /* ═══════════════════════════════════════════════════════════════════
  *  VISIBLE — Landing du PROGRAMME (l’abonnement)
@@ -371,7 +384,10 @@ export function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div
+      data-landing
+      className={cn(garamond.variable, "min-h-screen bg-background text-foreground")}
+    >
       <ScrollProgress />
       <LandingNav />
       <main>
@@ -502,9 +518,7 @@ function Problem() {
           Tu maîtrises ton art. Pourtant tu cours après les clients, tu casses
           tes prix pour signer, et tu te sens interchangeable. Le problème
           n’est pas ton talent.{" "}
-          <span className="font-medium text-foreground">
-            C’est que personne ne le voit.
-          </span>{" "}
+          <em>C’est que personne ne le voit.</em>{" "}
           Un designer invisible reste fauché — peu importe son niveau.
         </p>
       </Reveal>
@@ -567,13 +581,11 @@ function Switch() {
         <p className="mt-6 text-base leading-relaxed text-muted-foreground sm:text-lg">
           Les gourous du business en ligne t’apprennent à vendre, à poster, à
           démarcher. Aucun ne t’apprend à utiliser{" "}
-          <span className="font-medium text-foreground">
-            ce que tu sais déjà faire
-          </span>{" "}
+          <em>ce que tu sais déjà faire</em>{" "}
           — le design — pour devenir une marque qu’on s’arrache. C’est exactement
           ce que fait VISIBLE. Tu n’apprends pas à devenir un influenceur. Tu
           apprends à devenir{" "}
-          <span className="font-medium text-foreground">le designer évident</span>{" "}
+          <em>le designer évident</em>{" "}
           pour les bons clients.
         </p>
       </Reveal>
@@ -596,13 +608,11 @@ function Solution() {
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             Un programme d’accompagnement{" "}
-            <span className="font-medium text-foreground">en direct</span>, chaque
+            <em>en direct</em>, chaque
             semaine, où on construit ta marque ensemble. Pas une formation que tu
             regardes seul et que tu abandonnes. Un live par semaine, une
             communauté qui te pousse, et un plan clair :{" "}
-            <span className="font-medium text-foreground">
-              d’invisible à demandé, par le design.
-            </span>
+            <em>d’invisible à demandé, par le design.</em>
           </p>
         </div>
       </Reveal>

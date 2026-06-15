@@ -1,21 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 
-const geist = Geist({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-// Geist Mono powers the new design language's metadata typography —
-// timestamps, prices, durations, counts. Using a true monospace (rather
-// than `tabular-nums` on a proportional face) keeps figure widths perfectly
-// even, which reads as deliberate at small sizes.
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
+// Typography is the native system stack (SF on Apple, Roboto/Segoe
+// elsewhere) + SF Mono, declared in globals.css @theme per the Workshop
+// style guide. No webfont download for the app shell — lighter on 3G and
+// native to the Apple-heavy designer audience. The marketing landing
+// additionally loads EB Garamond (italic) for its <em> accents; that
+// import lives in the landing component, so the serif never ships with
+// the product UI.
 
 import { LanguageProvider } from "@/lib/i18n/language-context";
 import { AuthProvider } from "@/lib/auth-context";
@@ -85,7 +76,7 @@ export default function RootLayout({
     // No `dark` class — dark mode was removed in the rebrand.
     <html
       lang="en"
-      className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <head>
         {/* Preconnect to Supabase — every authenticated page makes
