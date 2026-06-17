@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Symbol — Visible mark only (no wordmark).
  *

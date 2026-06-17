@@ -18,6 +18,15 @@ const garamond = EB_Garamond({
   weight: ["400"],
   variable: "--font-eb-garamond",
   display: "swap",
+  // No preload: the serif is decorative (italic <em> accents on the
+  // marketing landing only). Because the variable is applied to <html>
+  // in the root layout, next/font would otherwise inject a render-
+  // blocking <link rel="preload"> on EVERY route — dashboard, auth,
+  // admin — none of which use it. preload:false keeps the
+  // --font-eb-garamond CSS var defined (so [data-landing] em still
+  // resolves) but defers the actual font fetch to display:swap, only
+  // when the landing renders an <em>.
+  preload: false,
 });
 
 import { LanguageProvider } from "@/lib/i18n/language-context";
