@@ -1,42 +1,48 @@
 import type { MetadataRoute } from "next";
-import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { headers } from "next/headers";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://academia-vert-phi.vercel.app";
+// Two-domain split: only the marketing landing is indexable, so the
+// sitemap lists the marketing pages. The product app (courses behind
+// auth, dashboard, admin) is noindex and contributes no entries.
+const LANDING_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://programme.workshop-visible.com";
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL || "https://app.workshop-visible.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = getSupabaseAdmin();
+  const host = (await headers()).get("host");
+  let appHost: string | null = null;
+  try {
+    appHost = new URL(APP_URL).host;
+  } catch {
+    appHost = null;
+  }
 
-  // Fetch all published course slugs
-  const { data: courses } = await supabase
-    .from("courses")
-    .select("slug, updated_at")
-    .eq("is_published", true);
+  // App host is noindex — emit an empty sitemap.
+  if (appHost && host === appHost) return [];
 
-  const courseEntries: MetadataRoute.Sitemap = (courses ?? []).map((course) => ({
-    url: `${BASE_URL}/courses/${course.slug}`,
-    lastModified: course.updated_at,
-    changeFrequency: "weekly",
-    priority: 0.8,
-  }));
-
+  // Marketing site map.
   return [
     {
-      url: BASE_URL,
+      url: LANDING_URL,
       lastModified: new Date(),
-      changeFrequency: "daily",
+      changeFrequency: "weekly",
       priority: 1,
     },
     {
-      url: `${BASE_URL}/sign-in`,
+      url: `${LANDING_URL}/pricing`,
       changeFrequency: "monthly",
-      priority: 0.3,
+      priority: 0.7,
     },
     {
-      url: `${BASE_URL}/sign-up`,
-      changeFrequency: "monthly",
-      priority: 0.5,
+      url: `${LANDING_URL}/privacy`,
+      changeFrequency: "yearly",
+      priority: 0.2,
     },
-    ...courseEntries,
+    {
+      url: `${LANDING_URL}/terms`,
+      changeFrequency: "yearly",
+      priority: 0.2,
+    },
   ];
 }
