@@ -2,72 +2,111 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 /**
- * Middleware — runs on every matched request before the page renders.
+ * Middleware — hostname routing + auth gating.
  *
- * Auth model: only /sign-in, /sign-up, /reset-password are reachable
- * without a session. Everything else under the matcher (including
- * the catalog at "/") requires auth — logged-out visitors are
- * redirected to /sign-in so we can layer in a proper marketing
- * landing page later without conflating it with the student home.
+ * TWO-DOMAIN SETUP
+ * ----------------
+ * The marketing landing and the product app are served from the SAME
+ * Vercel project under two hostnames, split here by the `Host` header:
+ *   • LANDING_HOST (NEXT_PUBLIC_SITE_URL) → public marketing pages only
+ *   • APP_HOST     (NEXT_PUBLIC_APP_URL)  → the product (auth + app)
  *
- * Perf shape: cookie-sniff first, getUser() only when needed.
- *  1. `supabase.auth.getUser()` is a NETWORK call to Supabase auth.
- *     On a cold edge it costs 50–200ms.
- *  2. Presence of an sb-*-auth-token cookie is a sufficient gate
- *     for the most common case (no cookie ⇒ no session). We only
- *     pay for getUser() when there's actually a token to verify.
+ * Any host matching NEITHER (Vercel preview URLs, localhost) falls back
+ * to single-domain behaviour — the whole app, with the landing at "/"
+ * for logged-out visitors — so previews and local dev keep working.
+ *
+ * AUTH MODEL (app host / fallback)
+ * --------------------------------
+ * Only /sign-in, /sign-up, /reset-password are reachable logged-out.
+ * Protected routes redirect to /sign-in; /admin additionally verifies
+ * role. We skip the getUser() network call entirely for visitors with
+ * no session cookie — there's nothing to verify or refresh.
  */
+
+function hostOf(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).host;
+  } catch {
+    return null;
+  }
+}
+
+// Hardcoded fallbacks mirror the rest of the codebase (which falls back
+// to the Vercel URL): production hosts resolve even if the env vars
+// aren't set yet, while previews/localhost match neither and stay
+// single-domain.
+const LANDING_HOST =
+  hostOf(process.env.NEXT_PUBLIC_SITE_URL) || "programme.workshop-visible.com";
+const APP_HOST =
+  hostOf(process.env.NEXT_PUBLIC_APP_URL) || "app.workshop-visible.com";
+const APP_ORIGIN = (
+  process.env.NEXT_PUBLIC_APP_URL || "https://app.workshop-visible.com"
+).replace(/\/$/, "");
+
+// The public marketing site. Everything else on the landing host is an
+// app route and gets bounced to the app domain.
+function isMarketingPath(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    pathname === "/pricing" ||
+    pathname === "/privacy" ||
+    pathname === "/terms"
+  );
+}
+
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
+  const host = request.headers.get("host");
   const response = NextResponse.next({ request });
 
-  // Auth pages — anyone can reach them (signed in or not).
+  // ── Landing host: marketing only ─────────────────────────────────
+  // Serve the marketing pages; bounce every app route to the app domain
+  // (preserving path + query). No auth work — the site is fully public.
+  if (host === LANDING_HOST) {
+    if (isMarketingPath(pathname)) return response;
+    return NextResponse.redirect(`${APP_ORIGIN}${pathname}${search}`);
+  }
+
+  const onAppHost = host === APP_HOST;
+
+  // ── Auth routing (app host + previews/localhost) ─────────────────
   const isAuthRoute =
     pathname === "/sign-in" ||
     pathname === "/sign-up" ||
     pathname === "/reset-password";
 
-  // Explicit protected-route list. This duplicates the `matcher` at
-  // the bottom of the file by design: if a new path gets added to
-  // the matcher without updating this list, the route falls through
-  // to "no decision" (no redirect, no protection) — fail-closed by
-  // omission rather than fail-open via `!isAuthRoute`. Reviewable
-  // here in one place instead of mentally re-deriving from the
-  // matcher pattern on every read.
-  //
-  // NOTE: `/` is NOT in this list because it now serves a public
-  // marketing landing page for unauthenticated visitors. Logged-in
-  // students still see the catalog there (handled in the page
-  // component itself), and logged-in admins still get the explicit
-  // redirect to /admin below.
   const isProtectedRoute =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/admin") ||
     pathname === "/onboarding" ||
     (pathname.startsWith("/courses/") && pathname.endsWith("/learn"));
 
-  // Cheap cookie sniff: does the visitor look authenticated at all?
   const hasSessionCookie = request.cookies
     .getAll()
     .some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"));
 
-  // Fast path 1: logged-out visitor on an auth page — let them in,
-  // no network call.
-  if (!hasSessionCookie && isAuthRoute) {
+  // No session cookie ⇒ nothing to verify or refresh. Decide locally,
+  // never paying for getUser() (saves a 50–200ms edge round-trip on
+  // every logged-out request).
+  if (!hasSessionCookie) {
+    if (isAuthRoute) return response;
+    if (isProtectedRoute) {
+      const signInUrl = new URL("/sign-in", request.url);
+      if (pathname !== "/") signInUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(signInUrl);
+    }
+    // App host: "/" is NOT the marketing page (that lives on the landing
+    // host) — send logged-out visitors to sign-in. On previews/localhost
+    // we let "/" render the landing so it stays testable.
+    if (onAppHost && pathname === "/") {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
     return response;
   }
 
-  // Fast path 2: logged-out visitor on a protected page — redirect
-  // locally, no network call. Includes "/" now.
-  if (!hasSessionCookie && isProtectedRoute) {
-    const signInUrl = new URL("/sign-in", request.url);
-    if (pathname !== "/") signInUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(signInUrl);
-  }
-
-  // Slow path: there is a session cookie, so we need to verify it
-  // and (importantly) let the SSR client refresh the token via the
-  // cookie callbacks. This is the only path that pays for getUser().
+  // Session cookie present — verify it and let the SSR client refresh
+  // the token via the cookie callbacks.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -90,27 +129,24 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Cookie present but token invalid/expired and unrefreshable —
-  // treat as unauthenticated.
+  // Cookie present but token invalid/expired and unrefreshable.
   if (!user) {
     if (isProtectedRoute) {
       const signInUrl = new URL("/sign-in", request.url);
       if (pathname !== "/") signInUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(signInUrl);
     }
+    if (onAppHost && pathname === "/") {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
     return response;
   }
 
-  // SECURITY: anchor admin gating on app_metadata.role, not
-  // user_metadata.role. user_metadata is client-writable via
-  // supabase.auth.updateUser({ data: ... }) — a regular user can
-  // self-elevate by writing { role: "admin" } to their own metadata
-  // and bypass this middleware. app_metadata is server-only writable
-  // (must use the service-role admin client). Backfilled from
-  // public.users.role in the `app_metadata_role_backfill` migration.
+  // SECURITY: anchor admin gating on app_metadata.role (server-only
+  // writable), never user_metadata.role (client-writable).
   const metaRole = (user.app_metadata as Record<string, unknown> | null)?.role;
 
-  // Authenticated user on auth route → bounce to their home.
+  // Authenticated user on an auth route → bounce to their home.
   if (isAuthRoute) {
     if (metaRole === "admin") {
       return NextResponse.redirect(new URL("/admin", request.url));
@@ -123,9 +159,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 
-  // /admin/* — verify admin role. JWT-cached path is fast; DB
-  // fallback covers users whose app_metadata isn't populated yet
-  // (legacy accounts pre-backfill).
+  // /admin/* — verify admin role (JWT fast path, DB fallback).
   if (pathname.startsWith("/admin")) {
     if (metaRole === "admin") return response;
 
@@ -138,12 +172,6 @@ export async function middleware(request: NextRequest) {
     if (!profile || profile.role !== "admin") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-
-    // DB says admin but JWT app_metadata isn't flagged — this is a
-    // post-promotion case. We can't update app_metadata from a
-    // non-admin Supabase client (would need service role). The next
-    // sign-in or token refresh after admin runs the backfill SQL
-    // again will pick it up; no-op here.
   }
 
   return response;
@@ -151,13 +179,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/",
-    "/dashboard/:path*",
-    "/admin/:path*",
-    "/sign-in",
-    "/sign-up",
-    "/reset-password",
-    "/courses/:slug/learn",
-    "/onboarding",
+    // Run on everything except API routes, the auth callback, Next
+    // internals, and static files (anything with a dot). Broad coverage
+    // is required so app routes hit on the landing host get redirected
+    // to the app domain.
+    "/((?!api|auth|_next/static|_next/image|favicon.ico|.*\\..*).*)",
   ],
 };
