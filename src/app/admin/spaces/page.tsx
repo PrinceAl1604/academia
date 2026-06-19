@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -55,6 +62,7 @@ function slugify(text: string): string {
 
 const TYPES: SpaceType[] = ["page", "course", "event", "link"];
 const ACCESS: SpaceAccess[] = ["public", "members", "pro"];
+const NO_GROUP = "__none__";
 
 export default function AdminSpacesPage() {
   const { t } = useLanguage();
@@ -108,10 +116,10 @@ export default function AdminSpacesPage() {
     setNewGroup("");
   };
 
-  const renameGroup = async (id: string, name: string, emoji: string | null) => {
-    const { error } = await supabase.from("space_groups").update({ name, emoji }).eq("id", id);
+  const renameGroup = async (id: string, name: string) => {
+    const { error } = await supabase.from("space_groups").update({ name }).eq("id", id);
     if (error) return toast.error(isEn ? "Save failed" : "Échec");
-    setGroups((p) => p.map((g) => (g.id === id ? { ...g, name, emoji } : g)));
+    setGroups((p) => p.map((g) => (g.id === id ? { ...g, name } : g)));
   };
 
   const deleteGroup = async (g: GroupRow) => {
@@ -280,7 +288,7 @@ function GroupBlock({
   onRename, onDelete, onMove, onAddSpace, onEditSpace, onDeleteSpace, onMoveSpace, onSetWelcome,
 }: {
   group: GroupRow; first: boolean; last: boolean; spaces: Space[]; welcomeId: string | null; isEn: boolean;
-  onRename: (id: string, name: string, emoji: string | null) => void;
+  onRename: (id: string, name: string) => void;
   onDelete: (g: GroupRow) => void;
   onMove: (id: string, dir: -1 | 1) => void;
   onAddSpace: () => void;
@@ -291,7 +299,6 @@ function GroupBlock({
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(group.name);
-  const [emoji, setEmoji] = useState(group.emoji ?? "");
 
   return (
     <Card>
@@ -299,15 +306,13 @@ function GroupBlock({
         <div className="flex items-center gap-2 px-4 py-3 border-b">
           {editing ? (
             <>
-              <Input value={emoji} onChange={(e) => setEmoji(e.target.value)} className="h-9 w-14 text-center" placeholder="🙂" />
               <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9 flex-1" autoFocus />
-              <Button size="sm" onClick={() => { onRename(group.id, name.trim() || group.name, emoji.trim() || null); setEditing(false); }}>
+              <Button size="sm" onClick={() => { onRename(group.id, name.trim() || group.name); setEditing(false); }}>
                 {isEn ? "Save" : "OK"}
               </Button>
             </>
           ) : (
             <>
-              <span className="text-base">{group.emoji}</span>
               <span className="flex-1 text-sm font-semibold uppercase tracking-wide text-foreground">{group.name}</span>
               <Button size="icon" variant="ghost" className="h-7 w-7" disabled={first} onClick={() => onMove(group.id, -1)}><ChevronUp className="h-4 w-4" /></Button>
               <Button size="icon" variant="ghost" className="h-7 w-7" disabled={last} onClick={() => onMove(group.id, 1)}><ChevronDown className="h-4 w-4" /></Button>
@@ -389,7 +394,6 @@ function SpaceEditor({
 }) {
   const cfg = (initial?.config ?? {}) as PageConfig & { url?: string; open_in_new?: boolean };
   const [name, setName] = useState(initial?.name ?? "");
-  const [emoji, setEmoji] = useState(initial?.emoji ?? "");
   const [type, setType] = useState<SpaceType>(initial?.type ?? "page");
   const [access, setAccess] = useState<SpaceAccess>(initial?.access ?? "members");
   const [groupId, setGroupId] = useState<string>(initial?.group_id ?? defaultGroupId ?? "");
@@ -414,7 +418,7 @@ function SpaceEditor({
     if (initial) {
       const { data, error } = await supabase
         .from("spaces")
-        .update({ name: name.trim(), emoji: emoji.trim() || null, type, access, group_id: groupId || null, config })
+        .update({ name: name.trim(), emoji: null, type, access, group_id: groupId || null, config })
         .eq("id", initial.id)
         .select(SPACE_COLUMNS)
         .single();
@@ -424,7 +428,7 @@ function SpaceEditor({
     } else {
       const { data, error } = await supabase
         .from("spaces")
-        .insert({ community_id: communityId, group_id: groupId || null, name: name.trim(), slug: slugify(name), emoji: emoji.trim() || null, type, access, sort_order: nextSortOrder(groupId || null), config })
+        .insert({ community_id: communityId, group_id: groupId || null, name: name.trim(), slug: slugify(name), type, access, sort_order: nextSortOrder(groupId || null), config })
         .select(SPACE_COLUMNS)
         .single();
       setSaving(false);
@@ -432,8 +436,6 @@ function SpaceEditor({
       onSaved(data as Space);
     }
   };
-
-  const selectCls = "h-9 rounded-md border border-input bg-background px-2 text-sm";
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -446,36 +448,47 @@ function SpaceEditor({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex gap-3">
-            <div className="w-16">
-              <label className="text-xs text-muted-foreground">{isEn ? "Emoji" : "Emoji"}</label>
-              <Input value={emoji} onChange={(e) => setEmoji(e.target.value)} placeholder="🚀" className="text-center" />
-            </div>
-            <div className="flex-1">
-              <label className="text-xs text-muted-foreground">{isEn ? "Name" : "Nom"}</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-            </div>
+          <div>
+            <label className="text-xs text-muted-foreground">{isEn ? "Name" : "Nom"}</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus placeholder={isEn ? "e.g. 🚀 Welcome" : "ex. 🚀 Bienvenue"} />
           </div>
 
           <div className="flex flex-wrap gap-3">
             <div>
               <label className="block text-xs text-muted-foreground">Type</label>
-              <select className={selectCls} value={type} onChange={(e) => setType(e.target.value as SpaceType)}>
-                {TYPES.map((tp) => <option key={tp} value={tp}>{tp}</option>)}
-              </select>
+              <Select value={type} onValueChange={(v) => v && setType(v as SpaceType)}>
+                <SelectTrigger className="mt-1 w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TYPES.map((tp) => <SelectItem key={tp} value={tp}>{tp}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="block text-xs text-muted-foreground">{isEn ? "Access" : "Accès"}</label>
-              <select className={selectCls} value={access} onChange={(e) => setAccess(e.target.value as SpaceAccess)}>
-                {ACCESS.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
+              <Select value={access} onValueChange={(v) => v && setAccess(v as SpaceAccess)}>
+                <SelectTrigger className="mt-1 w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACCESS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="block text-xs text-muted-foreground">{isEn ? "Group" : "Groupe"}</label>
-              <select className={selectCls} value={groupId} onChange={(e) => setGroupId(e.target.value)}>
-                <option value="">{isEn ? "(none)" : "(aucun)"}</option>
-                {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-              </select>
+              <Select value={groupId || NO_GROUP} onValueChange={(v) => setGroupId(!v || v === NO_GROUP ? "" : v)}>
+                <SelectTrigger className="mt-1 w-40">
+                  <SelectValue>
+                    {groups.find((g) => g.id === groupId)?.name ?? (isEn ? "(none)" : "(aucun)")}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_GROUP}>{isEn ? "(none)" : "(aucun)"}</SelectItem>
+                  {groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
