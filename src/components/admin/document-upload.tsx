@@ -70,7 +70,11 @@ export function DocumentUpload({
   };
 
   const remove = async (doc: SpaceDocument) => {
-    await supabase.storage.from("space-documents").remove([doc.path]);
+    const { error } = await supabase.storage.from("space-documents").remove([doc.path]);
+    if (error) {
+      alert(`${isEn ? "Remove failed" : "Échec de la suppression"}: ${error.message}`);
+      return; // keep it in the list so we don't orphan the object
+    }
     onChange(value.filter((d) => d.path !== doc.path));
   };
 
