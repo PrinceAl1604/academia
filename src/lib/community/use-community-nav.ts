@@ -4,21 +4,19 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   type Community,
-  type Space,
   type SpaceGroup,
+  type SpaceNav,
   COMMUNITY_COLUMNS,
-  SPACE_COLUMNS,
+  SPACE_NAV_COLUMNS,
 } from "./types";
 
 /**
  * Client hook that loads the community sidebar nav (groups → spaces).
  *
- * The sidebar is a client component that re-mounts on navigation (each
- * page wraps its own SidebarLayout), so we keep a module-level cache:
- * the first load fetches, later mounts render instantly from cache while
- * revalidating in the background — no flash, no refetch-from-blank.
- *
- * The server equivalent (`getCommunityNav`) powers the space pages.
+ * Reads the `space_nav` view, so it lists every space including `pro` ones
+ * (shown locked in the UI for non-Pro members). Content stays gated by the
+ * `spaces` table RLS. Module-level cache avoids a flash on the per-page
+ * SidebarLayout re-mounts.
  */
 let cache: { community: Community | null; groups: SpaceGroup[] } | null = null;
 
@@ -28,6 +26,7 @@ export function useCommunityNav() {
   const [loading, setLoading] = useState(!cache);
 
   useEffect(() => {
+    if (cache) return; // loaded once per session — nav is community-wide
     let active = true;
 
     (async () => {
@@ -44,21 +43,21 @@ export function useCommunityNav() {
         return;
       }
 
-      const [{ data: groupRows }, { data: spaceRows }] = await Promise.all([
+      const [{ data: groupRows }, { data: navRows }] = await Promise.all([
         supabase
           .from("space_groups")
           .select("id,community_id,name,emoji,sort_order")
           .eq("community_id", comm.id)
           .order("sort_order", { ascending: true }),
         supabase
-          .from("spaces")
-          .select(SPACE_COLUMNS)
+          .from("space_nav")
+          .select(SPACE_NAV_COLUMNS)
           .eq("community_id", comm.id)
           .order("sort_order", { ascending: true }),
       ]);
 
-      const spaces = (spaceRows ?? []) as Space[];
-      const byGroup = new Map<string, Space[]>();
+      const spaces = (navRows ?? []) as SpaceNav[];
+      const byGroup = new Map<string, SpaceNav[]>();
       for (const sp of spaces) {
         const key = sp.group_id ?? "_ungrouped";
         const list = byGroup.get(key) ?? [];
