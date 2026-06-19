@@ -18,6 +18,7 @@ import {
   Hash,
   ExternalLink,
   Lock,
+  Boxes,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -40,6 +41,7 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const { isAdmin, isPro } = useAuth();
   const { t } = useLanguage();
+  const isEn = t.nav.signIn === "Sign In";
   const { collapsed } = useSidebar();
   const [referralOpen, setReferralOpen] = useState(false);
   const { groups } = useCommunityNav();
@@ -66,6 +68,7 @@ export function DashboardSidebar() {
     {
       label: t.sidebar.content || "Content",
       items: [
+        { label: isEn ? "Spaces" : "Espaces", href: "/admin/spaces", icon: Boxes },
         { label: t.admin.manageCourses, href: "/admin/courses", icon: BookOpen },
         { label: t.sidebar.categories, href: "/admin/categories", icon: FolderOpen },
       ],
