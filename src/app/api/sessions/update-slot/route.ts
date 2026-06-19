@@ -51,6 +51,9 @@ export async function POST(req: Request) {
     duration_minutes?: number;
     max_attendees?: number;
     meeting_url?: string | null;
+    space_id?: string | null;
+    cover_url?: string | null;
+    location_type?: "online" | "in_person";
   };
   try {
     body = await req.json();
@@ -94,6 +97,11 @@ export async function POST(req: Request) {
     update.max_attendees = body.max_attendees;
   if (body.meeting_url !== undefined)
     update.meeting_url = body.meeting_url?.trim() || null;
+  if (body.space_id !== undefined) update.space_id = body.space_id || null;
+  if (body.cover_url !== undefined)
+    update.cover_url = body.cover_url?.trim() || null;
+  if (body.location_type !== undefined)
+    update.location_type = body.location_type;
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
