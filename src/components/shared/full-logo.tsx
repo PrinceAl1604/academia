@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * FullLogo — alias for Logo, kept for backward compatibility with
  * auth-page call sites (sign-in, sign-up, reset-password).

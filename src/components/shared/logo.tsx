@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Logo — full Visible wordmark + symbol.
  *

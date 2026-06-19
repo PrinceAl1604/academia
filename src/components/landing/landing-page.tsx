@@ -973,6 +973,7 @@ function Founder() {
               alt="Alex, fondateur de LogoMint, en interview"
               fill
               sizes="(min-width: 768px) 22rem, 20rem"
+              quality={70}
               className="object-cover"
             />
           </div>
