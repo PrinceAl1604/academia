@@ -26,6 +26,7 @@ export function useCommunityNav() {
   const [loading, setLoading] = useState(!cache);
 
   useEffect(() => {
+    if (cache) return; // loaded once per session — nav is community-wide
     let active = true;
 
     (async () => {

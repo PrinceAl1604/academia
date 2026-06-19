@@ -27,7 +27,10 @@ export default async function SpacePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const meta = await getSpaceNavBySlug(slug);
+  const community = await getActiveCommunity();
+  if (!community) notFound();
+
+  const meta = await getSpaceNavBySlug(slug, community.id);
   if (!meta) notFound();
 
   // Pro gate first — so a Pro link space locks rather than redirecting.
@@ -53,13 +56,10 @@ export default async function SpacePage({
   } else if (meta.type === "event") {
     body = <EventSpace name={meta.name} emoji={meta.emoji} />;
   } else {
-    // page — needs the full row for content + the community for the CTA
-    const [space, community] = await Promise.all([
-      getSpaceBySlug(slug),
-      getActiveCommunity(),
-    ]);
+    // page — needs the full row for content
+    const space = await getSpaceBySlug(slug, community.id);
     if (!space) notFound();
-    body = <PageSpaceView space={space} whatsappUrl={community?.whatsapp_url ?? null} />;
+    body = <PageSpaceView space={space} whatsappUrl={community.whatsapp_url} />;
   }
 
   return <SidebarLayout>{body}</SidebarLayout>;

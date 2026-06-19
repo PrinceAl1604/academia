@@ -68,11 +68,15 @@ export async function getCommunityNav(): Promise<{
 
 /** Metadata for one space (from the view) — works for any member, even on a
  *  Pro space they can't open (used to decide lock-wall vs content). */
-export async function getSpaceNavBySlug(slug: string): Promise<SpaceNav | null> {
+export async function getSpaceNavBySlug(
+  slug: string,
+  communityId: string
+): Promise<SpaceNav | null> {
   const supabase = await getSupabaseServer();
   const { data } = await supabase
     .from("space_nav")
     .select(SPACE_NAV_COLUMNS)
+    .eq("community_id", communityId)
     .eq("slug", slug)
     .maybeSingle();
   return (data as SpaceNav) ?? null;
@@ -80,11 +84,15 @@ export async function getSpaceNavBySlug(slug: string): Promise<SpaceNav | null> 
 
 /** Full space row incl. `config` — RLS-gated; returns null if the caller
  *  isn't allowed to read it. */
-export async function getSpaceBySlug(slug: string): Promise<Space | null> {
+export async function getSpaceBySlug(
+  slug: string,
+  communityId: string
+): Promise<Space | null> {
   const supabase = await getSupabaseServer();
   const { data } = await supabase
     .from("spaces")
     .select(SPACE_COLUMNS)
+    .eq("community_id", communityId)
     .eq("slug", slug)
     .maybeSingle();
   return (data as Space) ?? null;
