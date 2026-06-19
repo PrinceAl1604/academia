@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -140,6 +140,7 @@ function validateSlot(
 
 export default function AdminSessionsNewPage() {
   const { t } = useLanguage();
+  const isEn = t.nav.signIn === "Sign In";
   const { user } = useAuth();
   const router = useRouter();
 
@@ -157,6 +158,22 @@ export default function AdminSessionsNewPage() {
   const [repeatWeeks, setRepeatWeeks] = useState(4);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Phase 3 — optionally attach to an event space, with a cover + location.
+  const [spaceId, setSpaceId] = useState<string>("");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [locationType, setLocationType] = useState<"online" | "in_person">("online");
+  const [eventSpaces, setEventSpaces] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("spaces")
+      .select("id,name")
+      .eq("type", "event")
+      .order("sort_order", { ascending: true })
+      .then(({ data }) =>
+        setEventSpaces((data ?? []) as { id: string; name: string }[])
+      );
+  }, []);
 
   // When the admin flips type, default the capacity sensibly. They can
   // still override (e.g. a 1:1 with a silent observer), but defaults
@@ -211,6 +228,9 @@ export default function AdminSessionsNewPage() {
         duration_minutes: input.durationMinutes,
         max_attendees: input.maxAttendees,
         meeting_url: trimmedUrl,
+        space_id: spaceId || null,
+        cover_url: coverUrl.trim() || null,
+        location_type: locationType,
       });
     }
 
@@ -398,6 +418,82 @@ export default function AdminSessionsNewPage() {
               <p className="text-xs text-muted-foreground">
                 {t.sessions.formMeetingUrlHint}
               </p>
+            </div>
+
+            {/* Event space — attach this session to a community event
+                 space so it appears there (Phase 3). Optional. */}
+            <div className="space-y-2">
+              <Label htmlFor="space">{isEn ? "Event space" : "Espace événement"}</Label>
+              <Select
+                value={spaceId || "none"}
+                onValueChange={(v) => setSpaceId(!v || v === "none" ? "" : v)}
+              >
+                <SelectTrigger id="space">
+                  <SelectValue>
+                    {eventSpaces.find((s) => s.id === spaceId)?.name ??
+                      (isEn ? "None" : "Aucun")}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{isEn ? "None" : "Aucun"}</SelectItem>
+                  {eventSpaces.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {isEn
+                  ? "Show this event inside a community event space."
+                  : "Afficher cet événement dans un espace événement."}
+              </p>
+            </div>
+
+            {/* Location + cover image */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="location_type">{isEn ? "Location" : "Lieu"}</Label>
+                <Select
+                  value={locationType}
+                  onValueChange={(v) =>
+                    v && setLocationType(v as "online" | "in_person")
+                  }
+                >
+                  <SelectTrigger id="location_type">
+                    <SelectValue>
+                      {locationType === "in_person"
+                        ? isEn
+                          ? "In person"
+                          : "En personne"
+                        : isEn
+                          ? "Online"
+                          : "En ligne"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="online">
+                      {isEn ? "Online" : "En ligne"}
+                    </SelectItem>
+                    <SelectItem value="in_person">
+                      {isEn ? "In person" : "En personne"}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cover_url">
+                  {isEn ? "Cover image URL" : "URL de l'image"}
+                </Label>
+                <Input
+                  id="cover_url"
+                  type="url"
+                  inputMode="url"
+                  value={coverUrl}
+                  onChange={(e) => setCoverUrl(e.target.value)}
+                  placeholder="https://…"
+                />
+              </div>
             </div>
 
             {/* Recurrence — toggle + week count.

@@ -54,7 +54,7 @@ export default async function SpacePage({
   if (meta.type === "course") {
     body = <CourseSpace name={meta.name} emoji={meta.emoji} />;
   } else if (meta.type === "event") {
-    body = <EventSpace name={meta.name} emoji={meta.emoji} />;
+    body = <EventSpace spaceId={meta.id} name={meta.name} emoji={meta.emoji} />;
   } else {
     // page — needs the full row for content
     const space = await getSpaceBySlug(slug, community.id);

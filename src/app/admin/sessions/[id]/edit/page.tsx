@@ -43,6 +43,9 @@ interface SessionSlot {
   max_attendees: number;
   meeting_url: string | null;
   status: "open" | "cancelled" | "completed";
+  space_id: string | null;
+  cover_url: string | null;
+  location_type: "online" | "in_person";
 }
 
 export default function AdminSlotEditPage({
@@ -52,6 +55,7 @@ export default function AdminSlotEditPage({
 }) {
   const { id } = use(params);
   const { t } = useLanguage();
+  const isEn = t.nav.signIn === "Sign In";
   const router = useRouter();
 
   const [slot, setSlot] = useState<SessionSlot | null>(null);
@@ -61,6 +65,10 @@ export default function AdminSlotEditPage({
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [maxAttendees, setMaxAttendees] = useState(1);
   const [meetingUrl, setMeetingUrl] = useState("");
+  const [spaceId, setSpaceId] = useState<string>("");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [locationType, setLocationType] = useState<"online" | "in_person">("online");
+  const [eventSpaces, setEventSpaces] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +96,16 @@ export default function AdminSlotEditPage({
         setDurationMinutes(s.duration_minutes);
         setMaxAttendees(s.max_attendees);
         setMeetingUrl(s.meeting_url ?? "");
+        setSpaceId(s.space_id ?? "");
+        setCoverUrl(s.cover_url ?? "");
+        setLocationType(s.location_type ?? "online");
       }
+      const { data: spacesData } = await supabase
+        .from("spaces")
+        .select("id,name")
+        .eq("type", "event")
+        .order("sort_order", { ascending: true });
+      setEventSpaces((spacesData ?? []) as { id: string; name: string }[]);
       setLoading(false);
     })();
   }, [id]);
@@ -140,6 +157,9 @@ export default function AdminSlotEditPage({
         // Empty string -> null so "cleared the field" actually removes
         // the link rather than storing "".
         meeting_url: trimmedUrl || null,
+        space_id: spaceId || null,
+        cover_url: coverUrl.trim() || null,
+        location_type: locationType,
       }),
     });
     if (!res.ok) {
@@ -300,6 +320,76 @@ export default function AdminSlotEditPage({
               <p className="text-xs text-muted-foreground">
                 {t.sessions.formMeetingUrlHint}
               </p>
+            </div>
+
+            {/* Event space (Phase 3) */}
+            <div className="space-y-2">
+              <Label htmlFor="space">{isEn ? "Event space" : "Espace événement"}</Label>
+              <Select
+                value={spaceId || "none"}
+                onValueChange={(v) => setSpaceId(!v || v === "none" ? "" : v)}
+              >
+                <SelectTrigger id="space">
+                  <SelectValue>
+                    {eventSpaces.find((s) => s.id === spaceId)?.name ??
+                      (isEn ? "None" : "Aucun")}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{isEn ? "None" : "Aucun"}</SelectItem>
+                  {eventSpaces.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Location + cover image */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="location_type">{isEn ? "Location" : "Lieu"}</Label>
+                <Select
+                  value={locationType}
+                  onValueChange={(v) =>
+                    v && setLocationType(v as "online" | "in_person")
+                  }
+                >
+                  <SelectTrigger id="location_type">
+                    <SelectValue>
+                      {locationType === "in_person"
+                        ? isEn
+                          ? "In person"
+                          : "En personne"
+                        : isEn
+                          ? "Online"
+                          : "En ligne"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="online">
+                      {isEn ? "Online" : "En ligne"}
+                    </SelectItem>
+                    <SelectItem value="in_person">
+                      {isEn ? "In person" : "En personne"}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cover_url">
+                  {isEn ? "Cover image URL" : "URL de l'image"}
+                </Label>
+                <Input
+                  id="cover_url"
+                  type="url"
+                  inputMode="url"
+                  value={coverUrl}
+                  onChange={(e) => setCoverUrl(e.target.value)}
+                  placeholder="https://…"
+                />
+              </div>
             </div>
 
             {error && (
