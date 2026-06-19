@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, MapPin, Users } from "lucide-react";
@@ -38,6 +38,13 @@ export function MembersDirectoryView({
   const router = useRouter();
   const [value, setValue] = useState(q);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cancel a pending debounced search if the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 

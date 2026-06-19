@@ -63,7 +63,7 @@ export function MemberProfileView({
 
       <div className="rounded-xl border border-border/60 bg-card p-6">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-start">
-          <Avatar size="lg" className="size-20 shrink-0">
+          <Avatar className="size-20 shrink-0">
             {profile.avatar_url && (
               <AvatarImage src={profile.avatar_url} alt={profile.name} />
             )}
