@@ -34,11 +34,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { CoverUpload } from "@/components/admin/cover-upload";
+import { DocumentUpload } from "@/components/admin/document-upload";
 import {
   type Space,
   type SpaceType,
   type SpaceAccess,
   type PageConfig,
+  type SpaceDocument,
   COMMUNITY_COLUMNS,
   SPACE_COLUMNS,
 } from "@/lib/community/types";
@@ -61,7 +63,7 @@ function slugify(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-const TYPES: SpaceType[] = ["page", "course", "event", "link"];
+const TYPES: SpaceType[] = ["page", "course", "event", "link", "document"];
 const ACCESS: SpaceAccess[] = ["public", "members", "pro"];
 const NO_GROUP = "__none__";
 
@@ -411,7 +413,11 @@ function SpaceEditor({
   onClose: () => void;
   onSaved: (s: Space) => void;
 }) {
-  const cfg = (initial?.config ?? {}) as PageConfig & { url?: string; open_in_new?: boolean };
+  const cfg = (initial?.config ?? {}) as PageConfig & {
+    url?: string;
+    open_in_new?: boolean;
+    documents?: SpaceDocument[];
+  };
   const [name, setName] = useState(initial?.name ?? "");
   const [type, setType] = useState<SpaceType>(initial?.type ?? "page");
   const [access, setAccess] = useState<SpaceAccess>(initial?.access ?? "members");
@@ -424,6 +430,7 @@ function SpaceEditor({
   const [videoEmbed, setVideoEmbed] = useState(cfg.video_embed ?? "");
   const [videoMode, setVideoMode] = useState<"url" | "embed">(cfg.video_embed ? "embed" : "url");
   const [contentMd, setContentMd] = useState(cfg.content_md ?? "");
+  const [documents, setDocuments] = useState<SpaceDocument[]>(cfg.documents ?? []);
   const [saving, setSaving] = useState(false);
 
   const buildConfig = (): Record<string, unknown> => {
@@ -435,6 +442,7 @@ function SpaceEditor({
         video_embed: videoMode === "embed" ? extractEmbedSrc(videoEmbed) || null : null,
         content_md: contentMd,
       };
+    if (type === "document") return { documents };
     return {};
   };
 
@@ -594,6 +602,18 @@ function SpaceEditor({
                 <label className="text-xs text-muted-foreground">{isEn ? "Content" : "Contenu"}</label>
                 <Textarea value={contentMd} onChange={(e) => setContentMd(e.target.value)} rows={6} placeholder={isEn ? "Welcome text… (**bold** supported)" : "Texte de bienvenue… (**gras** pris en charge)"} />
               </div>
+            </div>
+          )}
+
+          {type === "document" && (
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">{isEn ? "Documents" : "Documents"}</label>
+              <DocumentUpload
+                value={documents}
+                onChange={setDocuments}
+                prefix={initial?.slug ?? slugify(name)}
+                isEn={isEn}
+              />
             </div>
           )}
 

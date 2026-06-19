@@ -7,7 +7,7 @@
  * spaces while their content stays RLS-gated.
  */
 
-export type SpaceType = "page" | "course" | "event" | "link";
+export type SpaceType = "page" | "course" | "event" | "link" | "document";
 export type SpaceAccess = "public" | "members" | "pro";
 
 export interface Community {
@@ -67,6 +67,20 @@ export interface PageConfig {
    *  precedence over `video_url` when present. */
   video_embed?: string | null;
   content_md?: string | null;
+}
+
+/** A file attached to a `document` space. `path` is the storage object key
+ *  in the private `space-documents` bucket; downloads use server-signed URLs. */
+export interface SpaceDocument {
+  name: string;
+  path: string;
+  size: number;
+  mime: string;
+}
+
+/** Per-type `config` shape for `document` spaces. */
+export interface DocumentConfig {
+  documents?: SpaceDocument[];
 }
 
 export const COMMUNITY_COLUMNS =
