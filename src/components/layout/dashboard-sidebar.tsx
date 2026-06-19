@@ -151,7 +151,6 @@ export function DashboardSidebar() {
               <div key={group.id} className={gi > 0 ? "mt-4" : ""}>
                 {!collapsed && (
                   <p className="mb-1.5 px-2.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                    {group.emoji ? `${group.emoji} ` : ""}
                     {group.name}
                   </p>
                 )}
