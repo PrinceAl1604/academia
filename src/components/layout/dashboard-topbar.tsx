@@ -62,7 +62,7 @@ function usePageTitle(): string {
   if (pathname.startsWith("/admin/referrals")) return t.admin.referrals;
   if (pathname.startsWith("/admin/categories")) return t.sidebar.categories || "Categories";
   if (pathname.startsWith("/admin/analytics")) return t.admin.analytics;
-  if (pathname.startsWith("/admin/explorer")) return t.sidebar.explorer || "Explorer";
+  if (pathname.startsWith("/spaces/")) return isEn ? "Space" : "Espace";
   if (pathname.startsWith("/admin/settings")) return t.settings.title;
   if (pathname === "/admin") return t.admin.dashboard;
   if (pathname.startsWith("/courses/")) return isEn ? "Course" : "Cours";
