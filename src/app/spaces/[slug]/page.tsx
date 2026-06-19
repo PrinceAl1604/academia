@@ -1,15 +1,25 @@
+import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
 import { SidebarLayout } from "@/components/layout/sidebar-layout";
-import { getSpaceBySlug } from "@/lib/community/queries";
-import { SpaceStub } from "./space-stub";
+import {
+  getSpaceNavBySlug,
+  getSpaceBySlug,
+  getActiveCommunity,
+} from "@/lib/community/queries";
+import { validateUserAccess } from "@/lib/supabase-server";
+import { PageSpaceView } from "@/components/community/page-space-view";
+import { CourseSpace } from "@/components/community/course-space";
+import { EventSpace } from "@/components/community/event-space";
+import { LockWall } from "@/components/community/lock-wall";
 
 /**
- * Space page (Phase 0).
+ * Space page (Phase 1).
  *
- * Server-rendered + RLS-aware: `getSpaceBySlug` runs under the user's
- * session, so a member who can't access the space (or a logged-out
- * visitor) simply gets a 404. `link` spaces forward to their URL; the
- * other types render a stub until Phase 1 fills in real rendering.
+ * Reads metadata from the `space_nav` view (so even a locked Pro space is
+ * known to exist), then:
+ *  - `link`  → redirect to its URL
+ *  - `pro` space + non-Pro member → LockWall (content stays blocked)
+ *  - otherwise render by type (page / course / event)
  */
 export default async function SpacePage({
   params,
@@ -17,18 +27,40 @@ export default async function SpacePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const space = await getSpaceBySlug(slug);
-  if (!space) notFound();
+  const meta = await getSpaceNavBySlug(slug);
+  if (!meta) notFound();
 
-  if (space.type === "link") {
-    const url = (space.config as { url?: string }).url;
-    if (url) redirect(url);
+  // Pro gate first — so a Pro link space locks rather than redirecting.
+  if (meta.access === "pro") {
+    const { isPro, isAdmin } = await validateUserAccess();
+    if (!isPro && !isAdmin) {
+      return (
+        <SidebarLayout>
+          <LockWall name={meta.name} emoji={meta.emoji} />
+        </SidebarLayout>
+      );
+    }
+  }
+
+  if (meta.type === "link") {
+    if (meta.link_url) redirect(meta.link_url);
     notFound();
   }
 
-  return (
-    <SidebarLayout>
-      <SpaceStub space={space} />
-    </SidebarLayout>
-  );
+  let body: ReactNode;
+  if (meta.type === "course") {
+    body = <CourseSpace name={meta.name} emoji={meta.emoji} />;
+  } else if (meta.type === "event") {
+    body = <EventSpace name={meta.name} emoji={meta.emoji} />;
+  } else {
+    // page — needs the full row for content + the community for the CTA
+    const [space, community] = await Promise.all([
+      getSpaceBySlug(slug),
+      getActiveCommunity(),
+    ]);
+    if (!space) notFound();
+    body = <PageSpaceView space={space} whatsappUrl={community?.whatsapp_url ?? null} />;
+  }
+
+  return <SidebarLayout>{body}</SidebarLayout>;
 }

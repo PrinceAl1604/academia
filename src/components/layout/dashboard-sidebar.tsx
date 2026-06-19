@@ -17,6 +17,7 @@ import {
   Video,
   Hash,
   ExternalLink,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -25,7 +26,7 @@ import { ReferralModal } from "@/components/shared/referral-modal";
 import { Logo } from "@/components/shared/logo";
 import { Symbol } from "@/components/shared/symbol";
 import { useCommunityNav } from "@/lib/community/use-community-nav";
-import type { Space } from "@/lib/community/types";
+import type { SpaceNav } from "@/lib/community/types";
 
 /**
  * Dashboard sidebar.
@@ -33,24 +34,18 @@ import type { Space } from "@/lib/community/types";
  * Two modes, chosen by route:
  *  • Admin area (`/admin/*`, admins only) → the admin management nav.
  *  • Everywhere else → the Circle-style **community nav**: Space Groups →
- *    Spaces, loaded from the DB (Phase 0). Admins see this in the member
- *    area too (with an extra "Admin" link back), so the owner experiences
- *    the community like a member.
- *
- * Active-nav treatment: subtle `bg-sidebar-accent` fill + a 2px primary
- * left edge. Group labels are mono-uppercase section headings.
+ *    Spaces from the DB. Pro spaces show with a 🔒 for non-Pro members.
  */
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isPro } = useAuth();
   const { t } = useLanguage();
   const { collapsed } = useSidebar();
   const [referralOpen, setReferralOpen] = useState(false);
   const { groups } = useCommunityNav();
 
-  // Admins inside /admin/* get the management nav; everyone else (incl.
-  // admins browsing the member area) gets the community nav.
   const adminMode = isAdmin && pathname.startsWith("/admin");
+  const canSeePro = isPro || isAdmin;
 
   type NavItem = {
     label: string;
@@ -168,6 +163,7 @@ export function DashboardSidebar() {
                       space={space}
                       collapsed={collapsed}
                       pathname={pathname}
+                      locked={space.access === "pro" && !canSeePro}
                     />
                   ))}
                 </div>
@@ -225,20 +221,22 @@ export function DashboardSidebar() {
 }
 
 /* ─── Space item (community nav) ─────────────────────────────── */
-/** Renders a Space row: emoji (or Hash) + name. Link spaces open their URL. */
+/** A Space row: emoji (or Hash) + name. Link spaces open their URL; Pro
+ *  spaces a non-Pro member can't open show a lock and route to the wall. */
 function SpaceItem({
   space,
   collapsed,
   pathname,
+  locked,
 }: {
-  space: Space;
+  space: SpaceNav;
   collapsed: boolean;
   pathname: string;
+  locked: boolean;
 }) {
-  const cfg = space.config as { url?: string; open_in_new?: boolean };
-  const isLink = space.type === "link";
-  const href = isLink ? cfg.url || "#" : `/spaces/${space.slug}`;
-  const isActive = !isLink && pathname === `/spaces/${space.slug}`;
+  const isExternal = space.type === "link" && !locked;
+  const href = isExternal ? space.link_url || "#" : `/spaces/${space.slug}`;
+  const isActive = !isExternal && pathname === `/spaces/${space.slug}`;
 
   const inner = (
     <>
@@ -250,7 +248,8 @@ function SpaceItem({
         )}
       </span>
       {!collapsed && <span className="flex-1 text-sm font-medium truncate">{space.name}</span>}
-      {!collapsed && isLink && <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-60" />}
+      {!collapsed && locked && <Lock className="h-3.5 w-3.5 shrink-0 opacity-60" />}
+      {!collapsed && isExternal && <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-60" />}
     </>
   );
 
@@ -265,12 +264,12 @@ function SpaceItem({
       : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
   );
 
-  if (isLink) {
+  if (isExternal) {
     return (
       <a
         href={href}
-        target={cfg.open_in_new ? "_blank" : undefined}
-        rel={cfg.open_in_new ? "noopener noreferrer" : undefined}
+        target={space.link_open_in_new ? "_blank" : undefined}
+        rel={space.link_open_in_new ? "noopener noreferrer" : undefined}
         title={collapsed ? space.name : undefined}
         className={className}
       >
