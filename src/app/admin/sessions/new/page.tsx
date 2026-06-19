@@ -390,7 +390,7 @@ export default function AdminSessionsNewPage() {
                 id="capacity"
                 type="number"
                 min={1}
-                max={50}
+                max={500}
                 value={maxAttendees}
                 onChange={(e) => setMaxAttendees(Number(e.target.value))}
                 disabled={type === "one_on_one"}

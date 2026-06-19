@@ -294,7 +294,7 @@ export default function AdminSlotEditPage({
                 id="capacity"
                 type="number"
                 min={1}
-                max={50}
+                max={500}
                 value={maxAttendees}
                 onChange={(e) => setMaxAttendees(Number(e.target.value))}
                 disabled={!isGroup}
