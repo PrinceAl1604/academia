@@ -33,6 +33,7 @@ import {
   Hash,
 } from "lucide-react";
 import { toast } from "sonner";
+import { CoverUpload } from "@/components/admin/cover-upload";
 import {
   type Space,
   type SpaceType,
@@ -63,6 +64,16 @@ function slugify(text: string): string {
 const TYPES: SpaceType[] = ["page", "course", "event", "link"];
 const ACCESS: SpaceAccess[] = ["public", "members", "pro"];
 const NO_GROUP = "__none__";
+
+/** Pull the iframe `src` out of a pasted embed snippet; if the input is
+ *  already a bare URL, return it unchanged. We store only the src and
+ *  render a controlled iframe (never raw HTML). */
+function extractEmbedSrc(input: string): string {
+  const s = input.trim();
+  if (!s) return "";
+  const m = s.match(/src=["']([^"']+)["']/i);
+  return m ? m[1] : s;
+}
 
 export default function AdminSpacesPage() {
   const { t } = useLanguage();
@@ -402,12 +413,20 @@ function SpaceEditor({
   const [openInNew, setOpenInNew] = useState(cfg.open_in_new ?? true);
   const [coverUrl, setCoverUrl] = useState(cfg.cover_url ?? "");
   const [videoUrl, setVideoUrl] = useState(cfg.video_url ?? "");
+  const [videoEmbed, setVideoEmbed] = useState(cfg.video_embed ?? "");
+  const [videoMode, setVideoMode] = useState<"url" | "embed">(cfg.video_embed ? "embed" : "url");
   const [contentMd, setContentMd] = useState(cfg.content_md ?? "");
   const [saving, setSaving] = useState(false);
 
   const buildConfig = (): Record<string, unknown> => {
     if (type === "link") return { url: url.trim(), open_in_new: openInNew };
-    if (type === "page") return { cover_url: coverUrl.trim() || null, video_url: videoUrl.trim() || null, content_md: contentMd };
+    if (type === "page")
+      return {
+        cover_url: coverUrl.trim() || null,
+        video_url: videoMode === "url" ? videoUrl.trim() || null : null,
+        video_embed: videoMode === "embed" ? extractEmbedSrc(videoEmbed) || null : null,
+        content_md: contentMd,
+      };
     return {};
   };
 
@@ -508,12 +527,60 @@ function SpaceEditor({
           {type === "page" && (
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-muted-foreground">{isEn ? "Cover image URL" : "URL de l'image de couverture"}</label>
-                <Input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://…" />
+                <label className="text-xs text-muted-foreground">{isEn ? "Cover image" : "Image de couverture"}</label>
+                <div className="mt-1">
+                  <CoverUpload
+                    value={coverUrl || null}
+                    onChange={(u) => setCoverUrl(u ?? "")}
+                    courseSlug={initial?.slug}
+                  />
+                </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">{isEn ? "Video URL (YouTube / Vimeo)" : "URL de la vidéo (YouTube / Vimeo)"}</label>
-                <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://youtu.be/…" />
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-muted-foreground">{isEn ? "Video" : "Vidéo"}</label>
+                  <div className="inline-flex rounded-md border border-input p-0.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setVideoMode("url")}
+                      className={`rounded px-2 py-0.5 ${videoMode === "url" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
+                    >
+                      URL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVideoMode("embed")}
+                      className={`rounded px-2 py-0.5 ${videoMode === "embed" ? "bg-muted text-foreground" : "text-muted-foreground"}`}
+                    >
+                      {isEn ? "Embed" : "Intégration"}
+                    </button>
+                  </div>
+                </div>
+                {videoMode === "url" ? (
+                  <Input
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    placeholder="https://youtu.be/…"
+                    className="mt-1"
+                  />
+                ) : (
+                  <Textarea
+                    value={videoEmbed}
+                    onChange={(e) => setVideoEmbed(e.target.value)}
+                    rows={3}
+                    placeholder={isEn ? "Paste the <iframe …> embed code" : "Collez le code <iframe …>"}
+                    className="mt-1"
+                  />
+                )}
+                <p className="mt-1 text-xs text-muted-foreground/70">
+                  {videoMode === "url"
+                    ? isEn
+                      ? "YouTube or Vimeo link."
+                      : "Lien YouTube ou Vimeo."
+                    : isEn
+                      ? "Paste an embed snippet from any provider."
+                      : "Collez un code d'intégration de n'importe quel fournisseur."}
+                </p>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">{isEn ? "Content" : "Contenu"}</label>

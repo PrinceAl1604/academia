@@ -62,7 +62,7 @@ export function PageSpaceView({
   const { t } = useLanguage();
   const isEn = t.nav.signIn === "Sign In";
   const cfg = space.config as PageConfig;
-  const embed = cfg.video_url ? getEmbedUrl(cfg.video_url) : null;
+  const embed = cfg.video_embed?.trim() || (cfg.video_url ? getEmbedUrl(cfg.video_url) : null);
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">

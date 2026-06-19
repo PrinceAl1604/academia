@@ -63,6 +63,9 @@ export interface SpaceGroup {
 export interface PageConfig {
   cover_url?: string | null;
   video_url?: string | null;
+  /** Embed iframe `src` (extracted from a pasted embed snippet); takes
+   *  precedence over `video_url` when present. */
+  video_embed?: string | null;
   content_md?: string | null;
 }
 
