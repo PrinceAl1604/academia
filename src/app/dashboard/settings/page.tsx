@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarUpload } from "@/components/shared/avatar-upload";
+import { ProfileDetailsForm } from "@/components/profile/profile-details-form";
 import {
   Check,
   Loader2,
@@ -553,6 +554,7 @@ export default function SettingsPage() {
           <div className="flex-1 max-w-2xl" role="tabpanel" id={`panel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
             {/* ─── Profile ──────────────────────────────────────── */}
             {activeTab === "profile" && (
+              <div className="space-y-6">
               <Card className="p-6">
                 <h3 className="text-lg font-semibold text-foreground">
                   {t.settings.personalInfo}
@@ -691,6 +693,8 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </Card>
+              <ProfileDetailsForm />
+              </div>
             )}
 
             {/* ─── Appearance ────────────────────────────────────── */}

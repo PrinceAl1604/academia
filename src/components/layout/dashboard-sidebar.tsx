@@ -150,6 +150,16 @@ export function DashboardSidebar() {
         ) : (
           /* ─── Community nav (Space Groups → Spaces) ──────── */
           <>
+            {/* Members directory (top-level) */}
+            <div className="mb-4 space-y-0.5">
+              <SidebarItem
+                href="/members"
+                icon={Users}
+                label={isEn ? "Members" : "Membres"}
+                isActive={pathname === "/members" || pathname.startsWith("/members/")}
+                collapsed={collapsed}
+              />
+            </div>
             {groups.map((group, gi) => (
               <div key={group.id} className={gi > 0 ? "mt-4" : ""}>
                 {!collapsed && (
