@@ -127,12 +127,13 @@ export default function AdminSpacesPage() {
     const i = ordered.findIndex((g) => g.id === id);
     const j = i + dir;
     if (i < 0 || j < 0 || j >= ordered.length) return;
-    const a = ordered[i], b = ordered[j];
-    await Promise.all([
-      supabase.from("space_groups").update({ sort_order: b.sort_order }).eq("id", a.id),
-      supabase.from("space_groups").update({ sort_order: a.sort_order }).eq("id", b.id),
-    ]);
-    setGroups((p) => p.map((g) => (g.id === a.id ? { ...g, sort_order: b.sort_order } : g.id === b.id ? { ...g, sort_order: a.sort_order } : g)));
+    [ordered[i], ordered[j]] = [ordered[j], ordered[i]];
+    // Reindex contiguously so equal/seeded sort_order values can't get stuck.
+    await Promise.all(
+      ordered.map((g, idx) => supabase.from("space_groups").update({ sort_order: idx }).eq("id", g.id))
+    );
+    const orderMap = new Map(ordered.map((g, idx) => [g.id, idx]));
+    setGroups((p) => p.map((g) => ({ ...g, sort_order: orderMap.get(g.id) ?? g.sort_order })));
   };
 
   // ── Spaces ────────────────────────────────────────────────────
@@ -148,12 +149,12 @@ export default function AdminSpacesPage() {
     const i = siblings.findIndex((x) => x.id === s.id);
     const j = i + dir;
     if (j < 0 || j >= siblings.length) return;
-    const a = siblings[i], b = siblings[j];
-    await Promise.all([
-      supabase.from("spaces").update({ sort_order: b.sort_order }).eq("id", a.id),
-      supabase.from("spaces").update({ sort_order: a.sort_order }).eq("id", b.id),
-    ]);
-    setSpaces((p) => p.map((x) => (x.id === a.id ? { ...x, sort_order: b.sort_order } : x.id === b.id ? { ...x, sort_order: a.sort_order } : x)));
+    [siblings[i], siblings[j]] = [siblings[j], siblings[i]];
+    await Promise.all(
+      siblings.map((x, idx) => supabase.from("spaces").update({ sort_order: idx }).eq("id", x.id))
+    );
+    const orderMap = new Map(siblings.map((x, idx) => [x.id, idx]));
+    setSpaces((p) => p.map((x) => (orderMap.has(x.id) ? { ...x, sort_order: orderMap.get(x.id)! } : x)));
   };
 
   const setWelcome = async (s: Space) => {
@@ -263,7 +264,7 @@ export default function AdminSpacesPage() {
           groups={orderedGroups}
           initial={editor.space}
           defaultGroupId={editor.groupId}
-          existingCount={spaces.length}
+          nextSortOrder={(gid) => spaces.filter((s) => s.group_id === (gid ?? null)).length}
           isEn={isEn}
           onClose={() => setEditor(null)}
           onSaved={onSaved}
@@ -375,13 +376,13 @@ function SpaceRow({
 
 /* ── Space editor dialog ─────────────────────────────────────── */
 function SpaceEditor({
-  communityId, groups, initial, defaultGroupId, existingCount, isEn, onClose, onSaved,
+  communityId, groups, initial, defaultGroupId, nextSortOrder, isEn, onClose, onSaved,
 }: {
   communityId: string;
   groups: GroupRow[];
   initial: Space | null;
   defaultGroupId: string;
-  existingCount: number;
+  nextSortOrder: (groupId: string | null) => number;
   isEn: boolean;
   onClose: () => void;
   onSaved: (s: Space) => void;
@@ -423,7 +424,7 @@ function SpaceEditor({
     } else {
       const { data, error } = await supabase
         .from("spaces")
-        .insert({ community_id: communityId, group_id: groupId || null, name: name.trim(), slug: slugify(name), emoji: emoji.trim() || null, type, access, sort_order: existingCount, config })
+        .insert({ community_id: communityId, group_id: groupId || null, name: name.trim(), slug: slugify(name), emoji: emoji.trim() || null, type, access, sort_order: nextSortOrder(groupId || null), config })
         .select(SPACE_COLUMNS)
         .single();
       setSaving(false);
