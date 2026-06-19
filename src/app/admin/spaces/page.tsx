@@ -72,7 +72,15 @@ function extractEmbedSrc(input: string): string {
   const s = input.trim();
   if (!s) return "";
   const m = s.match(/src=["']([^"']+)["']/i);
-  return m ? m[1] : s;
+  const src = m ? m[1] : s;
+  // Only accept http(s) — reject javascript:/data: and any non-URL so a
+  // pasted snippet can't smuggle a script into the rendered iframe.
+  try {
+    const u = new URL(src);
+    return u.protocol === "https:" || u.protocol === "http:" ? src : "";
+  } catch {
+    return "";
+  }
 }
 
 export default function AdminSpacesPage() {

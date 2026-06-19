@@ -62,7 +62,9 @@ export function PageSpaceView({
   const { t } = useLanguage();
   const isEn = t.nav.signIn === "Sign In";
   const cfg = space.config as PageConfig;
-  const embed = cfg.video_embed?.trim() || (cfg.video_url ? getEmbedUrl(cfg.video_url) : null);
+  const rawEmbed = cfg.video_embed?.trim() || (cfg.video_url ? getEmbedUrl(cfg.video_url) : null);
+  // Defense-in-depth: only ever hand an http(s) URL to the iframe src.
+  const embed = rawEmbed && /^https?:\/\//i.test(rawEmbed) ? rawEmbed : null;
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
