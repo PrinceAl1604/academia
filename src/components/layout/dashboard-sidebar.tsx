@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Compass,
   BookOpen,
   CreditCard,
   Shield,
@@ -16,6 +15,8 @@ import {
   Users,
   Gift,
   Video,
+  Hash,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -23,22 +24,21 @@ import { useSidebar } from "@/lib/sidebar-context";
 import { ReferralModal } from "@/components/shared/referral-modal";
 import { Logo } from "@/components/shared/logo";
 import { Symbol } from "@/components/shared/symbol";
+import { useCommunityNav } from "@/lib/community/use-community-nav";
+import type { Space } from "@/lib/community/types";
 
 /**
- * Dashboard sidebar — Cook-OS-flavored refresh.
+ * Dashboard sidebar.
  *
- * Migrated from hardcoded `bg-white dark:bg-neutral-950 / bg-neutral-100`
- * etc. to the semantic `bg-sidebar / bg-sidebar-accent / border-sidebar-border`
- * tokens defined in globals.css. Means this file no longer relies on the
- * override-block translations and is ready for Phase 9's cleanup.
+ * Two modes, chosen by route:
+ *  • Admin area (`/admin/*`, admins only) → the admin management nav.
+ *  • Everywhere else → the Circle-style **community nav**: Space Groups →
+ *    Spaces, loaded from the DB (Phase 0). Admins see this in the member
+ *    area too (with an extra "Admin" link back), so the owner experiences
+ *    the community like a member.
  *
- * The active-nav treatment combines a subtle `bg-sidebar-accent` fill
- * with a 2-px primary-green left edge — operator-console aesthetic that
- * makes the current page unmistakable without a heavy fill.
- *
- * Group labels switched to monospace + uppercase (`font-mono` + `uppercase`)
- * to fit the new design language. Reads as "section heading" rather than
- * "shouting label" because mono at 11px feels deliberate, not loud.
+ * Active-nav treatment: subtle `bg-sidebar-accent` fill + a 2px primary
+ * left edge. Group labels are mono-uppercase section headings.
  */
 export function DashboardSidebar() {
   const pathname = usePathname();
@@ -46,8 +46,12 @@ export function DashboardSidebar() {
   const { t } = useLanguage();
   const { collapsed } = useSidebar();
   const [referralOpen, setReferralOpen] = useState(false);
+  const { groups } = useCommunityNav();
 
-  // ─── Navigation (grouped) ────────────────────────────────────
+  // Admins inside /admin/* get the management nav; everyone else (incl.
+  // admins browsing the member area) gets the community nav.
+  const adminMode = isAdmin && pathname.startsWith("/admin");
+
   type NavItem = {
     label: string;
     href: string;
@@ -56,21 +60,7 @@ export function DashboardSidebar() {
   };
   type NavGroup = { label?: string; items: NavItem[] };
 
-  const studentNavGroups: NavGroup[] = [
-    {
-      items: [
-        // Dashboard goes first — it's the personalized stats overview the
-        // student lands on after sign-in. Browse (the catalog at `/`) is
-        // discovery, conceptually one step further out.
-        { label: t.dashboard.title || "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { label: t.dashboard.browse || "Browse", href: "/", icon: Compass },
-        { label: t.myCourses.title || "My Courses", href: "/dashboard/courses", icon: BookOpen },
-        // Live sessions has its own top-level entry — calendar/booking concern.
-        { label: t.sessions?.title || "Live sessions", href: "/dashboard/sessions", icon: Video },
-      ],
-    },
-  ];
-
+  // ─── Admin management nav (Explorer removed) ─────────────────
   const adminNavGroups: NavGroup[] = [
     {
       items: [
@@ -81,7 +71,6 @@ export function DashboardSidebar() {
     {
       label: t.sidebar.content || "Content",
       items: [
-        { label: t.sidebar.explorer, href: "/admin/explorer", icon: LayoutDashboard },
         { label: t.admin.manageCourses, href: "/admin/courses", icon: BookOpen },
         { label: t.sidebar.categories, href: "/admin/categories", icon: FolderOpen },
       ],
@@ -102,18 +91,13 @@ export function DashboardSidebar() {
     },
   ];
 
-  // Settings was removed from both nav groups — it's now accessible
-  // via the topbar's UserMenu dropdown (avatar → Settings). Keeping
-  // it here too would duplicate the entry point and confuse the
-  // hierarchy (where IS settings? two places).
-  const studentAccountNav: NavItem[] = [
-    { label: t.subscription.title || "Subscription", href: "/dashboard/subscription", icon: CreditCard },
+  // ─── Account section (community mode) ────────────────────────
+  const accountItems: NavItem[] = [
+    { label: t.dashboard.title || "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    ...(!isAdmin
+      ? [{ label: t.subscription.title || "Subscription", href: "/dashboard/subscription", icon: CreditCard }]
+      : [{ label: t.admin.dashboard || "Admin", href: "/admin", icon: Shield }]),
   ];
-
-  const adminAccountNav: NavItem[] = [];
-
-  const navGroups = isAdmin ? adminNavGroups : studentNavGroups;
-  const accountItems = isAdmin ? adminAccountNav : studentAccountNav;
 
   return (
     <aside
@@ -122,145 +106,192 @@ export function DashboardSidebar() {
         collapsed ? "w-[68px]" : "w-60"
       )}
     >
-      {/* ─── Logo ──────────────────────────────────────────────
-           Collapsed rail (~68px) shows just the symbol mark; expanded
-           rail shows the full wordmark. Both pull from the new brand
-           assets (/symbol.svg and /logo.svg). */}
+      {/* ─── Logo ────────────────────────────────────────────── */}
       <div className={cn("flex h-14 items-center shrink-0", collapsed ? "justify-center px-0" : "px-5")}>
-        <Link href={isAdmin ? "/admin" : "/"} className="flex items-center overflow-hidden">
-          {collapsed ? (
-            <Symbol className="h-8 w-8 shrink-0" />
-          ) : (
-            <Logo className="h-5" />
-          )}
+        <Link href={isAdmin && adminMode ? "/admin" : "/"} className="flex items-center overflow-hidden">
+          {collapsed ? <Symbol className="h-8 w-8 shrink-0" /> : <Logo className="h-5" />}
         </Link>
       </div>
 
-      {/* ─── Main Navigation ───────────────────────────────── */}
       <nav className="flex-1 overflow-y-auto py-3 px-2.5" aria-label="Main navigation">
-        {navGroups.map((group, gi) => (
-          <div key={gi} className={gi > 0 ? "mt-4" : ""}>
-            {/* Group label (expanded) / divider (collapsed) */}
-            {group.label && (
-              <>
+        {adminMode ? (
+          /* ─── Admin nav ─────────────────────────────────── */
+          adminNavGroups.map((group, gi) => (
+            <div key={gi} className={gi > 0 ? "mt-4" : ""}>
+              {group.label && (
+                <>
+                  {!collapsed && (
+                    <p className="mb-1.5 px-2.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                      {group.label}
+                    </p>
+                  )}
+                  {collapsed && <div className="mb-1.5 mx-2.5 h-px bg-sidebar-border" />}
+                </>
+              )}
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const isExactOnly = item.href === "/admin";
+                  const isActive = isExactOnly
+                    ? pathname === item.href
+                    : pathname === item.href || pathname.startsWith(item.href + "/");
+                  return (
+                    <SidebarItem
+                      key={item.href}
+                      href={item.href}
+                      icon={item.icon}
+                      label={item.label}
+                      isActive={isActive}
+                      collapsed={collapsed}
+                      badge={item.badge}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        ) : (
+          /* ─── Community nav (Space Groups → Spaces) ──────── */
+          <>
+            {groups.map((group, gi) => (
+              <div key={group.id} className={gi > 0 ? "mt-4" : ""}>
                 {!collapsed && (
                   <p className="mb-1.5 px-2.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                    {group.label}
+                    {group.emoji ? `${group.emoji} ` : ""}
+                    {group.name}
                   </p>
                 )}
-                {collapsed && (
-                  <div className="mb-1.5 mx-2.5 h-px bg-sidebar-border" />
-                )}
-              </>
+                {collapsed && <div className="mb-1.5 mx-2.5 h-px bg-sidebar-border" />}
+                <div className="space-y-0.5">
+                  {group.spaces.map((space) => (
+                    <SpaceItem
+                      key={space.id}
+                      space={space}
+                      collapsed={collapsed}
+                      pathname={pathname}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Invite friends (members only) */}
+            {!isAdmin && (
+              <div className="mt-4">
+                {collapsed && <div className="mb-1.5 mx-2.5 h-px bg-sidebar-border" />}
+                <button
+                  onClick={() => setReferralOpen(true)}
+                  title={collapsed ? t.referral.inviteFriends : undefined}
+                  className={cn(
+                    "group relative flex w-full items-center rounded-md transition-colors text-amber-400 hover:bg-amber-500/10 hover:text-amber-300",
+                    collapsed ? "justify-center p-2.5" : "gap-2.5 px-2.5 py-2"
+                  )}
+                >
+                  <Gift className={cn("shrink-0", collapsed ? "h-[18px] w-[18px]" : "h-4 w-4")} />
+                  {!collapsed && (
+                    <span className="text-sm font-medium truncate">{t.referral.inviteFriends}</span>
+                  )}
+                </button>
+              </div>
             )}
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                // `/`, `/dashboard`, and `/admin` are parent routes of
-                // other nav entries — they need exact-match only. A
-                // startsWith match on `/admin` would highlight BOTH
-                // "Tableau de bord admin" AND the active sub-page
-                // (Analytique, Étudiants, etc.) simultaneously.
-                const isExactOnly =
-                  item.href === "/" ||
-                  item.href === "/dashboard" ||
-                  item.href === "/admin";
-                const isActive = isExactOnly
-                  ? pathname === item.href
-                  : pathname === item.href ||
-                    pathname.startsWith(item.href + "/");
-                return (
+
+            {/* Account */}
+            <div className="mt-6">
+              {!collapsed && (
+                <p className="mb-1.5 px-2.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                  {t.sidebar.account || "Account"}
+                </p>
+              )}
+              {collapsed && <div className="mb-1.5 mx-2.5 h-px bg-sidebar-border" />}
+              <div className="space-y-0.5">
+                {accountItems.map((item) => (
                   <SidebarItem
                     key={item.href}
                     href={item.href}
                     icon={item.icon}
                     label={item.label}
-                    isActive={isActive}
-                    collapsed={collapsed}
-                    badge={item.badge}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        ))}
-
-        {/* ─── Invite Friends (students only) ─────────────── */}
-        {!isAdmin && (
-          <div className="mt-4">
-            {collapsed && <div className="mb-1.5 mx-2.5 h-px bg-sidebar-border" />}
-            <button
-              onClick={() => setReferralOpen(true)}
-              title={collapsed ? t.referral.inviteFriends : undefined}
-              className={cn(
-                "group relative flex w-full items-center rounded-md transition-colors text-amber-400 hover:bg-amber-500/10 hover:text-amber-300",
-                collapsed ? "justify-center p-2.5" : "gap-2.5 px-2.5 py-2"
-              )}
-            >
-              <Gift className={cn("shrink-0", collapsed ? "h-[18px] w-[18px]" : "h-4 w-4")} />
-              {!collapsed && <span className="text-sm font-medium truncate">{t.referral.inviteFriends}</span>}
-              {collapsed && (
-                <span className="pointer-events-none absolute left-full ml-3 z-50 hidden rounded-md border border-border/60 bg-popover px-2.5 py-1.5 text-xs font-medium text-popover-foreground shadow-xl shadow-black/30 group-hover:block whitespace-nowrap">
-                  {t.referral.inviteFriends}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
-
-        {/* ─── Account Section ────────────────────────────────
-             Only rendered when there are items to show. With Settings
-             moved to the topbar UserMenu, the admin nav has no account
-             items at all — rendering an empty group with just a label
-             would look broken. Students still have Subscription. */}
-        {accountItems.length > 0 && (
-          <div className="mt-6">
-            {!collapsed && (
-              <p className="mb-1.5 px-2.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                {isAdmin ? "Admin" : t.sidebar.account}
-              </p>
-            )}
-            {collapsed && <div className="mb-1.5 mx-2.5 h-px bg-sidebar-border" />}
-            <div className="space-y-0.5">
-              {accountItems.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <SidebarItem
-                    key={item.href}
-                    href={item.href}
-                    icon={item.icon}
-                    label={item.label}
-                    isActive={isActive}
+                    isActive={pathname === item.href}
                     collapsed={collapsed}
                   />
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </nav>
 
-      {/* User profile + sign-out moved to the topbar UserMenu.
-          Collapse toggle moved to the topbar (lives next to the page
-          title, ElevenLabs/Linear pattern). The sidebar bottom is now
-          a clean edge — no chrome, just the section ending at the
-          last nav item. */}
-      {/* Referral Modal */}
       {!isAdmin && <ReferralModal open={referralOpen} onClose={() => setReferralOpen(false)} />}
     </aside>
   );
 }
 
-/* ─── Sidebar Item ─────────────────────────────────────────── */
-/**
- * A single nav row. Active state has two visual cues:
- *   1. `bg-sidebar-accent` fill — subtle, won't dominate
- *   2. 2-px primary-green left edge (via `before:` pseudo) — the
- *      "operator console" indicator that makes the current page
- *      unambiguous on the page-load scan
- *
- * In collapsed mode the left-edge bar is hidden because the rail is
- * only 68px wide and the bar would overlap the icon.
- */
+/* ─── Space item (community nav) ─────────────────────────────── */
+/** Renders a Space row: emoji (or Hash) + name. Link spaces open their URL. */
+function SpaceItem({
+  space,
+  collapsed,
+  pathname,
+}: {
+  space: Space;
+  collapsed: boolean;
+  pathname: string;
+}) {
+  const cfg = space.config as { url?: string; open_in_new?: boolean };
+  const isLink = space.type === "link";
+  const href = isLink ? cfg.url || "#" : `/spaces/${space.slug}`;
+  const isActive = !isLink && pathname === `/spaces/${space.slug}`;
+
+  const inner = (
+    <>
+      <span className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+        {space.emoji ? (
+          <span className="text-[15px] leading-none">{space.emoji}</span>
+        ) : (
+          <Hash className={collapsed ? "h-[18px] w-[18px]" : "h-4 w-4"} />
+        )}
+      </span>
+      {!collapsed && <span className="flex-1 text-sm font-medium truncate">{space.name}</span>}
+      {!collapsed && isLink && <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-60" />}
+    </>
+  );
+
+  const className = cn(
+    "group relative flex items-center rounded-md transition-colors",
+    !collapsed &&
+      isActive &&
+      "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
+    collapsed ? "justify-center p-2.5" : "gap-2.5 pl-3 pr-2.5 py-2",
+    isActive
+      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+      : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+  );
+
+  if (isLink) {
+    return (
+      <a
+        href={href}
+        target={cfg.open_in_new ? "_blank" : undefined}
+        rel={cfg.open_in_new ? "noopener noreferrer" : undefined}
+        title={collapsed ? space.name : undefined}
+        className={className}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      aria-current={isActive ? "page" : undefined}
+      title={collapsed ? space.name : undefined}
+      className={className}
+    >
+      {inner}
+    </Link>
+  );
+}
+
+/* ─── Sidebar item (icon-based) ──────────────────────────────── */
 function SidebarItem({
   href,
   icon: Icon,
@@ -283,7 +314,6 @@ function SidebarItem({
       title={collapsed ? label : undefined}
       className={cn(
         "group relative flex items-center rounded-md transition-colors",
-        // 2px primary-green left edge when active (expanded only)
         !collapsed &&
           isActive &&
           "before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[2px] before:rounded-r-sm before:bg-primary",
@@ -295,29 +325,21 @@ function SidebarItem({
     >
       <span className="relative shrink-0">
         <Icon className={cn(collapsed ? "h-[18px] w-[18px]" : "h-4 w-4")} />
-        {/* Badge dot — collapsed mode */}
         {collapsed && !!badge && badge > 0 && (
           <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-sidebar" />
         )}
       </span>
       {!collapsed && <span className="flex-1 text-sm font-medium truncate">{label}</span>}
 
-      {/* Badge count — expanded mode */}
       {!collapsed && !!badge && badge > 0 && (
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground tabular-nums px-1 shrink-0">
           {badge > 99 ? "99+" : badge}
         </span>
       )}
 
-      {/* Tooltip — only in collapsed mode */}
       {collapsed && (
         <span className="pointer-events-none absolute left-full ml-3 z-50 hidden rounded-md border border-border/60 bg-popover px-2.5 py-1.5 text-xs font-medium text-popover-foreground shadow-xl shadow-black/30 group-hover:block whitespace-nowrap">
           {label}
-          {!!badge && badge > 0 && (
-            <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground tabular-nums px-1">
-              {badge > 99 ? "99+" : badge}
-            </span>
-          )}
         </span>
       )}
     </Link>
