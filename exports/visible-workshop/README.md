@@ -7,11 +7,21 @@ Garamond italic) and reuses its existing assets, so there's nothing new to desig
 
 ## Install (in the `visible-workshop` repo)
 
-1. Copy `liste.html` to the **repo root** (next to `index.html`).
-   With the repo's `vercel.json` (`"cleanUrls": true`) it serves at **`/liste`**.
-2. No other files needed — the page reuses assets already in the repo:
+The waitlist becomes the **homepage** (`workshop-visible.com`), and the current
+workshop sales page is moved to a path and left **unlinked** (reachable only by
+direct URL):
+
+1. Rename the existing sales page `index.html` → `workshop.html`.
+   With `"cleanUrls": true` it serves at **`/workshop`** — unlinked, so it's
+   effectively hidden. (Pick a less guessable name if you want it harder to find.)
+2. Add this **`index.html`** (the waitlist) at the **repo root** → served at
+   **`workshop-visible.com`**.
+3. No other files needed — the page reuses assets already in the repo:
    `logo.svg`, `favicon.svg`, `alex-prof.jpg`, and `logos/*.svg`.
    (Optional: add an `og-cover.jpg` for nicer social previews.)
+
+The waitlist does **not** link to the sales page (the nav CTA scrolls to the
+form; the footer "Le workshop" link was removed), so the sale stays out of sight.
 
 That's it. The page is one self-contained file: inline CSS + inline JS, one
 Google webfont (EB Garamond italic), zero build step.
