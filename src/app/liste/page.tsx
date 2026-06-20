@@ -84,7 +84,7 @@ export default async function ListePage() {
           </p>
 
           <div className="mx-auto mt-8 max-w-sm rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <WaitlistForm whatsappUrl={whatsappUrl} />
+            <WaitlistForm whatsappUrl={whatsappUrl} formId="wl-hero" />
           </div>
         </div>
       </section>
@@ -159,7 +159,7 @@ export default async function ListePage() {
             là que les places fondateur partent en premier.
           </p>
           <div className="mx-auto mt-8 max-w-sm rounded-2xl border border-border bg-card p-5 shadow-sm">
-            <WaitlistForm whatsappUrl={whatsappUrl} />
+            <WaitlistForm whatsappUrl={whatsappUrl} formId="wl-cta" />
           </div>
         </div>
       </section>

@@ -10,7 +10,14 @@ import { Button } from "@/components/ui/button";
  * design: no qualifying questions (that happens later, at the paid workshop
  * signup). On success it shows the confirmation + a WhatsApp join button.
  */
-export function WaitlistForm({ whatsappUrl }: { whatsappUrl: string | null }) {
+export function WaitlistForm({
+  whatsappUrl,
+  formId = "wl",
+}: {
+  whatsappUrl: string | null;
+  /** Namespaces the field ids so multiple forms can share a page. */
+  formId?: string;
+}) {
   const [firstName, setFirstName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
@@ -86,11 +93,11 @@ export function WaitlistForm({ whatsappUrl }: { whatsappUrl: string | null }) {
   return (
     <form onSubmit={submit} className="space-y-3 text-left">
       <div>
-        <label htmlFor="wl-name" className="mb-1 block text-xs font-medium text-muted-foreground">
+        <label htmlFor={`${formId}-name`} className="mb-1 block text-xs font-medium text-muted-foreground">
           Prénom
         </label>
         <Input
-          id="wl-name"
+          id={`${formId}-name`}
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           placeholder="Ton prénom"
@@ -99,11 +106,11 @@ export function WaitlistForm({ whatsappUrl }: { whatsappUrl: string | null }) {
         />
       </div>
       <div>
-        <label htmlFor="wl-wa" className="mb-1 block text-xs font-medium text-muted-foreground">
+        <label htmlFor={`${formId}-wa`} className="mb-1 block text-xs font-medium text-muted-foreground">
           Numéro WhatsApp
         </label>
         <Input
-          id="wl-wa"
+          id={`${formId}-wa`}
           type="tel"
           inputMode="tel"
           value={whatsapp}
@@ -114,11 +121,11 @@ export function WaitlistForm({ whatsappUrl }: { whatsappUrl: string | null }) {
         />
       </div>
       <div>
-        <label htmlFor="wl-email" className="mb-1 block text-xs font-medium text-muted-foreground">
+        <label htmlFor={`${formId}-email`} className="mb-1 block text-xs font-medium text-muted-foreground">
           Email <span className="text-muted-foreground/60">(optionnel)</span>
         </label>
         <Input
-          id="wl-email"
+          id={`${formId}-email`}
           type="email"
           inputMode="email"
           value={email}
