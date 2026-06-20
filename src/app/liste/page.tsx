@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Gift, Crown, CalendarClock, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { Gift, Sparkles, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 import { WaitlistForm } from "@/components/waitlist/waitlist-form";
@@ -9,8 +10,8 @@ import { WaitlistForm } from "@/components/waitlist/waitlist-form";
  *
  * The widest net: captures people who interact with the content but aren't yet
  * ready to book the workshop, and routes them into WhatsApp. Low friction
- * (prénom + WhatsApp), clear value + founder price. French-first (the audience
- * is francophone creatives). A subdomain will be pointed here later.
+ * (prénom + WhatsApp), clear value + founder price + proof. French-first.
+ * A subdomain will be pointed here later.
  */
 
 export const metadata: Metadata = {
@@ -22,6 +23,12 @@ export const metadata: Metadata = {
 // Regenerate at most hourly — keeps the page fast/static while still picking up
 // a changed WhatsApp link within the hour.
 export const revalidate = 3600;
+
+// LogoMint client wordmarks (placeholder text — swap for real logo images when
+// available). Drives the proof logo cloud.
+const CLIENTS = ["lya", "cultiva", "KICKNOVA", "prospera", "ZilkCredible"];
+// TODO: real LogoMint portfolio URL.
+const LOGOMINT_PORTFOLIO_URL = "#";
 
 async function getWhatsappUrl(): Promise<string | null> {
   try {
@@ -37,24 +44,6 @@ async function getWhatsappUrl(): Promise<string | null> {
     return null;
   }
 }
-
-const PERKS = [
-  {
-    icon: Crown,
-    title: "Accès prioritaire + prix fondateur",
-    body: "Ton tarif fondateur est verrouillé dès l'ouverture de VISIBLE.",
-  },
-  {
-    icon: Gift,
-    title: "Un cadeau immédiat",
-    body: "Le mini Brand Blueprint — un avant-goût du livrable du workshop.",
-  },
-  {
-    icon: CalendarClock,
-    title: "Invitation prioritaire au workshop",
-    body: "Place à tarif réduit au prochain workshop, avant tout le monde.",
-  },
-];
 
 /** Hero backdrop: faint dot grid + a green glow at the top (matches landing). */
 function Backdrop() {
@@ -123,10 +112,7 @@ function BrandSeal({ className }: { className?: string }) {
 function BlueprintMock() {
   return (
     <div className="relative mx-auto w-full max-w-[260px]">
-      <div
-        aria-hidden
-        className="absolute -inset-3 -z-10 rounded-3xl bg-primary/10 blur-2xl"
-      />
+      <div aria-hidden className="absolute -inset-3 -z-10 rounded-3xl bg-primary/10 blur-2xl" />
       <div className="rotate-[-3deg] rounded-2xl border border-border bg-card p-5 shadow-2xl shadow-black/10">
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-primary/70" />
@@ -185,52 +171,6 @@ export default async function ListePage() {
         </div>
       </section>
 
-      {/* ── Core idea (dark band) ────────────────────────────── */}
-      <section className="border-y border-border bg-foreground px-5 py-16 text-background sm:py-20">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-background/50">
-            L&apos;idée
-          </p>
-          <p className="mt-4 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-            Le talent ne paie pas. <em className="text-primary">La marque, si.</em>
-          </p>
-        </div>
-      </section>
-
-      {/* ── The 3 things you get ─────────────────────────────── */}
-      <section className="px-5 py-16 sm:py-24">
-        <div className="mx-auto max-w-3xl">
-          <div className="text-center">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-              Ce que tu obtiens
-            </p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-              3 raisons de rejoindre
-            </h2>
-          </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-3">
-            {PERKS.map((p, i) => {
-              const Icon = p.icon;
-              return (
-                <div
-                  key={p.title}
-                  className="group relative rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/40"
-                >
-                  <span className="absolute right-4 top-4 font-mono text-xs tabular-nums text-muted-foreground/40">
-                    0{i + 1}
-                  </span>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <h3 className="mt-5 text-base font-semibold tracking-tight">{p.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{p.body}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* ── The immediate gift (with visual) ─────────────────── */}
       <section className="border-y border-border bg-muted/30 px-5 py-16 sm:py-24">
         <div className="mx-auto grid max-w-4xl items-center gap-10 sm:grid-cols-2">
@@ -254,31 +194,99 @@ export default async function ListePage() {
         </div>
       </section>
 
-      {/* ── Who it's for ─────────────────────────────────────── */}
-      <section className="px-5 py-14 text-center">
-        <p className="mx-auto max-w-xl text-base text-muted-foreground sm:text-lg">
-          Pour les{" "}
-          <span className="font-medium text-foreground">
-            créatifs francophones doués mais invisibles
-          </span>{" "}
-          — ceux dont le travail mérite d&apos;être payé à sa juste valeur.
-        </p>
+      {/* ── Founder — Ton prof ───────────────────────────────── */}
+      <section className="px-5 py-16 sm:py-24">
+        <div className="mx-auto max-w-4xl">
+          <div className="grid items-center gap-10 md:grid-cols-[minmax(0,320px)_1fr]">
+            <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-2xl border border-border md:max-w-none">
+              <Image
+                src="/alex.jpg"
+                alt="Alex Landrin, fondateur de LogoMint"
+                fill
+                sizes="(min-width: 768px) 320px, 20rem"
+                quality={70}
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                <span className="opacity-50">/</span> Ton prof
+              </p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                Alex Landrin.
+              </h2>
+              <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Designer · Fondateur de LogoMint
+              </p>
+              <div className="mt-5 space-y-4 text-base leading-relaxed text-muted-foreground">
+                <p>
+                  Il y a quelques années, je galérais comme la plupart des designers
+                  africains : du super travail, zéro client premium. J&apos;avais le talent —
+                  pas la visibilité.
+                </p>
+                <p>
+                  Le déclic est venu en arrêtant de me vendre comme « designer freelance » et
+                  en construisant <span className="font-medium text-foreground">LogoMint</span>{" "}
+                  en mettant mon <em>personal branding</em> en avant — le studio qui attire
+                  désormais les marques au lieu de les chasser.
+                </p>
+                <p>
+                  Avec <span className="font-medium text-foreground">VISIBLE</span>, je
+                  transmets le système exact que j&apos;ai utilisé. Aucune théorie. Que du
+                  terrain.
+                </p>
+              </div>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <span className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  Samedi · 20h GMT
+                </span>
+                <span className="rounded-full border border-border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  LogoMint · VISIBLE
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* ── Repeated CTA ─────────────────────────────────────── */}
-      <section className="relative overflow-hidden px-5 py-16 text-center sm:py-24">
-        <Backdrop />
-        <div className="relative mx-auto max-w-md">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Verrouille ta place.
-          </h2>
-          <p className="mx-auto mt-3 max-w-sm text-base text-muted-foreground">
-            VISIBLE est un programme premium. La liste d&apos;attente est gratuite — et c&apos;est
-            là que les places fondateur partent en premier.
+      {/* ── Proof — La preuve (client logo cloud) ────────────── */}
+      <section className="border-y border-border bg-muted/30 px-5 py-16 sm:py-24">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            <span className="opacity-50">/</span> La preuve
           </p>
-          <div className="mx-auto mt-8 max-w-sm rounded-2xl border border-border bg-card/80 p-5 shadow-xl shadow-black/5 backdrop-blur-sm">
-            <WaitlistForm whatsappUrl={whatsappUrl} formId="wl-cta" />
-          </div>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Les témoignages arrivent. <em className="text-primary">La preuve est déjà là.</em>
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
+            <span className="font-medium text-foreground">VISIBLE</span>, c&apos;est le système
+            exact qui a bâti <span className="font-medium text-foreground">LogoMint</span>. Tu
+            rejoins la toute première promo — les premiers témoignages, c&apos;est vous qui
+            allez les écrire. En attendant, regarde le travail.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-x-10 gap-y-5">
+          {CLIENTS.map((name) => (
+            <span
+              key={name}
+              className="text-xl font-semibold tracking-tight text-muted-foreground/45 sm:text-2xl"
+            >
+              {name}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-8 text-center">
+          <a
+            href={LOGOMINT_PORTFOLIO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            Voir tout le portfolio LogoMint
+            <ArrowRight className="h-4 w-4" />
+          </a>
         </div>
       </section>
 
