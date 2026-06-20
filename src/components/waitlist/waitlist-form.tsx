@@ -128,7 +128,7 @@ export function WaitlistForm({
         )}
       </Button>
       <p className="text-center font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-        Gratuit · sans engagement · prix fondateur verrouillé
+        Gratuit · sans engagement · accès prioritaire au workshop
       </p>
     </form>
   );

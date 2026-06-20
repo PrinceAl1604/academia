@@ -210,8 +210,8 @@ export async function sendWaitlistWelcomeEmail({
       preheading: "Ton mini Brand Blueprint + ton accès prioritaire à VISIBLE.",
       body: `
         <p style="margin:0 0 16px;">
-          Merci d'avoir rejoint la liste d'attente <strong>VISIBLE</strong>. Ton prix
-          fondateur est verrouillé, et tu seras le premier prévenu pour le prochain workshop.
+          Merci d'avoir rejoint la liste d'attente du <strong>workshop VISIBLE</strong>. Tu
+          seras le premier prévenu pour le prochain workshop — avec ta place à tarif réduit réservée.
         </p>
         <p style="margin:0;">
           ${

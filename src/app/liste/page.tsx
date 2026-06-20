@@ -15,9 +15,9 @@ import { WaitlistForm } from "@/components/waitlist/waitlist-form";
  */
 
 export const metadata: Metadata = {
-  title: "Liste d'attente — VISIBLE",
+  title: "Liste d'attente — Workshop VISIBLE",
   description:
-    "Rejoins la liste d'attente VISIBLE : prix fondateur verrouillé, cadeau immédiat (le mini Brand Blueprint) et invitation prioritaire au workshop.",
+    "Rejoins la liste d'attente du workshop VISIBLE : sois prévenu en premier, garde ta place à tarif réduit, et reçois le mini Brand Blueprint.",
 };
 
 // Regenerate at most hourly — keeps the page fast/static while still picking up
@@ -154,17 +154,17 @@ export default async function ListePage() {
           <div className="text-center lg:text-left">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
               <Sparkles className="h-3 w-3" />
-              Prix fondateur · places limitées
+              Prochain workshop · places limitées
             </span>
             <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-              VISIBLE arrive.
+              VISIBLE · Workshop live
             </p>
             <h1 className="mt-3 text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
-              Rejoins la <span className="text-primary">liste d&apos;attente.</span>
+              Rejoins la liste d&apos;attente <span className="text-primary">du workshop.</span>
             </h1>
             <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">
-              Sois le premier informé, verrouille le prix fondateur, et reçois ton
-              invitation au workshop.
+              Sois le premier prévenu pour le prochain workshop VISIBLE, garde ta place
+              à tarif réduit, et reçois ton mini Brand Blueprint.
             </p>
           </div>
 
