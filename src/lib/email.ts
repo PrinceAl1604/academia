@@ -188,6 +188,45 @@ export async function sendWelcomeEmail({
   });
 }
 
+/* ─── Waitlist welcome email (with the gift) ──────────────── */
+export async function sendWaitlistWelcomeEmail({
+  to,
+  name,
+  blueprintUrl,
+}: {
+  to: string;
+  name: string;
+  blueprintUrl?: string | null;
+}) {
+  const safeFirstName = esc((name || to).split(" ")[0] || (name || to));
+  const hasGift = !!blueprintUrl;
+
+  return getResend().emails.send({
+    from: FROM_EMAIL,
+    to,
+    subject: `Tu es sur la liste VISIBLE, ${safeFirstName} 🎉`,
+    html: emailWrapper({
+      heading: `Bienvenue sur la liste, ${safeFirstName} 🎉`,
+      preheading: "Ton mini Brand Blueprint + ton accès prioritaire à VISIBLE.",
+      body: `
+        <p style="margin:0 0 16px;">
+          Merci d'avoir rejoint la liste d'attente <strong>VISIBLE</strong>. Ton prix
+          fondateur est verrouillé, et tu seras le premier prévenu pour le prochain workshop.
+        </p>
+        <p style="margin:0;">
+          ${
+            hasGift
+              ? "Comme promis, voici ton cadeau : le <strong>mini Brand Blueprint</strong> — un avant-goût concret du livrable du workshop. Clique ci-dessous pour le récupérer."
+              : "Ton cadeau, le <strong>mini Brand Blueprint</strong>, arrive très vite — surveille ta boîte mail."
+          }
+        </p>`,
+      buttonLabel: hasGift ? "Récupérer mon Brand Blueprint" : undefined,
+      buttonUrl: hasGift ? blueprintUrl! : undefined,
+      footnote: "Le talent ne paie pas. La marque, si. — VISIBLE",
+    }),
+  });
+}
+
 /* ─── Course completion email ─────────────────────────────── */
 export async function sendCourseCompletionEmail({
   to,

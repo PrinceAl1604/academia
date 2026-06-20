@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
+import { sendWaitlistWelcomeEmail } from "@/lib/email";
 
 /**
  * POST /api/waitlist — public, low-friction capture for the VISIBLE waitlist.
@@ -56,6 +57,15 @@ export async function POST(req: Request) {
   if (error) {
     console.error("[waitlist] insert failed:", error.message);
     return NextResponse.json({ error: "server_error" }, { status: 500 });
+  }
+
+  // Welcome email + the gift. Non-fatal: the contact is already saved, so an
+  // email hiccup shouldn't fail the signup.
+  const blueprintUrl = process.env.WAITLIST_BLUEPRINT_URL || null;
+  try {
+    await sendWaitlistWelcomeEmail({ to: email, name: firstName, blueprintUrl });
+  } catch (e) {
+    console.error("[waitlist] welcome email failed:", e);
   }
 
   return NextResponse.json({ ok: true });
