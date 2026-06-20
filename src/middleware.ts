@@ -51,7 +51,8 @@ function isMarketingPath(pathname: string): boolean {
     pathname === "/" ||
     pathname === "/pricing" ||
     pathname === "/privacy" ||
-    pathname === "/terms"
+    pathname === "/terms" ||
+    pathname === "/liste"
   );
 }
 
