@@ -6,24 +6,15 @@ import { getSupabaseAdmin } from "@/lib/supabase-server";
  * POST /api/waitlist — public, low-friction capture for the VISIBLE waitlist.
  *
  * No auth (it's top-of-funnel). Inserts via the service role (so the table
- * needs no public-write RLS) and is rate-limited per WhatsApp number. Upserts
- * on WhatsApp so a re-submit refreshes the contact instead of erroring.
+ * needs no public-write RLS) and is rate-limited per email. Upserts on email
+ * so a re-submit refreshes the contact instead of erroring.
  */
 
 const MAX = 5;
 const WINDOW_SECONDS = 600; // 10 min
 
-function normalizePhone(raw: string): string {
-  return raw.replace(/[^\d+]/g, "");
-}
-
 export async function POST(req: Request) {
-  let body: {
-    first_name?: string;
-    whatsapp?: string;
-    email?: string;
-    source?: string;
-  };
+  let body: { first_name?: string; email?: string; source?: string };
   try {
     body = await req.json();
   } catch {
@@ -31,21 +22,17 @@ export async function POST(req: Request) {
   }
 
   const firstName = (body.first_name ?? "").trim();
-  const whatsapp = normalizePhone(body.whatsapp ?? "");
-  const email = (body.email ?? "").trim() || null;
+  const email = (body.email ?? "").trim().toLowerCase();
 
   if (firstName.length < 2 || firstName.length > 80) {
     return NextResponse.json({ error: "invalid_name" }, { status: 400 });
   }
-  if (!/^\+?\d{7,15}$/.test(whatsapp)) {
-    return NextResponse.json({ error: "invalid_whatsapp" }, { status: 400 });
-  }
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "invalid_email" }, { status: 400 });
   }
 
   const allowed = await checkRateLimit({
-    bucket: `waitlist:${whatsapp}`,
+    bucket: `waitlist:${email}`,
     maxCount: MAX,
     windowSeconds: WINDOW_SECONDS,
   });
@@ -60,11 +47,10 @@ export async function POST(req: Request) {
   const { error } = await admin.from("waitlist").upsert(
     {
       first_name: firstName,
-      whatsapp,
       email,
       source: (body.source ?? "liste").slice(0, 40),
     },
-    { onConflict: "whatsapp" }
+    { onConflict: "email" }
   );
 
   if (error) {

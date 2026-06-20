@@ -187,7 +187,7 @@ export default async function ListePage() {
             </h2>
             <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
               Un avant-goût concret du livrable du workshop : la trame pour transformer ton
-              talent en une marque qui se vend. Reçu sur WhatsApp dès ton inscription.
+              talent en une marque qui se vend. Reçu par email dès ton inscription.
             </p>
             <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <Gift className="h-3.5 w-3.5" />

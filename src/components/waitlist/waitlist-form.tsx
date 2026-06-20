@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 /**
- * Waitlist capture form — prénom + WhatsApp (+ optional email). Low friction by
- * design: no qualifying questions (that happens later, at the paid workshop
- * signup). On success it shows the confirmation + a WhatsApp join button.
+ * Waitlist capture form — prénom + email. Low friction by design: no
+ * qualifying questions (that happens later, at the paid workshop signup). On
+ * success it shows the email-based confirmation + an optional WhatsApp
+ * community button.
  */
 export function WaitlistForm({
   whatsappUrl,
@@ -19,7 +20,6 @@ export function WaitlistForm({
   formId?: string;
 }) {
   const [firstName, setFirstName] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,13 +29,13 @@ export function WaitlistForm({
     e.preventDefault();
     setError(null);
     const name = firstName.trim();
-    const phone = whatsapp.replace(/[^\d+]/g, "");
+    const mail = email.trim();
     if (name.length < 2) {
       setError("Indique ton prénom.");
       return;
     }
-    if (!/^\+?\d{7,15}$/.test(phone)) {
-      setError("Numéro WhatsApp invalide (avec l'indicatif, ex. +229…).");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+      setError("Adresse email invalide.");
       return;
     }
     setLoading(true);
@@ -43,12 +43,7 @@ export function WaitlistForm({
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          first_name: name,
-          whatsapp: phone,
-          email: email.trim() || undefined,
-          source: "liste",
-        }),
+        body: JSON.stringify({ first_name: name, email: mail, source: "liste" }),
       });
       if (!res.ok) {
         const d = (await res.json().catch(() => ({}))) as { error?: string };
@@ -72,7 +67,7 @@ export function WaitlistForm({
         <CheckCircle2 className="mx-auto h-8 w-8 text-primary" />
         <p className="mt-3 text-lg font-semibold text-foreground">Tu es sur la liste 🎉</p>
         <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-muted-foreground">
-          Surveille ton WhatsApp : ton cadeau arrive, et tu seras le premier prévenu
+          Vérifie ta boîte mail : ton cadeau arrive, et tu seras le premier prévenu
           pour le workshop.
         </p>
         {whatsappUrl && (
@@ -83,7 +78,7 @@ export function WaitlistForm({
             className="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
             <MessageCircle className="h-4 w-4" />
-            Rejoindre le WhatsApp maintenant
+            Rejoindre la communauté WhatsApp
           </a>
         )}
       </div>
@@ -106,23 +101,8 @@ export function WaitlistForm({
         />
       </div>
       <div>
-        <label htmlFor={`${formId}-wa`} className="mb-1 block text-xs font-medium text-muted-foreground">
-          Numéro WhatsApp
-        </label>
-        <Input
-          id={`${formId}-wa`}
-          type="tel"
-          inputMode="tel"
-          value={whatsapp}
-          onChange={(e) => setWhatsapp(e.target.value)}
-          placeholder="+229 00 00 00 00"
-          autoComplete="tel"
-          className="h-11"
-        />
-      </div>
-      <div>
         <label htmlFor={`${formId}-email`} className="mb-1 block text-xs font-medium text-muted-foreground">
-          Email <span className="text-muted-foreground/60">(optionnel)</span>
+          Email
         </label>
         <Input
           id={`${formId}-email`}
