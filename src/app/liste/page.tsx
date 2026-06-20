@@ -149,23 +149,27 @@ export default async function ListePage() {
       <section className="relative overflow-hidden px-5 pt-8 pb-20 sm:pt-14 sm:pb-28">
         <Backdrop />
         <BrandSeal className="absolute -right-24 -top-12 w-[340px] text-foreground/[0.05] sm:-right-12 sm:w-[460px]" />
-        <div className="relative mx-auto max-w-xl text-center duration-700 animate-in fade-in-0 slide-in-from-bottom-4">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
-            <Sparkles className="h-3 w-3" />
-            Prix fondateur · places limitées
-          </span>
-          <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-            VISIBLE arrive.
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
-            Rejoins la <span className="text-primary">liste d&apos;attente.</span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Sois le premier informé, verrouille le prix fondateur, et reçois ton
-            invitation au workshop.
-          </p>
+        <div className="relative mx-auto grid max-w-5xl items-center gap-10 duration-700 animate-in fade-in-0 slide-in-from-bottom-4 lg:grid-cols-2 lg:gap-12">
+          {/* Left: copy */}
+          <div className="text-center lg:text-left">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+              <Sparkles className="h-3 w-3" />
+              Prix fondateur · places limitées
+            </span>
+            <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+              VISIBLE arrive.
+            </p>
+            <h1 className="mt-3 text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
+              Rejoins la <span className="text-primary">liste d&apos;attente.</span>
+            </h1>
+            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0">
+              Sois le premier informé, verrouille le prix fondateur, et reçois ton
+              invitation au workshop.
+            </p>
+          </div>
 
-          <div className="mx-auto mt-8 max-w-sm rounded-2xl border border-border bg-card/80 p-5 shadow-xl shadow-black/5 backdrop-blur-sm">
+          {/* Right: form */}
+          <div className="mx-auto w-full max-w-sm rounded-2xl border border-border bg-card/80 p-5 shadow-xl shadow-black/5 backdrop-blur-sm lg:mx-0 lg:ml-auto">
             <WaitlistForm whatsappUrl={whatsappUrl} formId="wl-hero" />
           </div>
         </div>
