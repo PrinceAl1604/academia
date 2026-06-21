@@ -389,7 +389,10 @@ export function LandingPage() {
         <HowItWorks />
         <Bonuses />
         <Founder />
-        <SocialProof />
+        {/* Hidden for now — the section only has placeholder testimonials.
+            Flip SHOW_SOCIAL_PROOF to true once real founding-member
+            testimonials are ready. */}
+        {SHOW_SOCIAL_PROOF && <SocialProof />}
         <TheMath />
         <Offer />
         <Guarantee />
@@ -1010,6 +1013,11 @@ function Founder() {
 /* ═══════════════════════════════════════════════════════════════════
  *  12. Preuve sociale
  * ═══════════════════════════════════════════════════════════════════ */
+
+// Temporarily hidden from the page (see <main>): the section only has
+// placeholder testimonials for now. Set to `true` to show it again once real
+// founding-member testimonials exist.
+const SHOW_SOCIAL_PROOF = false;
 
 function SocialProof() {
   return (
