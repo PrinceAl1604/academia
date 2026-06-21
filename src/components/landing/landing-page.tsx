@@ -915,7 +915,6 @@ function HowItWorks() {
  * ═══════════════════════════════════════════════════════════════════ */
 
 function Bonuses() {
-  // [VALEUR] = montant d’ancrage à fournir par Alex (brief §5.10 / §7).
   const bonuses = [
     { icon: LayoutTemplate, title: "Banque de templates" },
     { icon: FileText, title: "Swipe file (hooks + scripts)" },
@@ -936,17 +935,13 @@ function Bonuses() {
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           {bonuses.map((b, i) => (
             <Reveal key={b.title} delay={i * 60}>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
+              <div className="flex items-center rounded-2xl border border-border bg-card p-5">
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <b.icon className="h-5 w-5" />
                   </span>
                   <span className="font-medium text-foreground">{b.title}</span>
                 </div>
-                {/* Valeur d’ancrage — à remplir (placeholder grep-able). */}
-                <span className="shrink-0 font-mono text-xs text-muted-foreground/70">
-                  valeur : [—]
-                </span>
               </div>
             </Reveal>
           ))}
