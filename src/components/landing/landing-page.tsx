@@ -86,7 +86,10 @@ const STRIPE_CHECKOUT_URL =
   process.env.NEXT_PUBLIC_STRIPE_PAYMENT_URL ||
   "https://buy.stripe.com/REMPLACER";
 
-const PRICE = "50 000 FCFA";
+// EUR is the primary price; the franc CFA is pegged at 1 € = 655,957 FCFA,
+// so 50 000 FCFA ≈ 76 €. FCFA is shown as the equivalence.
+const PRICE = "76 €";
+const PRICE_FCFA = "50 000 FCFA";
 const PRICE_UNIT = "/mois";
 
 /* ─── Mécanisme d’urgence (brief §5.15) ──────────────────────────────
@@ -1107,7 +1110,7 @@ function Offer() {
               <p className="text-sm text-primary-foreground/70">
                 Valeur totale :{" "}
                 <span className="line-through decoration-primary-foreground/40">
-                  2 000 000 FCFA
+                  3 000 €
                 </span>
               </p>
               <div className="mt-2 flex items-end justify-center gap-1">
@@ -1118,6 +1121,9 @@ function Offer() {
                   {PRICE_UNIT}
                 </span>
               </div>
+              <p className="mt-1 font-mono text-sm text-primary-foreground/70">
+                ≈ {PRICE_FCFA}{PRICE_UNIT}
+              </p>
               <p className="mt-1 text-sm text-primary-foreground/80">
                 tout inclus · pas de frais d’entrée
               </p>
@@ -1138,8 +1144,9 @@ function Offer() {
             <p className="text-sm leading-relaxed text-foreground/90">
               <span className="font-semibold">Tarif fondateur.</span> Les
               premiers membres bloquent{" "}
-              <span className="font-semibold">{PRICE}{PRICE_UNIT} à vie</span>.
-              Le prix montera ensuite — les fondateurs ne paieront jamais plus.
+              <span className="font-semibold">{PRICE}{PRICE_UNIT} à vie</span> (≈{" "}
+              {PRICE_FCFA}{PRICE_UNIT}). Le prix montera ensuite — les fondateurs
+              ne paieront jamais plus.
             </p>
           </div>
         </Reveal>
