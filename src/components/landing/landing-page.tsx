@@ -520,17 +520,20 @@ function Hero() {
     <section className="relative isolate overflow-hidden bg-neutral-950 text-white">
       {/* Photo plein cadre, ancrée à droite, fondue dans le noir à gauche
           (lisibilité du texte) — comme une couverture éditoriale sombre. */}
+      {/* Photo plein cadre — ce cliché est large, sujet à droite et noir à
+          gauche : parfait pour poser le texte sur la gauche sombre. */}
       <div className="absolute inset-0 -z-10">
         <Image
-          src="/alex.jpg"
+          src="/hero.jpg"
           alt="Alex Landrin, fondateur de LogoMint, au micro"
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center"
+          className="object-cover object-right"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/85 to-neutral-950/25 sm:via-neutral-950/75 lg:to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/10 to-transparent" />
+        {/* Renforce le noir à gauche (lisibilité du texte). */}
+        <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/70 to-transparent sm:via-neutral-950/45" />
+        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-neutral-950/20" />
       </div>
 
       <div className="mx-auto flex min-h-[88vh] max-w-6xl items-center px-5 py-28 sm:py-32">
