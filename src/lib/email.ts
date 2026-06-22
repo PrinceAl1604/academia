@@ -5,7 +5,14 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
-const FROM_EMAIL = process.env.FROM_EMAIL || "Visible <noreply@resend.dev>";
+// Sender for every transactional email. Override per-environment with
+// FROM_EMAIL. The default MUST be an address on a domain verified in
+// Resend — the old `onboarding@resend.dev` shared test sender only
+// delivers to the Resend account owner's own address, so real waitlist
+// signups failed silently. workshop-visible.com is verified (DKIM) in
+// Resend, so it can send to any recipient.
+const FROM_EMAIL =
+  process.env.FROM_EMAIL || "Visible <noreply@workshop-visible.com>";
 const APP_NAME = "Visible";
 const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://academia-vert-phi.vercel.app";
