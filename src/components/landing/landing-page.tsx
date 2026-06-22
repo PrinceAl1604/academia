@@ -426,12 +426,18 @@ function LandingNav() {
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" aria-label="VISIBLE — accueil" className="flex items-center">
-          <Logo />
+          {/* White logo over the dark hero; normal once the nav solidifies. */}
+          <Logo className={cn("h-5", !scrolled && "brightness-0 invert")} />
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
           <Link
             href="/sign-in"
-            className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+            className={cn(
+              "hidden text-sm transition-colors sm:inline-flex",
+              scrolled
+                ? "text-muted-foreground hover:text-foreground"
+                : "text-white/80 hover:text-white"
+            )}
           >
             Se connecter
           </Link>
@@ -514,47 +520,62 @@ function BrandSeal({ className }: { className?: string }) {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden px-5 pt-32 pb-16 sm:pt-40 sm:pb-24">
-      <HeroBackdrop />
-      <BrandSeal className="absolute -right-28 top-6 w-[420px] text-foreground/[0.05] sm:-right-20 sm:w-[560px]" />
-      <div className="relative mx-auto max-w-3xl text-center">
-        <Reveal>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary sm:text-[11px]">
+    <section className="relative isolate overflow-hidden bg-neutral-950 text-white">
+      {/* Photo plein cadre, ancrée à droite, fondue dans le noir à gauche
+          (lisibilité du texte) — comme une couverture éditoriale sombre. */}
+      {/* Photo plein cadre — ce cliché est large, sujet à droite et noir à
+          gauche : parfait pour poser le texte sur la gauche sombre. */}
+      <div className="absolute inset-0 -z-10">
+        <Image
+          src="/hero.png"
+          alt="Alex Landrin, fondateur de LogoMint, au micro"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-right"
+        />
+        {/* Renforce le noir à gauche (lisibilité du texte). */}
+        <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/70 to-transparent sm:via-neutral-950/45" />
+        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-transparent to-neutral-950/20" />
+      </div>
+
+      <div className="mx-auto flex min-h-[88vh] max-w-6xl items-center px-5 py-28 sm:py-32">
+        <Reveal className="max-w-2xl">
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/70 sm:text-[11px]">
             Programme pour designers · accompagnement en direct
           </p>
-          <h1 className="mt-6 text-4xl font-semibold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 text-[2.75rem] font-bold leading-[0.98] tracking-tight sm:text-6xl lg:text-7xl">
             Deviens le designer que les{" "}
-            <span className="text-primary">bons clients choisissent.</span>
+            <span className="text-white">bons clients choisissent.</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+
+          {/* Crédibilité fondateur — chiffres réels, pas de faux témoignages. */}
+          <div className="mt-7 flex items-center gap-3">
+            <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-white/15">
+              <Image src="/alex.jpg" alt="" fill sizes="40px" className="object-cover" />
+            </span>
+            <p className="text-sm text-white/70">
+              Par <span className="font-medium text-white">Alex</span>, fondateur de
+              LogoMint — <span className="font-medium text-white">~600</span> clients
+              · <span className="font-medium text-white">~10 000</span> abonnés.
+            </p>
+          </div>
+
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-white/80 sm:text-lg">
             VISIBLE transforme ton talent en une marque qui attire des clients
             premium — sans démarcher, sans devenir un influenceur. Ton premier
             client premium en 90 jours, ou tu es remboursé.
           </p>
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <CtaButton className="w-full sm:w-auto">
+
+          <div className="mt-9 flex flex-col items-start gap-3">
+            <CtaButton className="w-full border border-black/5 bg-stone-50 text-neutral-900 shadow-xl shadow-black/25 hover:bg-white sm:w-auto">
               Rejoindre VISIBLE — tarif fondateur
               <ArrowRight className="h-4 w-4" />
             </CtaButton>
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-white/55">
               Sans engagement · résilie quand tu veux · mobile money
             </p>
           </div>
-        </Reveal>
-
-        <Reveal delay={120} className="mt-12">
-          {/* Visuel hero — photo d’Alex ou mockup de marque. */}
-          <LabelledPlaceholder
-            label="Photo d’Alex · ou mockup de marque"
-            aspect="aspect-[16/10]"
-            className="mx-auto max-w-2xl"
-          />
-          <p className="mt-5 text-sm text-muted-foreground">
-            Par <span className="font-medium text-foreground">Alex</span>,
-            fondateur de LogoMint —{" "}
-            <span className="font-medium text-foreground">~600</span> clients,{" "}
-            <span className="font-medium text-foreground">~10 000</span> abonnés.
-          </p>
         </Reveal>
       </div>
     </section>
