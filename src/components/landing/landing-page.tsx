@@ -1127,18 +1127,23 @@ function Offer() {
                     <dd className="text-right font-medium text-foreground">{v}</dd>
                   </div>
                 ))}
-                <div className="flex items-baseline justify-between gap-4 border-t border-border/70 pt-2.5 font-mono text-[12px] uppercase tracking-[0.12em]">
-                  <dt className="text-muted-foreground">Tarif</dt>
-                  <dd className="text-right">
-                    <span className="text-base font-semibold tracking-normal text-primary">
-                      {PRICE}{PRICE_UNIT}
-                    </span>
-                    <span className="mt-0.5 block text-[10px] normal-case tracking-normal text-muted-foreground">
-                      ≈ {PRICE_FCFA}{PRICE_UNIT}
-                    </span>
-                  </dd>
-                </div>
               </dl>
+            </div>
+
+            {/* Tarif — bien en évidence : grand + gras, avec l'équivalence FCFA */}
+            <div className="flex items-end justify-between gap-4 border-t border-border/70 px-6 py-5 sm:px-8">
+              <span className="font-mono text-[12px] uppercase tracking-[0.16em] text-muted-foreground">
+                Tarif
+              </span>
+              <div className="text-right">
+                <div className="font-mono text-4xl font-bold leading-none tracking-tight text-primary sm:text-5xl">
+                  {PRICE}
+                  <span className="text-2xl sm:text-3xl">{PRICE_UNIT}</span>
+                </div>
+                <div className="mt-1.5 font-mono text-xs text-muted-foreground sm:text-sm">
+                  ≈ {PRICE_FCFA}{PRICE_UNIT}
+                </div>
+              </div>
             </div>
 
             {/* Ligne de déchirure + encoches latérales */}
