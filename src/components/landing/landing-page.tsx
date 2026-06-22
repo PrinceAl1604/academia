@@ -987,43 +987,129 @@ function Founder() {
   ];
   return (
     <section className="px-5 py-16 sm:py-24">
-      <div className="mx-auto max-w-4xl">
-        <Reveal className="grid items-center gap-10 md:grid-cols-2">
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-2xl border border-border md:max-w-none">
-            <Image
-              src="/alex.jpg"
-              alt="Alex, fondateur de LogoMint, en interview"
-              fill
-              sizes="(min-width: 768px) 22rem, 20rem"
-              quality={70}
-              className="object-cover"
-            />
-          </div>
-          <div>
-            <Eyebrow>Qui t’accompagne</Eyebrow>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Alex, designer — fondateur de LogoMint.
-            </h2>
-            <p className="mt-5 text-base leading-relaxed text-muted-foreground">
-              Designer autodidacte, parti d’un iPhone 11 dans une chambre de
-              15 m². Introverti — la preuve vivante qu’on n’a pas besoin
-              d’être un show-man pour devenir demandé. En ~1 an, LogoMint est
-              passé de zéro à une marque que les clients cherchent.
-            </p>
-            <dl className="mt-8 grid grid-cols-3 gap-4">
+      <div className="mx-auto max-w-5xl">
+        <Reveal>
+          <Eyebrow>Qui t’accompagne</Eyebrow>
+          <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Alex, designer — fondateur de LogoMint.
+          </h2>
+        </Reveal>
+
+        <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,19rem)_1fr] md:gap-14">
+          {/* Colonne gauche — reste épinglée pendant qu'on lit l'histoire */}
+          <div className="md:sticky md:top-24 md:self-start">
+            <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-2xl border border-border md:mx-0 md:max-w-none">
+              <Image
+                src="/alex.jpg"
+                alt="Alex, fondateur de LogoMint, en interview"
+                fill
+                sizes="(min-width: 768px) 19rem, 18rem"
+                quality={70}
+                className="object-cover"
+              />
+            </div>
+            <dl className="mt-5 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
               {proof.map((s) => (
-                <div key={s.label} className="rounded-2xl border border-border bg-card p-4 text-center">
-                  <dd className="font-mono text-2xl font-semibold tracking-tight text-foreground">
+                <div key={s.label} className="flex items-center justify-between gap-3 px-4 py-3.5">
+                  <dd className="font-mono text-2xl font-bold tracking-tight text-primary">
                     <CountUp end={s.end} suffix={s.suffix} locale="fr-FR" />
                   </dd>
-                  <dt className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                  <dt className="text-right text-[10px] font-medium uppercase leading-tight tracking-[0.14em] text-muted-foreground">
                     {s.label}
                   </dt>
                 </div>
               ))}
             </dl>
           </div>
-        </Reveal>
+
+          {/* Colonne droite — l'histoire défile, la photo reste */}
+          <div className="space-y-5 text-base leading-relaxed text-muted-foreground">
+            <p className="text-lg text-foreground">
+              Moi, c’est Alex. Et avant d’aider des créatifs à devenir visibles,
+              j’ai d’abord été <em>invisible</em>.
+            </p>
+          <p>
+            Ça fait huit ans que je suis designer, spécialisé dans la création
+            d’identités visuelles. J’ai commencé en freelance, puis j’ai
+            travaillé en agence comme consultant. Et pendant des années, j’ai
+            cru qu’il suffisait d’être bon dans son métier pour réussir.
+          </p>
+          <p className="font-medium text-foreground">Je me trompais.</p>
+          <p>
+            Très vite, j’ai vu un problème que partagent énormément de créatifs,
+            surtout en Afrique : on a le talent, mais on reste invisibles. On
+            attend qu’un client vienne frapper à la porte. On galère à se faire
+            payer à sa juste valeur. Et dans un milieu où le design graphique est
+            encore peu valorisé, beaucoup finissent par détester le métier qu’ils
+            aimaient.
+          </p>
+          <p>
+            Je connais cette réalité de l’intérieur. Je viens d’Afrique.
+            Aujourd’hui je vis en Allemagne, mais je n’ai pas oublié d’où je
+            viens : les coupures d’électricité, le manque de moyens, les
+            formations hors de prix, le sentiment de travailler dur sans jamais
+            joindre les deux bouts.
+          </p>
+          <p>
+            Il y a trois ans, j’ai commencé à partager mon expertise sur YouTube.
+            Au début, je faisais des tutos — comment maîtriser Illustrator,
+            Photoshop, créer une marque. Puis j’ai compris quelque chose de bien
+            plus important :{" "}
+            <span className="font-medium text-foreground">
+              le talent ne paie pas. La marque, si.
+            </span>
+          </p>
+          <p>
+            Tu peux maîtriser tous les logiciels du monde. Si tu ne sais pas
+            vendre ton expertise, ça ne te servira à rien.
+          </p>
+          <p>
+            Alors j’ai arrêté de seulement enseigner des outils. J’ai créé mon
+            agence, LogoMint, et j’ai pris le temps de comprendre ce qui fait
+            vraiment la différence : la psychologie des clients, le
+            positionnement, la marque personnelle. Il y a trois ans, je tournais
+            mes vidéos dans une chambre de 15 m². Aujourd’hui, j’ai mon propre
+            studio.{" "}
+            <span className="font-medium text-foreground">
+              Ce n’est pas mon talent qui a changé. C’est ma façon de le rendre
+              visible.
+            </span>
+          </p>
+          <p className="font-medium text-foreground">
+            C’est exactement ça que je veux te transmettre.
+          </p>
+          <p>
+            Aujourd’hui, j’aide les créatifs francophones — designers, monteurs,
+            développeurs, consultants — à sortir de l’invisibilité. Concrètement,
+            ça veut dire :
+          </p>
+          <ul className="space-y-3">
+            {[
+              "Construire une marque personnelle qui inspire confiance, sans avoir à se justifier.",
+              "Choisir un positionnement clair, parce que la polyvalence ne paie pas — la spécialisation, si.",
+              "Définir ton client idéal, pour enfin proposer la bonne offre à la bonne personne.",
+              "Partager ton expertise sur les réseaux : tes résultats, tes preuves, tes opinions, ton savoir.",
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3 text-foreground/90">
+                <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p>
+            Tu n’as pas besoin de millions de vues. Même avec 200 personnes qui
+            te regardent, il y en a toujours une qui a besoin de toi. C’est comme
+            ça que tout commence.
+          </p>
+          <p>
+            Je l’ai fait pour moi. Je l’ai fait pour mes clients. Maintenant, je
+            veux le faire avec toi.
+          </p>
+          <p className="text-lg font-semibold text-foreground">
+            Parce que ton talent mérite d’être vu.
+          </p>
+          </div>
+        </div>
       </div>
     </section>
   );
