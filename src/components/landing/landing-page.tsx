@@ -390,6 +390,7 @@ export function LandingPage() {
         <FitMatrix />
         <Modules />
         <HowItWorks />
+        <Journey />
         <Bonuses />
         <Founder />
         {/* Hidden for now — the section only has placeholder testimonials.
@@ -868,11 +869,6 @@ function HowItWorks() {
     { icon: FolderOpen, label: "Ton classeur + templates", desc: "tu exécutes, tu ne pars pas de zéro." },
     { icon: Flame, label: "Hot seats", desc: "ton travail audité en direct." },
   ];
-  const timeline = [
-    { day: "J+7", title: "Visible", desc: "Positionnement + profil + plan de contenu." },
-    { day: "J+30", title: "Premières demandes", desc: "Ton contenu commence à attirer." },
-    { day: "J+90", title: "Ton premier client premium", desc: "Tu signes — sans avoir démarché." },
-  ];
   return (
     <section className="px-5 py-16 sm:py-24">
       <div className="mx-auto max-w-4xl">
@@ -898,37 +894,63 @@ function HowItWorks() {
             </Reveal>
           ))}
         </div>
+      </div>
+    </section>
+  );
+}
 
-        {/* Timeline du parcours */}
-        <Reveal className="mt-12">
-          <p className="text-center font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            Ton parcours
+/* ═══════════════════════════════════════════════════════════════════
+ *  9b. Ton parcours — timeline 90 jours (section sur la marque)
+ * ═══════════════════════════════════════════════════════════════════ */
+
+function Journey() {
+  const timeline = [
+    { day: "J+7", title: "Visible", desc: "Positionnement + profil + plan de contenu." },
+    { day: "J+30", title: "Premières demandes", desc: "Ton contenu commence à attirer." },
+    { day: "J+90", title: "Ton premier client premium", desc: "Tu signes — sans avoir démarché." },
+  ];
+  return (
+    <section className="relative overflow-hidden bg-primary px-5 py-16 text-primary-foreground sm:py-24">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(circle,_oklch(1_0_0/0.07)_1px,_transparent_1px)] [background-size:22px_22px]"
+      />
+      <div className="relative mx-auto max-w-5xl">
+        <Reveal className="mx-auto max-w-2xl text-center">
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary-foreground/70">
+            <span className="opacity-60">/</span> Ton parcours
           </p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            {timeline.map((step, i) => (
-              <div
-                key={step.day}
-                className="relative rounded-2xl border border-primary/20 bg-primary/[0.04] p-6 text-center"
-              >
-                <span className="font-mono text-sm font-semibold text-primary">
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+            D’invisible à demandé, en 90 jours.
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-primary-foreground/75">
+            Un chemin clair, étape par étape — pas de magie, de la méthode.
+          </p>
+        </Reveal>
+
+        <div className="relative mt-14 grid gap-10 md:grid-cols-3 md:gap-6">
+          {/* Ligne reliant les jalons (desktop) */}
+          <div
+            aria-hidden
+            className="absolute left-[16.67%] right-[16.67%] top-[14px] hidden h-px bg-primary-foreground/25 md:block"
+          />
+          {timeline.map((step, i) => (
+            <Reveal key={step.day} delay={i * 120} className="relative">
+              <span className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full bg-primary-foreground font-mono text-xs font-bold text-primary md:mx-auto">
+                {i + 1}
+              </span>
+              <div className="mt-5 rounded-2xl border border-primary-foreground/15 bg-primary-foreground/[0.06] p-6 backdrop-blur-sm md:text-center">
+                <span className="inline-block rounded-full bg-primary-foreground/15 px-3 py-1 font-mono text-xs font-semibold tracking-wide text-primary-foreground">
                   {step.day}
                 </span>
-                <p className="mt-2 text-lg font-semibold text-foreground">
-                  {step.title}
+                <h3 className="mt-3 text-xl font-semibold tracking-tight">{step.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-primary-foreground/75">
+                  {step.desc}
                 </p>
-                <p className="mt-2 text-sm text-muted-foreground">{step.desc}</p>
-                {i < timeline.length - 1 && (
-                  <span
-                    aria-hidden
-                    className="absolute -right-3 top-1/2 hidden -translate-y-1/2 text-primary/40 sm:block"
-                  >
-                    <ArrowRight className="h-5 w-5" />
-                  </span>
-                )}
               </div>
-            ))}
-          </div>
-        </Reveal>
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   );
