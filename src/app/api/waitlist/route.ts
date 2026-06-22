@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
-import { sendWaitlistWelcomeEmail } from "@/lib/email";
+import { buildWaitlistWelcomeEmail, sendWaitlistWelcomeEmail } from "@/lib/email";
 
 /**
  * POST /api/waitlist — public, low-friction capture for the VISIBLE waitlist.
@@ -44,12 +44,13 @@ export async function POST(req: Request) {
     );
   }
 
+  const source = (body.source ?? "liste").slice(0, 40);
   const admin = getSupabaseAdmin();
   const { error } = await admin.from("waitlist").upsert(
     {
       first_name: firstName,
       email,
-      source: (body.source ?? "liste").slice(0, 40),
+      source,
     },
     { onConflict: "email" }
   );
@@ -60,23 +61,51 @@ export async function POST(req: Request) {
   }
 
   // Welcome email + the gift. Non-fatal: the contact is already saved, so an
-  // email hiccup shouldn't fail the signup. The Resend SDK returns { error }
-  // instead of throwing on API errors, so surface BOTH paths in the logs
-  // (otherwise a rejected send fails silently with no trace).
+  // email hiccup must never fail the signup.
+  //
+  // Preferred path: hand the rendered email to a Zapier "Catch Hook" (set
+  // ZAPIER_WAITLIST_HOOK_URL). The Zap files the lead in Google Sheets and
+  // sends the message from Google Workspace (Gmail), so delivery rides on the
+  // owner's own inbox reputation. When the hook isn't configured we fall back
+  // to sending directly through Resend, so existing deployments keep working.
   const blueprintUrl = process.env.WAITLIST_BLUEPRINT_URL || null;
+  const zapierHook = process.env.ZAPIER_WAITLIST_HOOK_URL;
   try {
-    const { error: emailError } = await sendWaitlistWelcomeEmail({
-      to: email,
-      name: firstName,
-      blueprintUrl,
-    });
-    if (emailError) {
-      console.error("[waitlist] Resend rejected the welcome email:", emailError);
+    if (zapierHook) {
+      const { subject, html } = buildWaitlistWelcomeEmail({
+        to: email,
+        name: firstName,
+        blueprintUrl,
+      });
+      // 5s cap so a slow Zap never holds the signup response hostage.
+      const res = await fetch(zapierHook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ first_name: firstName, email, source, subject, html }),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) {
+        const detail = (await res.text().catch(() => "")).slice(0, 200);
+        console.error("[waitlist] Zapier hook rejected:", res.status, detail);
+      } else {
+        console.log("[waitlist] welcome email handed to Zapier for", email);
+      }
     } else {
-      console.log("[waitlist] welcome email sent to", email);
+      // Fallback: Resend. Its SDK returns { error } instead of throwing on
+      // API errors, so surface both paths (otherwise sends fail silently).
+      const { error: emailError } = await sendWaitlistWelcomeEmail({
+        to: email,
+        name: firstName,
+        blueprintUrl,
+      });
+      if (emailError) {
+        console.error("[waitlist] Resend rejected the welcome email:", emailError);
+      } else {
+        console.log("[waitlist] welcome email sent via Resend to", email);
+      }
     }
   } catch (e) {
-    console.error("[waitlist] welcome email threw:", e);
+    console.error("[waitlist] welcome email delivery failed:", e);
   }
 
   return NextResponse.json({ ok: true });
