@@ -1084,55 +1084,104 @@ function Offer() {
     "Classeur, templates & calculateur de tarifs",
     "Tous les bonus",
   ];
+  const ticketMeta = [
+    ["Format", "En ligne · live"],
+    ["Rythme", "1 live / sem."],
+    ["Replays", "À vie"],
+    ["Communauté", "Privée + hot seats"],
+    ["Engagement", "Sans · résiliable"],
+  ];
   return (
     <section id="tarif" className="scroll-mt-16 px-5 py-16 sm:py-24">
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-3xl">
         <Reveal className="text-center">
-          <Eyebrow>L’offre</Eyebrow>
+          <Eyebrow>Ton billet</Eyebrow>
           <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             Tout ça, pour le prix d’un projet sous-payé par mois.
           </h2>
         </Reveal>
 
         <Reveal delay={100} className="mt-10">
-          {/* Panneau premium — vert forêt, texte clair. */}
-          <div className="overflow-hidden rounded-3xl bg-primary p-8 text-primary-foreground shadow-[0_24px_60px_-24px_oklch(var(--primary)/0.6)] sm:p-10">
-            <ul className="space-y-3">
-              {includes.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm text-primary-foreground/90">
-                  <Check className="mt-0.5 h-5 w-5 shrink-0" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
+          {/* Billet / boarding-pass — récapitulatif de l'abonnement. */}
+          <div className="relative mx-auto overflow-hidden rounded-3xl border border-border bg-card shadow-xl shadow-black/10">
+            {/* En-tête */}
+            <div className="flex items-center justify-between gap-4 border-b border-border/70 px-6 py-4 sm:px-8">
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <strong className="font-semibold text-foreground">VISIBLE</strong> · Abonnement
+              </span>
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Fondateur · 2026
+              </span>
+            </div>
 
-            <div className="mt-8 border-t border-primary-foreground/15 pt-8 text-center">
-              <p className="text-sm text-primary-foreground/70">
-                Valeur totale :{" "}
-                <span className="line-through decoration-primary-foreground/40">
-                  3 000 €
-                </span>
-              </p>
-              <div className="mt-2 flex items-end justify-center gap-1">
-                <span className="font-mono text-5xl font-semibold tracking-tight sm:text-6xl">
-                  {PRICE}
-                </span>
-                <span className="mb-2 text-lg text-primary-foreground/80">
-                  {PRICE_UNIT}
-                </span>
-              </div>
-              <p className="mt-1 font-mono text-sm text-primary-foreground/70">
-                ≈ {PRICE_FCFA}{PRICE_UNIT}
-              </p>
-              <p className="mt-1 text-sm text-primary-foreground/80">
-                tout inclus · pas de frais d’entrée
-              </p>
+            {/* Corps : wordmark + détails */}
+            <div className="grid items-center gap-6 px-6 py-7 sm:grid-cols-2 sm:px-8">
+              <Logo className="h-8 sm:h-9" />
+              <dl className="space-y-2.5">
+                {ticketMeta.map(([k, v]) => (
+                  <div
+                    key={k}
+                    className="flex items-baseline justify-between gap-4 font-mono text-[12px] uppercase tracking-[0.12em]"
+                  >
+                    <dt className="text-muted-foreground">{k}</dt>
+                    <dd className="text-right font-medium text-foreground">{v}</dd>
+                  </div>
+                ))}
+                <div className="flex items-baseline justify-between gap-4 border-t border-border/70 pt-2.5 font-mono text-[12px] uppercase tracking-[0.12em]">
+                  <dt className="text-muted-foreground">Tarif</dt>
+                  <dd className="text-right">
+                    <span className="text-base font-semibold tracking-normal text-primary">
+                      {PRICE}{PRICE_UNIT}
+                    </span>
+                    <span className="mt-0.5 block text-[10px] normal-case tracking-normal text-muted-foreground">
+                      ≈ {PRICE_FCFA}{PRICE_UNIT}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
+            </div>
 
-              <PaymentChooser triggerClassName="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-card px-6 py-3.5 text-base font-medium text-primary shadow-sm transition-transform duration-200 hover:scale-[1.02]">
+            {/* Ligne de déchirure + encoches latérales */}
+            <div className="relative">
+              <div className="mx-6 border-t border-dashed border-border sm:mx-8" />
+              <span aria-hidden className="absolute left-0 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-background" />
+              <span aria-hidden className="absolute right-0 top-1/2 h-5 w-5 translate-x-1/2 -translate-y-1/2 rounded-full bg-background" />
+            </div>
+
+            {/* Inclus */}
+            <div className="px-6 py-7 sm:px-8">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <span className="opacity-50">/</span> Inclus dans ton abonnement
+              </p>
+              <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
+                {includes.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-foreground/90">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <PaymentChooser triggerClassName="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-base font-medium text-primary-foreground shadow-sm transition-transform duration-200 hover:scale-[1.02]">
                 Rejoindre VISIBLE — tarif fondateur
                 <ArrowRight className="h-4 w-4" />
               </PaymentChooser>
-              <PayReassurance className="mt-3 justify-center text-primary-foreground/70" />
+              <PayReassurance className="mt-3 justify-center" />
+            </div>
+
+            {/* Code-barres */}
+            <div className="flex items-center justify-between gap-4 border-t border-border/70 bg-muted/30 px-6 py-4 sm:px-8">
+              <div
+                aria-hidden
+                className="h-8 w-40 opacity-80"
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(90deg, #1c1c1c 0 1.5px, transparent 1.5px 3px, #1c1c1c 3px 4.5px, transparent 4.5px 8px)",
+                }}
+              />
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                VISIBLE · Membre · Fondateur
+              </span>
             </div>
           </div>
         </Reveal>
