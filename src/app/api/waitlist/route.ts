@@ -60,12 +60,23 @@ export async function POST(req: Request) {
   }
 
   // Welcome email + the gift. Non-fatal: the contact is already saved, so an
-  // email hiccup shouldn't fail the signup.
+  // email hiccup shouldn't fail the signup. The Resend SDK returns { error }
+  // instead of throwing on API errors, so surface BOTH paths in the logs
+  // (otherwise a rejected send fails silently with no trace).
   const blueprintUrl = process.env.WAITLIST_BLUEPRINT_URL || null;
   try {
-    await sendWaitlistWelcomeEmail({ to: email, name: firstName, blueprintUrl });
+    const { error: emailError } = await sendWaitlistWelcomeEmail({
+      to: email,
+      name: firstName,
+      blueprintUrl,
+    });
+    if (emailError) {
+      console.error("[waitlist] Resend rejected the welcome email:", emailError);
+    } else {
+      console.log("[waitlist] welcome email sent to", email);
+    }
   } catch (e) {
-    console.error("[waitlist] welcome email failed:", e);
+    console.error("[waitlist] welcome email threw:", e);
   }
 
   return NextResponse.json({ ok: true });
