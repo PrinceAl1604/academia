@@ -189,7 +189,13 @@ export async function sendWelcomeEmail({
 }
 
 /* ─── Waitlist welcome email (with the gift) ──────────────── */
-export async function sendWaitlistWelcomeEmail({
+/**
+ * Render the subject + HTML for the waitlist welcome email. Kept pure (no
+ * send) so the same template can be delivered either through Resend or handed
+ * to an external sender — e.g. a Zapier "Catch Hook" whose Zap sends it from
+ * Google Workspace (Gmail) — that only needs the rendered body.
+ */
+export function buildWaitlistWelcomeEmail({
   to,
   name,
   blueprintUrl,
@@ -197,13 +203,11 @@ export async function sendWaitlistWelcomeEmail({
   to: string;
   name: string;
   blueprintUrl?: string | null;
-}) {
+}): { subject: string; html: string } {
   const safeFirstName = esc((name || to).split(" ")[0] || (name || to));
   const hasGift = !!blueprintUrl;
 
-  return getResend().emails.send({
-    from: FROM_EMAIL,
-    to,
+  return {
     subject: `Tu es sur la liste VISIBLE, ${safeFirstName} 🎉`,
     html: emailWrapper({
       heading: `Bienvenue sur la liste, ${safeFirstName} 🎉`,
@@ -224,7 +228,24 @@ export async function sendWaitlistWelcomeEmail({
       buttonUrl: hasGift ? blueprintUrl! : undefined,
       footnote: "Le talent ne paie pas. La marque, si. — VISIBLE",
     }),
-  });
+  };
+}
+
+/**
+ * Send the waitlist welcome email directly through Resend. Used as the
+ * fallback when no Zapier hook is configured (see /api/waitlist).
+ */
+export async function sendWaitlistWelcomeEmail({
+  to,
+  name,
+  blueprintUrl,
+}: {
+  to: string;
+  name: string;
+  blueprintUrl?: string | null;
+}) {
+  const { subject, html } = buildWaitlistWelcomeEmail({ to, name, blueprintUrl });
+  return getResend().emails.send({ from: FROM_EMAIL, to, subject, html });
 }
 
 /* ─── Course completion email ─────────────────────────────── */
