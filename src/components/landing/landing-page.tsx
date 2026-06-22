@@ -399,7 +399,7 @@ export function LandingPage() {
         <TheMath />
         <Offer />
         <Guarantee />
-        <Urgency />
+        {SHOW_URGENCY && <Urgency />}
         <Faq />
         <FinalCta />
       </main>
@@ -1320,6 +1320,9 @@ function Countdown({ deadline }: { deadline: string }) {
   );
 }
 
+// Hidden from the page (see <main>). Flip to true to show the urgency band.
+const SHOW_URGENCY = false;
+
 function Urgency() {
   return (
     <section className="px-5 py-16 sm:py-20">
@@ -1400,7 +1403,7 @@ function Faq() {
       a: "Oui. Tu résilies quand tu veux.",
     },
     {
-      q: "J’ai fait le workshop, et mes 10 € ?",
+      q: "J’ai fait le workshop, et mes 15 € ?",
       a: "Crédités sur ton premier mois (code promo fourni à l’inscription).",
     },
   ];
