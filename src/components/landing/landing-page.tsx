@@ -1008,13 +1008,13 @@ function Founder() {
                 className="object-cover"
               />
             </div>
-            <dl className="mt-5 grid grid-cols-3 gap-3">
+            <dl className="mt-5 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
               {proof.map((s) => (
-                <div key={s.label} className="rounded-xl border border-border bg-card p-3 text-center">
-                  <dd className="font-mono text-xl font-semibold tracking-tight text-foreground">
+                <div key={s.label} className="flex items-center justify-between gap-3 px-4 py-3.5">
+                  <dd className="font-mono text-2xl font-bold tracking-tight text-primary">
                     <CountUp end={s.end} suffix={s.suffix} locale="fr-FR" />
                   </dd>
-                  <dt className="mt-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                  <dt className="text-right text-[10px] font-medium uppercase leading-tight tracking-[0.14em] text-muted-foreground">
                     {s.label}
                   </dt>
                 </div>
