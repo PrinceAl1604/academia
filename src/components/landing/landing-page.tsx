@@ -987,48 +987,47 @@ function Founder() {
   ];
   return (
     <section className="px-5 py-16 sm:py-24">
-      <div className="mx-auto max-w-4xl">
-        {/* Intro — photo + titre + chiffres */}
-        <Reveal className="grid items-center gap-10 md:grid-cols-2">
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-2xl border border-border md:max-w-none">
-            <Image
-              src="/alex.jpg"
-              alt="Alex, fondateur de LogoMint, en interview"
-              fill
-              sizes="(min-width: 768px) 22rem, 20rem"
-              quality={70}
-              className="object-cover"
-            />
-          </div>
-          <div>
-            <Eyebrow>Qui t’accompagne</Eyebrow>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              Alex, designer — fondateur de LogoMint.
-            </h2>
-            <p className="mt-5 text-lg leading-relaxed text-foreground">
-              Moi, c’est Alex. Et avant d’aider des créatifs à devenir visibles,
-              j’ai d’abord été <em>invisible</em>.
-            </p>
-            <dl className="mt-8 grid grid-cols-3 gap-4">
+      <div className="mx-auto max-w-5xl">
+        <Reveal>
+          <Eyebrow>Qui t’accompagne</Eyebrow>
+          <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Alex, designer — fondateur de LogoMint.
+          </h2>
+        </Reveal>
+
+        <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,19rem)_1fr] md:gap-14">
+          {/* Colonne gauche — reste épinglée pendant qu'on lit l'histoire */}
+          <div className="md:sticky md:top-24 md:self-start">
+            <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-2xl border border-border md:mx-0 md:max-w-none">
+              <Image
+                src="/alex.jpg"
+                alt="Alex, fondateur de LogoMint, en interview"
+                fill
+                sizes="(min-width: 768px) 19rem, 18rem"
+                quality={70}
+                className="object-cover"
+              />
+            </div>
+            <dl className="mt-5 grid grid-cols-3 gap-3">
               {proof.map((s) => (
-                <div key={s.label} className="rounded-2xl border border-border bg-card p-4 text-center">
-                  <dd className="font-mono text-2xl font-semibold tracking-tight text-foreground">
+                <div key={s.label} className="rounded-xl border border-border bg-card p-3 text-center">
+                  <dd className="font-mono text-xl font-semibold tracking-tight text-foreground">
                     <CountUp end={s.end} suffix={s.suffix} locale="fr-FR" />
                   </dd>
-                  <dt className="mt-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+                  <dt className="mt-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                     {s.label}
                   </dt>
                 </div>
               ))}
             </dl>
           </div>
-        </Reveal>
 
-        {/* L’histoire complète */}
-        <Reveal
-          delay={100}
-          className="mx-auto mt-12 max-w-2xl space-y-5 text-base leading-relaxed text-muted-foreground sm:mt-14"
-        >
+          {/* Colonne droite — l'histoire défile, la photo reste */}
+          <div className="space-y-5 text-base leading-relaxed text-muted-foreground">
+            <p className="text-lg text-foreground">
+              Moi, c’est Alex. Et avant d’aider des créatifs à devenir visibles,
+              j’ai d’abord été <em>invisible</em>.
+            </p>
           <p>
             Ça fait huit ans que je suis designer, spécialisé dans la création
             d’identités visuelles. J’ai commencé en freelance, puis j’ai
@@ -1109,7 +1108,8 @@ function Founder() {
           <p className="text-lg font-semibold text-foreground">
             Parce que ton talent mérite d’être vu.
           </p>
-        </Reveal>
+          </div>
+        </div>
       </div>
     </section>
   );
