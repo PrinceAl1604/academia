@@ -538,12 +538,12 @@ function Hero() {
 
       <div className="mx-auto flex min-h-[88vh] max-w-6xl items-center px-5 py-28 sm:py-32">
         <Reveal className="max-w-2xl">
-          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-primary sm:text-[11px]">
+          <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/70 sm:text-[11px]">
             Programme pour designers · accompagnement en direct
           </p>
           <h1 className="mt-6 text-[2.75rem] font-bold leading-[0.98] tracking-tight sm:text-6xl lg:text-7xl">
             Deviens le designer que les{" "}
-            <span className="text-primary">bons clients choisissent.</span>
+            <span className="text-white">bons clients choisissent.</span>
           </h1>
 
           {/* Crédibilité fondateur — chiffres réels, pas de faux témoignages. */}
