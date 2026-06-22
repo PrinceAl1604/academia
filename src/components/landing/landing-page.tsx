@@ -524,7 +524,7 @@ function Hero() {
           gauche : parfait pour poser le texte sur la gauche sombre. */}
       <div className="absolute inset-0 -z-10">
         <Image
-          src="/hero.jpg"
+          src="/hero.png"
           alt="Alex Landrin, fondateur de LogoMint, au micro"
           fill
           priority
